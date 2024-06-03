@@ -1,64 +1,150 @@
+use reqwest::Client;
+use reqwest::Error;
+use std::collections::HashMap;
 use crate::engine::http::http_client::HttpClient;
 use crate::engine::http::http_client::HttpHeader;
 use crate::engine::http::http_client::HttpParameter;
+use async_trait::async_trait;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
 pub struct HttpClientImpl {
-
+    client: Client,
 }
 
 impl HttpClientImpl {
     pub fn new() -> Self {
-        HttpClientImpl { }
+        HttpClientImpl { client: Client::new() }
+    }
+
+    fn build_headers(&self, headers: Option<&[HttpHeader]>) -> HeaderMap {
+        let mut header_map = HeaderMap::new();
+        if let Some(headers) = headers {
+            for (key, value) in headers {
+                if let Ok(header_name) = HeaderName::from_bytes(key.as_bytes()) {
+                    if let Some(value) = value {
+                        if let Ok(header_value) = HeaderValue::from_str(&value) {
+                            header_map.insert(header_name, header_value);
+                        }
+                    }
+                }
+            }
+        }
+        header_map
+    }
+
+    fn build_params(&self, params: Option<&[HttpParameter]>) -> HashMap<String, String> {
+        let mut param_map = HashMap::new();
+        if let Some(params) = params {
+            for (key, value) in params {
+                if let Some(value) = value {
+                    param_map.insert(key.clone(), value.clone());
+                }
+            }
+        }
+        param_map
     }
 }
 
-
+#[async_trait]
 impl HttpClient for HttpClientImpl {
-    #[doc = " Call DELETE HTTP method on the spHttpParameterecified `base_url` with `headers` and `parameters`."]
-#[doc = ""]
-#[doc = " The method returns a JSON response encoded as `String`."]
-#[must_use]
-#[allow(clippy::type_complexity,clippy::type_repetition_in_bounds)]
-fn delete(&self,base_url: &'str,headers:Option< &'life2[HttpHeader]> ,parameters:Option< &'life3[HttpParameter]> ,request_timeout:Option<u64> ,connection_timeout:Option<u64> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = String> + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait {
-        todo!()
+    async fn delete(
+        &self,
+        base_url: &str,
+        headers: Option<&[HttpHeader]>,
+        parameters: Option<&[HttpParameter]>,
+        request_timeout: Option<u64>,
+        connection_timeout: Option<u64>,
+    ) -> Result<String, Error> {
+        let response = self.client
+            .delete(base_url)
+            .headers(self.build_headers(headers))
+            .query(&self.build_params(parameters))
+            .send()
+            .await?
+            .text()
+            .await;
+        response
     }
 
-    #[doc = " Call GET HTTP method on the specified `base_url` with `headers` and `parameters`."]
-#[doc = ""]
-#[doc = " The method returns a JSON response encoded as `String`."]
-#[must_use]
-#[allow(clippy::type_complexity,clippy::type_repetition_in_bounds)]
-fn get(&'life0 self,base_url: &'life1 str,headers:Option< &'life2[HttpHeader]> ,parameters:Option< &'life3[HttpParameter]> ,request_timeout:Option<u64> ,connection_timeout:Option<u64> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = String> + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait {
-        todo!()
+    async fn get(
+        &self,
+        base_url: &str,
+        headers: Option<&[HttpHeader]>,
+        parameters: Option<&[HttpParameter]>,
+        request_timeout: Option<u64>,
+        connection_timeout: Option<u64>,
+    ) -> Result<String, Error> {
+        let response = self.client
+            .get(base_url)
+            .headers(self.build_headers(headers))
+            .query(&self.build_params(parameters))
+            .send()
+            .await?
+            .text()
+            .await;
+        response
     }
 
-    #[doc = " Call PATCH HTTP method on the specified `base_url` with `headers`, `parameters`, and `body`."]
-#[doc = ""]
-#[doc = " The `body` is a serialized JSON in `String` representation."]
-#[doc = " The method returns a JSON response encoded as `String`."]
-#[must_use]
-#[allow(clippy::type_complexity,clippy::type_repetition_in_bounds)]
-fn patch(&'life0 self,base_url: &'life1 str,body:Option< &'life2 str> ,headers:Option< &'life3[HttpHeader]> ,parameters:Option< &'life4[HttpParameter]> ,request_timeout:Option<u64> ,connection_timeout:Option<u64> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = String> + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,'life4:'async_trait,Self:'async_trait {
-        todo!()
+    async fn patch(
+        &self,
+        base_url: &str,
+        body: Option<&str>,
+        headers: Option<&[HttpHeader]>,
+        parameters: Option<&[HttpParameter]>,
+        request_timeout: Option<u64>,
+        connection_timeout: Option<u64>,
+    ) -> Result<String, Error> {
+        let response = self.client
+            .patch(base_url)
+            .headers(self.build_headers(headers))
+            .query(&self.build_params(parameters))
+            //.body(body.unwrap_or(""))
+            .send()
+            .await?
+            .text()
+            .await;
+        response
     }
 
-    #[doc = " Call POST HTTP method on the specified `base_url` with `headers`, `parameters`, and `body`."]
-#[doc = ""]
-#[doc = " The `body` is a serialized JSON in `String` representation."]
-#[doc = " The method returns a JSON response encoded as `String`."]
-#[must_use]
-#[allow(clippy::type_complexity,clippy::type_repetition_in_bounds)]
-fn post(&'life0 self,base_url: &'life1 str,body:Option< &'life2 str> ,headers:Option< &'life3[HttpHeader]> ,parameters:Option< &'life4[HttpParameter]> ,request_timeout:Option<u64> ,connection_timeout:Option<u64> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = String> + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,'life4:'async_trait,Self:'async_trait {
-        todo!()
+    async fn post(
+        &self,
+        base_url: &str,
+        body: Option<&str>,
+        headers: Option<&[HttpHeader]>,
+        parameters: Option<&[HttpParameter]>,
+        request_timeout: Option<u64>,
+        connection_timeout: Option<u64>,
+    ) -> Result<String, Error> {
+        let response = self.client
+            .post(base_url)
+            .headers(self.build_headers(headers))
+            .query(&self.build_params(parameters))
+            //.body(body.unwrap_or(""))
+            .send()
+            .await?
+            .text()
+            .await;
+        response
     }
 
-    #[doc = " Call PUT HTTP method on the specified `base_url` with `headers`, `parameters`, and `body`."]
-#[doc = ""]
-#[doc = " The `body` is a serialized JSON in `String` representation."]
-#[doc = " The method returns a JSON response encoded as `String`."]
-#[must_use]
-#[allow(clippy::type_complexity,clippy::type_repetition_in_bounds)]
-fn put(&'life0 self,base_url: &'life1 str,body:Option< &'life2 str> ,headers:Option< &'life3[HttpHeader]> ,parameters:Option< &'life4[HttpParameter]> ,request_timeout:Option<u64> ,connection_timeout:Option<u64> ,) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = String> + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,'life4:'async_trait,Self:'async_trait {
-        todo!()
+    async fn put(
+        &self,
+        base_url: &str,
+        body: Option<&str>,
+        headers: Option<&[HttpHeader]>,
+        parameters: Option<&[HttpParameter]>,
+        request_timeout: Option<u64>,
+        connection_timeout: Option<u64>,
+    ) -> Result<String, Error> {
+        let response = self.client
+            .put(base_url)
+            .headers(self.build_headers(headers))
+            .query(&self.build_params(parameters))
+            //.body(body.unwrap_or(""))
+            .send()
+            .await?
+            .text()
+            .await;
+        response
     }
 }
