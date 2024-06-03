@@ -1,3 +1,4 @@
+use reqwest::Body;
 use reqwest::Client;
 use reqwest::Error;
 use std::collections::HashMap;
@@ -98,7 +99,7 @@ impl HttpClient for HttpClientImpl {
             .patch(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
-            //.body(body.unwrap_or(""))
+            .body(Body::from(body.unwrap_or("").to_string()))
             .send()
             .await?
             .text()
@@ -119,7 +120,7 @@ impl HttpClient for HttpClientImpl {
             .post(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
-            //.body(body.unwrap_or(""))
+            .body(Body::from(body.unwrap_or("").to_string()))
             .send()
             .await?
             .text()
@@ -140,7 +141,7 @@ impl HttpClient for HttpClientImpl {
             .put(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
-            //.body(body.unwrap_or(""))
+            .body(Body::from(body.unwrap_or("").to_string()))
             .send()
             .await?
             .text()
