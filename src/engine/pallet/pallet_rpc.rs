@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use std::sync::Arc;
 
 #[async_trait]
-trait PalletRpc {
+pub trait PalletRpc {
     fn handle_error(json: Value) -> Result<Option<String>, Box<dyn std::error::Error>> {
         if let Some(error) = json.get("error") {
             let message = error["message"].as_str().unwrap_or_default();

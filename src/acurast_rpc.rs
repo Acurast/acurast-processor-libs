@@ -7,14 +7,16 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::{xxh3_64, xxh3_64_with_seed};
 use crate::storage::acurast_storage::AcurastStorage;
-use crate::codec::processor_version::ProcessorVersion;
+
 use std::io::{Cursor, Read, Write};
 
 use crate::engine::engine::RpcEngine;
 use crate::engine::pallet::author::Author;
 use crate::engine::pallet::chain::Chain;
-use crate::engine::pallet::state::State;
+use crate::engine::pallet::state::{RuntimeVersion, State};
 use crate::types::header::Header;
+use crate::codec::processor_version::ProcessorVersion;
+use crate::codec::processor_update_info::ProcessorUpdateInfo;
 
 #[async_trait]
 pub trait AcurastRpc {
