@@ -1,26 +1,42 @@
-use crate::engine::http::http_client::HttpClient;
+use crate::engine::http::http_client::{HttpClient, HttpHeader};
 use crate::engine::engine::RpcEngine;
 use serde_json::{json, Value};
 use std::time::Duration;
+use async_trait::async_trait;
+use std::sync::Arc;
 pub struct HttpEngine {
     pub id: String,
-    pub client: Box<dyn HttpClient + Send + Sync>,
+    pub client: Arc<dyn HttpClient + Send + Sync>,
 }
 
 impl HttpEngine {
-    pub fn new(id: String, client: Box<dyn HttpClient + Send + Sync>) -> Self {
+    pub fn new(id: String, client: Arc<dyn HttpClient + Send + Sync>) -> Self {
         HttpEngine { id, client }
     }
 }
 
+#[async_trait]
 impl RpcEngine for HttpEngine {
     fn id(&self) ->  &str {
         todo!()
     }
+    
+    async fn request(
+        &self,
+        body: Option<serde_json::Value>,
+        timeout: Option<u64>,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let body_str = body.unwrap().to_string();   
+        let content_type_header: HttpHeader = ("Content-Type".to_string(), Some("application/json".to_string()));
+        let host_header: HttpHeader = ("Host".to_string(), Some("rust".to_string()));
+        let headers = vec![content_type_header, host_header,];
 
-    #[must_use]
-#[allow(clippy::type_complexity,clippy::type_repetition_in_bounds)]
-fn request<'life0,'async_trait>(&'life0 self,body:Value,timeout:Option<Duration>) ->  ::core::pin::Pin<Box<dyn ::core::future::Future<Output = Value> + ::core::marker::Send+'async_trait> >where 'life0:'async_trait,Self:'async_trait {
-        todo!()
+        let response = self
+            .client
+            .post("https://rpc.collator-1.acurast.papers.tech", Some(&body_str), Some(&headers), None, timeout, None)
+            .await?;
+        let response_body = response;
+        let json_response: serde_json::Value = serde_json::from_str(&response_body)?;
+        Ok(json_response)
     }
 }

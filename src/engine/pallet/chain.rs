@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use serde_json::{json, Value};
 use num_bigint::BigUint;
-use crate::engine::engine::RpcEngine;
+use crate::engine::engine::{rpc_engine_request, RpcEngine};
 use crate::types::header::Header;
 
 pub struct Chain;
@@ -21,8 +21,8 @@ impl Chain {
         engine: &Arc<dyn RpcEngine>,
     ) -> Result<Option<String>, Box<dyn std::error::Error>> {
         let params = json!([block_number]);
-        let response = engine.request("chain_getBlockHash", Some(params), timeout).await?;
-
+        let response = rpc_engine_request(engine, "chain_getBlockHash", params, timeout).await?;
+        println!("get_block_hash: {}", response.to_string());
         if let Some(result) = response.get("result") {
             if let Some(result_str) = result.as_str() {
                 return Ok(Some(result_str.to_string()));
@@ -38,7 +38,7 @@ impl Chain {
         engine: &Arc<dyn RpcEngine>,
     ) -> Result<Header, Box<dyn std::error::Error>> {
         let params = json!([block_hash.map(|b| hex::encode(b))]);
-        let response = engine.request("chain_getHeader", Some(params), timeout).await?;
+        let response = rpc_engine_request(engine, "chain_getHeader", params, timeout).await?;
 
         let result = response.get("result").and_then(|r| r.as_object()).ok_or("Invalid response")?;
         let parent_hash = result.get("parentHash").and_then(|h| h.as_str()).ok_or("Missing parentHash")?.to_string();

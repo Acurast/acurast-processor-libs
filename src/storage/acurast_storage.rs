@@ -1,1 +1,1 @@
-pub trait AcurastStorage {}
+pub trait AcurastStorage: Send + Sync {}

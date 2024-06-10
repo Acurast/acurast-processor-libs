@@ -1,6 +1,7 @@
 use std::io::Cursor;
 use byteorder::{BigEndian, ReadBytesExt};
 use crate::codec::platform::Platform;
+use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct ProcessorVersion {
@@ -16,5 +17,11 @@ impl ProcessorVersion {
             platform,
             build_number,
         }
+    }
+
+    pub fn to_u8a(&self) -> Vec<u8> {
+        let mut result = self.platform.to_u8a();
+        result.extend_from_slice(&self.build_number.to_le_bytes());
+        result
     }
 }
