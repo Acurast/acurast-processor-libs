@@ -1,6 +1,7 @@
 use crate::engine::engine::{rpc_engine_request, RpcEngine};
 use std::sync::Arc;
 use serde_json::{json, Value};
+use crate::hex::ToHex;
 
 pub struct RuntimeVersion {
     spec_version: i32,
@@ -26,9 +27,7 @@ impl RuntimeVersion {
 }
 
 
-pub struct State {
-
-}
+pub struct State;
 
 impl State {
     pub fn new() -> Self {
@@ -70,5 +69,34 @@ impl State {
         let response = rpc_engine_request(engine, "state_getStorage", params, timeout).await?;
         let result = response.get("result").and_then(Value::as_str);
         Ok(result.map(String::from))
+    }
+
+    pub async fn call_state(
+        method: String,
+        data: Option<Vec<u8>>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+        engine: Arc<dyn RpcEngine>,
+    ) -> Result<String, String> {
+        let mut params = json!([method]);
+        if let Some(data) = data {
+            params.as_array_mut().unwrap().push(json!(data.to_hex()));
+        }
+        if let Some(block_hash) = block_hash {
+            params.as_array_mut().unwrap().push(json!(block_hash.to_hex()));
+        }
+        match rpc_engine_request(&engine, "state_call", params, timeout).await {
+            Ok(response) => {
+                if let Some(result) = response.get("result").and_then(Value::as_str) {
+                    Ok(result.to_string())
+                } else {
+                    Err("Result is not a string".to_string())
+                }
+            }
+            Err(err) => {
+                let err_msg = format!("Error: {}", err);
+                Err(err_msg)
+            }
+        }
     }
 }

@@ -1,0 +1,24 @@
+namespace acurastsdk {
+  
+};
+[Custom]
+typedef string BigUint;
+
+dictionary Header {
+  string parent_hash;
+  string state_root;
+  string extrinsics_root;
+  BigUint number;
+};
+
+[Trait]
+interface AcurastRpc {
+  [Async]
+  string? get_block_hash(i64? block_number, u64? timeout);
+  [Async]
+  Header? get_header(bytes? block_hash, u64? timeout);
+  [Async]
+  u32 get_api_version(bytes? block_hash, u64? timeout);
+};
+
+

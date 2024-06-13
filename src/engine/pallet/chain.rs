@@ -22,7 +22,6 @@ impl Chain {
     ) -> Result<Option<String>, Box<dyn std::error::Error>> {
         let params = json!([block_number]);
         let response = rpc_engine_request(engine, "chain_getBlockHash", params, timeout).await?;
-        println!("get_block_hash: {}", response.to_string());
         if let Some(result) = response.get("result") {
             if let Some(result_str) = result.as_str() {
                 return Ok(Some(result_str.to_string()));

@@ -2,15 +2,12 @@ use async_trait::async_trait;
 use blake2::{Blake2b, Digest};
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex::decode;
-use serde_json::to_string;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use xxhash_rust::xxh3::{xxh3_64, xxh3_64_with_seed};
+use crate::hex::hex_to_ba;
 use crate::storage::acurast_storage::AcurastStorage;
-
-use std::io::{Cursor, Read, Write};
-
+use std::io::{Cursor};
 use crate::engine::engine::RpcEngine;
 use crate::engine::pallet::author::Author;
 use crate::engine::pallet::chain::Chain;
@@ -20,7 +17,7 @@ use crate::codec::processor_version::ProcessorVersion;
 use crate::codec::processor_update_info::ProcessorUpdateInfo;
 
 #[async_trait]
-pub trait AcurastRpc {
+pub trait AcurastRpc: Send + Sync {
     async fn get_block_hash(&self, block_number: Option<i64>, timeout: Option<u64>) -> Option<String>;
     async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<Header>;
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32;
@@ -103,7 +100,7 @@ impl AcurastRpc for AcurastRpcImpl {
                     0
                 }
             },
-            Err(_) => todo!(),
+            Err(_) => 0,
         }
     }
 
@@ -112,17 +109,24 @@ impl AcurastRpc for AcurastRpcImpl {
     }
 
     async fn get_update_info(&self, account_id: Vec<u8>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<ProcessorUpdateInfo> {
-        /*let key = [
+        let key = [
             Self::generate_key("AcurastProcessorManager", "ProcessorUpdateInfo"),
             Self::hash_blake2b(&account_id),
             account_id.clone(),
         ].concat();
-        if let Some(storage) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
-            Some(ProcessorUpdateInfo::read(&storage))
-        } else {
-            None
-        }*/
-        None
+
+        match self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+            Ok(storage_option) => {
+                if let Some(storage) = storage_option {
+                    let byte_array = hex_to_ba(&storage).unwrap();
+                    let mut cursor = Cursor::new(&byte_array[..]); 
+                    Some(ProcessorUpdateInfo::read(&mut cursor))
+                } else {
+                    None
+                }
+            },
+            Err(_) => None,
+        }
     }
 
     async fn get_known_binary_hash(&self, version: ProcessorVersion, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<Vec<u8>> {
@@ -145,21 +149,17 @@ impl AcurastRpc for AcurastRpcImpl {
     }
 
     async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Option<String> {
-        //self.author.submit_extrinsic(extrinsic, timeout, &self.engine).await
-        Some("".to_string())
+        self.author.submit_extrinsic(extrinsic, timeout, &self.engine).await.ok()
     }
 
     async fn call(&self, method: String, data: Option<Vec<u8>>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<String> {
-        //self.state.call(method, data, block_hash, timeout, &self.engine).await
-        Some("".to_string())
+        self.call(method, data, block_hash, timeout).await
     }
 
     fn storage(&self, version: u32) -> Arc<dyn AcurastStorage> {
         self.storages.get(&version).cloned().expect("Unsupported API version")
-    }
-    
+    }   
 }
-
 
 fn xxh128(data: &[u8], seed: u64) -> u128 {
     let mut buf = Cursor::new(data);

@@ -8,10 +8,22 @@ async-trait = "0.1.51"
 serde_json = "1.0"
 rand = "0.8"
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.11", features = ["blocking"] }
+reqwest = { version = "0.12.4", features = ["blocking"] }
 xxhash-rust = {version = "0.8", features = ["xxh3"]}
 byteorder = "1.4"
 blake2 = "0.9"
 hex = "0.4"
 num-bigint = "0.4"
 lazy_static = "1.4.0"
+uniffi = { version = "0.28.0", features = ["cli"] }
+
+[build-dependencies]
+uniffi = { version = "0.28.0", features = ["build"] }
+
+[lib]
+crate-type = ["staticlib"]
+name = "acurastsdk"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"

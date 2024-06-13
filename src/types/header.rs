@@ -1,10 +1,10 @@
 use num_bigint::BigUint;
 
 pub struct Header {
-    parent_hash: String,
-    number: BigUint,
-    state_root: String,
-    extrinsics_root: String,
+    pub parent_hash: String,
+    pub number: BigUint,
+    pub state_root: String,
+    pub extrinsics_root: String,
 }
 
 impl Header {
