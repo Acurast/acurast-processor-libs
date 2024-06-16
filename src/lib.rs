@@ -11,6 +11,10 @@ use std::str::FromStr;
 
 pub use acurast_rpc::*;
 pub use crate::types::header::Header;
+pub use crate::engine::pallet::state::RuntimeVersion;
+pub use crate::codec::processor_update_info::ProcessorUpdateInfo;
+pub use crate::codec::processor_version::ProcessorVersion;
+pub use crate::codec::platform::Platform;
 use num_bigint::BigUint;
 
 

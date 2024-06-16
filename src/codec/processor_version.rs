@@ -5,8 +5,8 @@ use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct ProcessorVersion {
-    platform: Platform,
-    build_number: u32,
+    pub platform: Platform,
+    pub build_number: u32,
 }
 
 impl ProcessorVersion {

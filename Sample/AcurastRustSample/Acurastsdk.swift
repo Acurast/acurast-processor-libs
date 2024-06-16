@@ -379,6 +379,32 @@ private class UniffiHandleMap<T> {
 
 // Public interface members begin here.
 
+private struct FfiConverterUInt32: FfiConverterPrimitive {
+    typealias FfiType = UInt32
+    typealias SwiftType = UInt32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+private struct FfiConverterInt32: FfiConverterPrimitive {
+    typealias FfiType = Int32
+    typealias SwiftType = Int32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Int32, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
 private struct FfiConverterUInt64: FfiConverterPrimitive {
     typealias FfiType = UInt64
     typealias SwiftType = UInt64
@@ -459,9 +485,21 @@ private struct FfiConverterData: FfiConverterRustBuffer {
 }
 
 public protocol AcurastRpcProtocol: AnyObject {
+    func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async -> String?
+
+    func getApiVersion(blockHash: Data?, timeout: UInt64?) async -> UInt32
+
     func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async -> String?
 
     func getHeader(blockHash: Data?, timeout: UInt64?) async -> Header?
+
+    func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeout: UInt64?) async -> Data?
+
+    func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async -> RuntimeVersion
+
+    func getUpdateInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async -> ProcessorUpdateInfo?
+
+    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async -> String?
 }
 
 open class AcurastRpc:
@@ -504,6 +542,40 @@ open class AcurastRpc:
         try! rustCall { uniffi_acurastsdk_fn_free_acurastrpc(pointer, $0) }
     }
 
+    open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async -> String? {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpc_call(
+                        self.uniffiClonePointer(),
+                        FfiConverterString.lower(method), FfiConverterOptionData.lower(data), FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                liftFunc: FfiConverterOptionString.lift,
+                errorHandler: nil
+            )
+    }
+
+    open func getApiVersion(blockHash: Data?, timeout: UInt64?) async -> UInt32 {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpc_get_api_version(
+                        self.uniffiClonePointer(),
+                        FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_u32,
+                completeFunc: ffi_acurastsdk_rust_future_complete_u32,
+                freeFunc: ffi_acurastsdk_rust_future_free_u32,
+                liftFunc: FfiConverterUInt32.lift,
+                errorHandler: nil
+            )
+    }
+
     open func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async -> String? {
         return
             try! await uniffiRustCallAsync(
@@ -534,6 +606,74 @@ open class AcurastRpc:
                 completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
                 freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
                 liftFunc: FfiConverterOptionTypeHeader.lift,
+                errorHandler: nil
+            )
+    }
+
+    open func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeout: UInt64?) async -> Data? {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpc_get_known_binary_hash(
+                        self.uniffiClonePointer(),
+                        FfiConverterTypeProcessorVersion.lower(version), FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                liftFunc: FfiConverterOptionData.lift,
+                errorHandler: nil
+            )
+    }
+
+    open func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async -> RuntimeVersion {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpc_get_runtime_version(
+                        self.uniffiClonePointer(),
+                        FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                liftFunc: FfiConverterTypeRuntimeVersion.lift,
+                errorHandler: nil
+            )
+    }
+
+    open func getUpdateInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async -> ProcessorUpdateInfo? {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpc_get_update_info(
+                        self.uniffiClonePointer(),
+                        FfiConverterData.lower(accountId), FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                liftFunc: FfiConverterOptionTypeProcessorUpdateInfo.lift,
+                errorHandler: nil
+            )
+    }
+
+    open func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async -> String? {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpc_submit_extrinsic(
+                        self.uniffiClonePointer(),
+                        FfiConverterData.lower(extrinsic), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                liftFunc: FfiConverterOptionString.lift,
                 errorHandler: nil
             )
     }
@@ -645,6 +785,205 @@ public func FfiConverterTypeHeader_lower(_ value: Header) -> RustBuffer {
     return FfiConverterTypeHeader.lower(value)
 }
 
+public struct ProcessorUpdateInfo {
+    public var binaryLocation: Data
+    public var version: ProcessorVersion
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(binaryLocation: Data, version: ProcessorVersion) {
+        self.binaryLocation = binaryLocation
+        self.version = version
+    }
+}
+
+extension ProcessorUpdateInfo: Equatable, Hashable {
+    public static func == (lhs: ProcessorUpdateInfo, rhs: ProcessorUpdateInfo) -> Bool {
+        if lhs.binaryLocation != rhs.binaryLocation {
+            return false
+        }
+        if lhs.version != rhs.version {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(binaryLocation)
+        hasher.combine(version)
+    }
+}
+
+public struct FfiConverterTypeProcessorUpdateInfo: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorUpdateInfo {
+        return
+            try ProcessorUpdateInfo(
+                binaryLocation: FfiConverterData.read(from: &buf),
+                version: FfiConverterTypeProcessorVersion.read(from: &buf)
+            )
+    }
+
+    public static func write(_ value: ProcessorUpdateInfo, into buf: inout [UInt8]) {
+        FfiConverterData.write(value.binaryLocation, into: &buf)
+        FfiConverterTypeProcessorVersion.write(value.version, into: &buf)
+    }
+}
+
+public func FfiConverterTypeProcessorUpdateInfo_lift(_ buf: RustBuffer) throws -> ProcessorUpdateInfo {
+    return try FfiConverterTypeProcessorUpdateInfo.lift(buf)
+}
+
+public func FfiConverterTypeProcessorUpdateInfo_lower(_ value: ProcessorUpdateInfo) -> RustBuffer {
+    return FfiConverterTypeProcessorUpdateInfo.lower(value)
+}
+
+public struct ProcessorVersion {
+    public var platform: Platform
+    public var buildNumber: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(platform: Platform, buildNumber: UInt32) {
+        self.platform = platform
+        self.buildNumber = buildNumber
+    }
+}
+
+extension ProcessorVersion: Equatable, Hashable {
+    public static func == (lhs: ProcessorVersion, rhs: ProcessorVersion) -> Bool {
+        if lhs.platform != rhs.platform {
+            return false
+        }
+        if lhs.buildNumber != rhs.buildNumber {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(platform)
+        hasher.combine(buildNumber)
+    }
+}
+
+public struct FfiConverterTypeProcessorVersion: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorVersion {
+        return
+            try ProcessorVersion(
+                platform: FfiConverterTypePlatform.read(from: &buf),
+                buildNumber: FfiConverterUInt32.read(from: &buf)
+            )
+    }
+
+    public static func write(_ value: ProcessorVersion, into buf: inout [UInt8]) {
+        FfiConverterTypePlatform.write(value.platform, into: &buf)
+        FfiConverterUInt32.write(value.buildNumber, into: &buf)
+    }
+}
+
+public func FfiConverterTypeProcessorVersion_lift(_ buf: RustBuffer) throws -> ProcessorVersion {
+    return try FfiConverterTypeProcessorVersion.lift(buf)
+}
+
+public func FfiConverterTypeProcessorVersion_lower(_ value: ProcessorVersion) -> RustBuffer {
+    return FfiConverterTypeProcessorVersion.lower(value)
+}
+
+public struct RuntimeVersion {
+    public var specVersion: Int32
+    public var transactionVersion: Int32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(specVersion: Int32, transactionVersion: Int32) {
+        self.specVersion = specVersion
+        self.transactionVersion = transactionVersion
+    }
+}
+
+extension RuntimeVersion: Equatable, Hashable {
+    public static func == (lhs: RuntimeVersion, rhs: RuntimeVersion) -> Bool {
+        if lhs.specVersion != rhs.specVersion {
+            return false
+        }
+        if lhs.transactionVersion != rhs.transactionVersion {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(specVersion)
+        hasher.combine(transactionVersion)
+    }
+}
+
+public struct FfiConverterTypeRuntimeVersion: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeVersion {
+        return
+            try RuntimeVersion(
+                specVersion: FfiConverterInt32.read(from: &buf),
+                transactionVersion: FfiConverterInt32.read(from: &buf)
+            )
+    }
+
+    public static func write(_ value: RuntimeVersion, into buf: inout [UInt8]) {
+        FfiConverterInt32.write(value.specVersion, into: &buf)
+        FfiConverterInt32.write(value.transactionVersion, into: &buf)
+    }
+}
+
+public func FfiConverterTypeRuntimeVersion_lift(_ buf: RustBuffer) throws -> RuntimeVersion {
+    return try FfiConverterTypeRuntimeVersion.lift(buf)
+}
+
+public func FfiConverterTypeRuntimeVersion_lower(_ value: RuntimeVersion) -> RustBuffer {
+    return FfiConverterTypeRuntimeVersion.lower(value)
+}
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum Platform {
+    case android
+    case ios
+}
+
+public struct FfiConverterTypePlatform: FfiConverterRustBuffer {
+    typealias SwiftType = Platform
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Platform {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        case 1: return .android
+
+        case 2: return .ios
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: Platform, into buf: inout [UInt8]) {
+        switch value {
+        case .android:
+            writeInt(&buf, Int32(1))
+
+        case .ios:
+            writeInt(&buf, Int32(2))
+        }
+    }
+}
+
+public func FfiConverterTypePlatform_lift(_ buf: RustBuffer) throws -> Platform {
+    return try FfiConverterTypePlatform.lift(buf)
+}
+
+public func FfiConverterTypePlatform_lower(_ value: Platform) -> RustBuffer {
+    return FfiConverterTypePlatform.lower(value)
+}
+
+extension Platform: Equatable, Hashable {}
+
 private struct FfiConverterOptionUInt64: FfiConverterRustBuffer {
     typealias SwiftType = UInt64?
 
@@ -750,6 +1089,27 @@ private struct FfiConverterOptionTypeHeader: FfiConverterRustBuffer {
     }
 }
 
+private struct FfiConverterOptionTypeProcessorUpdateInfo: FfiConverterRustBuffer {
+    typealias SwiftType = ProcessorUpdateInfo?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeProcessorUpdateInfo.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeProcessorUpdateInfo.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 /**
  * Typealias from the type name used in the UDL file to the builtin type.  This
  * is needed because the UDL type name is used in function/method signatures.
@@ -844,10 +1204,28 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if uniffi_acurastsdk_checksum_method_acurastrpc_call() != 19311 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 7757 {
+        return InitializationResult.apiChecksumMismatch
+    }
     if uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 26737 {
         return InitializationResult.apiChecksumMismatch
     }
     if uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 21150 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 24124 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 11216 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 18097 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 7021 {
         return InitializationResult.apiChecksumMismatch
     }
 

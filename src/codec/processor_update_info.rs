@@ -3,8 +3,8 @@ use crate::codec::processor_version::ProcessorVersion;
 
 #[derive(Debug)]
 pub struct ProcessorUpdateInfo {
-    version: ProcessorVersion,
-    binary_location: Vec<u8>,
+    pub version: ProcessorVersion,
+    pub binary_location: Vec<u8>,
 }
 
 impl ProcessorUpdateInfo {

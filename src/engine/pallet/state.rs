@@ -4,8 +4,8 @@ use serde_json::{json, Value};
 use crate::hex::ToHex;
 
 pub struct RuntimeVersion {
-    spec_version: i32,
-    transaction_version: i32,
+    pub spec_version: i32,
+    pub transaction_version: i32,
 }
 
 impl RuntimeVersion {
