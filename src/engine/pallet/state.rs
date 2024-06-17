@@ -15,15 +15,6 @@ impl RuntimeVersion {
             transaction_version,
         }
     }
-
-    // Getters
-    pub fn spec_version(&self) -> i32 {
-        self.spec_version
-    }
-
-    pub fn transaction_version(&self) -> i32 {
-        self.transaction_version
-    }
 }
 
 

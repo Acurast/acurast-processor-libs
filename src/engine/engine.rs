@@ -21,5 +21,6 @@ pub async fn rpc_engine_request(
         "method": method,
         "params": params,
     });
+    println!("rpc_engine_request: {}", body);
     engine.request(Some(body), timeout).await
 }

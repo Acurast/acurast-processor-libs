@@ -499,6 +499,8 @@ public protocol AcurastRpcProtocol: AnyObject {
 
     func getUpdateInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async -> ProcessorUpdateInfo?
 
+    func storage(version: UInt32) -> AcurastStorage
+
     func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async -> String?
 }
 
@@ -661,6 +663,13 @@ open class AcurastRpc:
             )
     }
 
+    open func storage(version: UInt32) -> AcurastStorage {
+        return try! FfiConverterTypeAcurastStorage.lift(try! rustCall {
+            uniffi_acurastsdk_fn_method_acurastrpc_storage(self.uniffiClonePointer(),
+                                                           FfiConverterUInt32.lower(version), $0)
+        })
+    }
+
     open func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async -> String? {
         return
             try! await uniffiRustCallAsync(
@@ -715,6 +724,87 @@ public func FfiConverterTypeAcurastRpc_lift(_ pointer: UnsafeMutableRawPointer) 
 
 public func FfiConverterTypeAcurastRpc_lower(_ value: AcurastRpc) -> UnsafeMutableRawPointer {
     return FfiConverterTypeAcurastRpc.lower(value)
+}
+
+public protocol AcurastStorageProtocol: AnyObject {}
+
+open class AcurastStorage:
+    AcurastStorageProtocol
+{
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    public required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    /// This constructor can be used to instantiate a fake object.
+    /// - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    ///
+    /// - Warning:
+    ///     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+    public init(noPointer _: NoPointer) {
+        pointer = nil
+    }
+
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_acurastsdk_fn_clone_acuraststorage(self.pointer, $0) }
+    }
+
+    // No primary constructor declared for this class.
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_acurastsdk_fn_free_acuraststorage(pointer, $0) }
+    }
+}
+
+public struct FfiConverterTypeAcurastStorage: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = AcurastStorage
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> AcurastStorage {
+        return AcurastStorage(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: AcurastStorage) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AcurastStorage {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if ptr == nil {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: AcurastStorage, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+public func FfiConverterTypeAcurastStorage_lift(_ pointer: UnsafeMutableRawPointer) throws -> AcurastStorage {
+    return try FfiConverterTypeAcurastStorage.lift(pointer)
+}
+
+public func FfiConverterTypeAcurastStorage_lower(_ value: AcurastStorage) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeAcurastStorage.lower(value)
 }
 
 public struct Header {
@@ -1188,6 +1278,13 @@ private func uniffiFutureContinuationCallback(handle: UInt64, pollResult: Int8) 
     }
 }
 
+public func acurastRpc() -> AcurastRpc {
+    return try! FfiConverterTypeAcurastRpc.lift(try! rustCall {
+        uniffi_acurastsdk_fn_func_acurast_rpc($0
+        )
+    })
+}
+
 private enum InitializationResult {
     case ok
     case contractVersionMismatch
@@ -1203,6 +1300,9 @@ private var initializationResult: InitializationResult = {
     let scaffolding_contract_version = ffi_acurastsdk_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
+    }
+    if uniffi_acurastsdk_checksum_func_acurast_rpc() != 11636 {
+        return InitializationResult.apiChecksumMismatch
     }
     if uniffi_acurastsdk_checksum_method_acurastrpc_call() != 19311 {
         return InitializationResult.apiChecksumMismatch
@@ -1223,6 +1323,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 18097 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 1132 {
         return InitializationResult.apiChecksumMismatch
     }
     if uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 7021 {

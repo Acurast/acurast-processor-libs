@@ -44,7 +44,8 @@ pub mod acurastTests{
     #[tokio::test]
     async fn test_get_runtime_version() {
         let res = AC_RPC.get_runtime_version(None, None).await;
-        assert!(res.spec_version() == 40)
+        println!("test_get_runtime_version {}", res.spec_version);
+        assert!(res.spec_version == 13)
     }
 }
 

@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import Acurastsdk
 
 struct ContentView: View {
-    let acurastRpc = AcurastRpc(noPointer: .init())
+    let acurast = acurastRpc()
     
     var body: some View {
         VStack {
@@ -20,7 +21,7 @@ struct ContentView: View {
         }
         .padding()
         .task {
-            await acurastRpc.getHeader(blockHash: nil, timeout: nil)?.parentHash
+            await acurast.getHeader(blockHash: nil, timeout: nil)?.parentHash
         }
     }
 }

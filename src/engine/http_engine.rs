@@ -30,11 +30,11 @@ impl RpcEngine for HttpEngine {
         let content_type_header: HttpHeader = ("Content-Type".to_string(), Some("application/json".to_string()));
         let host_header: HttpHeader = ("Host".to_string(), Some("rust".to_string()));
         let headers = vec![content_type_header, host_header,];
-
         let response = self
             .client
-            .post("https://rpc.collator-1.acurast.papers.tech", Some(&body_str), Some(&headers), None, timeout, None)
+            .post("https://canarynet-ws-1.acurast-h-server-2.papers.tech", Some(&body_str), Some(&headers), None, timeout, None)
             .await?;
+        println!("HttpEngine::response: {}", response);
         let response_body = response;
         let json_response: serde_json::Value = serde_json::from_str(&response_body)?;
         Ok(json_response)

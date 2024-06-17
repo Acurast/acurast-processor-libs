@@ -1,5 +1,5 @@
 namespace acurastsdk {
-  
+  AcurastRpc acurast_rpc();
 };
 [Custom]
 typedef string BigUint;
@@ -31,6 +31,9 @@ dictionary ProcessorUpdateInfo {
 };
 
 [Trait]
+interface AcurastStorage {};
+
+[Trait]
 interface AcurastRpc {
   [Async]
   string? get_block_hash(i64? block_number, u64? timeout);
@@ -48,6 +51,7 @@ interface AcurastRpc {
   string? submit_extrinsic(bytes extrinsic, u64? timeout);
   [Async]
   string? call(string method, bytes? data, bytes? block_hash, u64? timeout);
+  AcurastStorage storage(u32 version);
 };
 
 

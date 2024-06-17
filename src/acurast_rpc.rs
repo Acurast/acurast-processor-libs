@@ -16,7 +16,7 @@ use crate::types::header::Header;
 use crate::codec::processor_version::ProcessorVersion;
 use crate::codec::processor_update_info::ProcessorUpdateInfo;
 
-#[async_trait]
+#[async_trait::async_trait]
 pub trait AcurastRpc: Send + Sync {
     async fn get_block_hash(&self, block_number: Option<i64>, timeout: Option<u64>) -> Option<String>;
     async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<Header>;
