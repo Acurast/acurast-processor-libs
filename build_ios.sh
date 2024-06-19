@@ -4,7 +4,7 @@ set -e # Helps to give error info
 RUST_PROJ=""
 IOS_LIB="Sample/AcurastRustSample"
 
-LOCAL_UDL="src/acurastsdk.udl"
+#LOCAL_UDL="src/acurastsdk.udl"
 UDL_NAME="acurastsdk"
 FRAMEWORK_NAME="Acurastsdk"
 SWIFT_INTERFACE="Acurastsdk"

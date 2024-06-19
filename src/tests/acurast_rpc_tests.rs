@@ -28,7 +28,7 @@ pub mod acurastTests{
         }
     }
     
-    /*#[tokio::test]
+    #[tokio::test]
     async fn test_get_header() {
         let res = AC_RPC.get_header(None, None).await;
         match  res {
@@ -39,7 +39,7 @@ pub mod acurastTests{
                 assert!(false); 
             }
         }
-    }*/
+    }
 
     #[tokio::test]
     async fn test_get_runtime_version() {

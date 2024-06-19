@@ -1,7 +1,7 @@
 use std::io::{Cursor, Read};
 use crate::codec::processor_version::ProcessorVersion;
 
-#[derive(uniffi::Object)] 
+#[derive(uniffi::Record)]
 #[derive(Debug)]
 pub struct ProcessorUpdateInfo {
     pub version: ProcessorVersion,

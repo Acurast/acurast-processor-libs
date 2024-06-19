@@ -23,7 +23,7 @@ pub trait AcurastRpc: Send + Sync {
     async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<Header>;
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32;
     async fn get_runtime_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> RuntimeVersion;
-    //async fn get_update_info(&self, account_id: Vec<u8>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<ProcessorUpdateInfo>;
+    async fn get_update_info(&self, account_id: Vec<u8>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<ProcessorUpdateInfo>;
     //async fn get_known_binary_hash(&self, version: ProcessorVersion, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<Vec<u8>>;
     async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Option<String>;
     async fn call(&self, method: String, data: Option<Vec<u8>>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<String>;
@@ -110,7 +110,7 @@ impl AcurastRpc for AcurastRpcImpl {
         self.state.get_runtime_version(block_hash, timeout, &self.engine).await.unwrap()
     }
 
-    /*async fn get_update_info(&self, account_id: Vec<u8>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<ProcessorUpdateInfo> {
+    async fn get_update_info(&self, account_id: Vec<u8>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<ProcessorUpdateInfo> {
         let key = [
             Self::generate_key("AcurastProcessorManager", "ProcessorUpdateInfo"),
             Self::hash_blake2b(&account_id),
@@ -129,7 +129,7 @@ impl AcurastRpc for AcurastRpcImpl {
             },
             Err(_) => None,
         }
-    }*/
+    }
 
     /*async fn get_known_binary_hash(&self, version: ProcessorVersion, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<Vec<u8>> {
         let version_bytes = version.to_u8a();

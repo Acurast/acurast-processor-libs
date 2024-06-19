@@ -2,14 +2,13 @@ use std::io::Cursor;
 use byteorder::{BigEndian, ReadBytesExt};
 use crate::codec::platform::Platform;
 
-#[derive(uniffi::Object)] 
+#[derive(uniffi::Record)]
 #[derive(Debug)]
 pub struct ProcessorVersion {
     pub platform: Platform,
     pub build_number: u32,
 }
 
-#[uniffi::export]
 impl ProcessorVersion {
     pub fn to_u8a(&self) -> Vec<u8> {
         let mut result = self.platform.to_u8a();

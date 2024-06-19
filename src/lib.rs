@@ -7,7 +7,6 @@ pub mod tests;
 pub mod hex;
 
 use async_trait::async_trait;
-//uniffi::include_scaffolding!("acurastsdk");
 uniffi::setup_scaffolding!();
 use std::str::FromStr;
 use std::sync::Arc;
