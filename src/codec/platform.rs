@@ -2,6 +2,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Cursor;
 
 #[derive(Debug, PartialEq)]
+#[derive(uniffi::Enum)]
 pub enum Platform {
     Android, Ios
 }

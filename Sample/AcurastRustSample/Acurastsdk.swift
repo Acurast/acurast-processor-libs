@@ -392,19 +392,6 @@ private struct FfiConverterUInt32: FfiConverterPrimitive {
     }
 }
 
-private struct FfiConverterInt32: FfiConverterPrimitive {
-    typealias FfiType = Int32
-    typealias SwiftType = Int32
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int32 {
-        return try lift(readInt(&buf))
-    }
-
-    public static func write(_ value: Int32, into buf: inout [UInt8]) {
-        writeInt(&buf, lower(value))
-    }
-}
-
 private struct FfiConverterUInt64: FfiConverterPrimitive {
     typealias FfiType = UInt64
     typealias SwiftType = UInt64
@@ -485,23 +472,19 @@ private struct FfiConverterData: FfiConverterRustBuffer {
 }
 
 public protocol AcurastRpcProtocol: AnyObject {
-    func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async -> String?
-
-    func getApiVersion(blockHash: Data?, timeout: UInt64?) async -> UInt32
-
     func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async -> String?
 
     func getHeader(blockHash: Data?, timeout: UInt64?) async -> Header?
 
-    func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeout: UInt64?) async -> Data?
+    func getApiVersion(blockHash: Data?, timeout: UInt64?) async -> UInt32
 
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async -> RuntimeVersion
 
-    func getUpdateInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async -> ProcessorUpdateInfo?
+    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async -> String?
+
+    func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async -> String?
 
     func storage(version: UInt32) -> AcurastStorage
-
-    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async -> String?
 }
 
 open class AcurastRpc:
@@ -544,40 +527,6 @@ open class AcurastRpc:
         try! rustCall { uniffi_acurastsdk_fn_free_acurastrpc(pointer, $0) }
     }
 
-    open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async -> String? {
-        return
-            try! await uniffiRustCallAsync(
-                rustFutureFunc: {
-                    uniffi_acurastsdk_fn_method_acurastrpc_call(
-                        self.uniffiClonePointer(),
-                        FfiConverterString.lower(method), FfiConverterOptionData.lower(data), FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
-                    )
-                },
-                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
-                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
-                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-                liftFunc: FfiConverterOptionString.lift,
-                errorHandler: nil
-            )
-    }
-
-    open func getApiVersion(blockHash: Data?, timeout: UInt64?) async -> UInt32 {
-        return
-            try! await uniffiRustCallAsync(
-                rustFutureFunc: {
-                    uniffi_acurastsdk_fn_method_acurastrpc_get_api_version(
-                        self.uniffiClonePointer(),
-                        FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
-                    )
-                },
-                pollFunc: ffi_acurastsdk_rust_future_poll_u32,
-                completeFunc: ffi_acurastsdk_rust_future_complete_u32,
-                freeFunc: ffi_acurastsdk_rust_future_free_u32,
-                liftFunc: FfiConverterUInt32.lift,
-                errorHandler: nil
-            )
-    }
-
     open func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async -> String? {
         return
             try! await uniffiRustCallAsync(
@@ -612,19 +561,19 @@ open class AcurastRpc:
             )
     }
 
-    open func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeout: UInt64?) async -> Data? {
+    open func getApiVersion(blockHash: Data?, timeout: UInt64?) async -> UInt32 {
         return
             try! await uniffiRustCallAsync(
                 rustFutureFunc: {
-                    uniffi_acurastsdk_fn_method_acurastrpc_get_known_binary_hash(
+                    uniffi_acurastsdk_fn_method_acurastrpc_get_api_version(
                         self.uniffiClonePointer(),
-                        FfiConverterTypeProcessorVersion.lower(version), FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                        FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
                     )
                 },
-                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
-                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
-                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-                liftFunc: FfiConverterOptionData.lift,
+                pollFunc: ffi_acurastsdk_rust_future_poll_u32,
+                completeFunc: ffi_acurastsdk_rust_future_complete_u32,
+                freeFunc: ffi_acurastsdk_rust_future_free_u32,
+                liftFunc: FfiConverterUInt32.lift,
                 errorHandler: nil
             )
     }
@@ -638,36 +587,12 @@ open class AcurastRpc:
                         FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
                     )
                 },
-                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
-                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
-                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                pollFunc: ffi_acurastsdk_rust_future_poll_pointer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_pointer,
+                freeFunc: ffi_acurastsdk_rust_future_free_pointer,
                 liftFunc: FfiConverterTypeRuntimeVersion.lift,
                 errorHandler: nil
             )
-    }
-
-    open func getUpdateInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async -> ProcessorUpdateInfo? {
-        return
-            try! await uniffiRustCallAsync(
-                rustFutureFunc: {
-                    uniffi_acurastsdk_fn_method_acurastrpc_get_update_info(
-                        self.uniffiClonePointer(),
-                        FfiConverterData.lower(accountId), FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
-                    )
-                },
-                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
-                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
-                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-                liftFunc: FfiConverterOptionTypeProcessorUpdateInfo.lift,
-                errorHandler: nil
-            )
-    }
-
-    open func storage(version: UInt32) -> AcurastStorage {
-        return try! FfiConverterTypeAcurastStorage.lift(try! rustCall {
-            uniffi_acurastsdk_fn_method_acurastrpc_storage(self.uniffiClonePointer(),
-                                                           FfiConverterUInt32.lower(version), $0)
-        })
     }
 
     open func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async -> String? {
@@ -685,6 +610,30 @@ open class AcurastRpc:
                 liftFunc: FfiConverterOptionString.lift,
                 errorHandler: nil
             )
+    }
+
+    open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async -> String? {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpc_call(
+                        self.uniffiClonePointer(),
+                        FfiConverterString.lower(method), FfiConverterOptionData.lower(data), FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                liftFunc: FfiConverterOptionString.lift,
+                errorHandler: nil
+            )
+    }
+
+    open func storage(version: UInt32) -> AcurastStorage {
+        return try! FfiConverterTypeAcurastStorage.lift(try! rustCall {
+            uniffi_acurastsdk_fn_method_acurastrpc_storage(self.uniffiClonePointer(),
+                                                           FfiConverterUInt32.lower(version), $0)
+        })
     }
 }
 
@@ -724,6 +673,114 @@ public func FfiConverterTypeAcurastRpc_lift(_ pointer: UnsafeMutableRawPointer) 
 
 public func FfiConverterTypeAcurastRpc_lower(_ value: AcurastRpc) -> UnsafeMutableRawPointer {
     return FfiConverterTypeAcurastRpc.lower(value)
+}
+
+public protocol AcurastRpcClientProtocol: AnyObject {
+    func getHeader(blockHash: Data?, timeout: UInt64?) async -> Header?
+}
+
+open class AcurastRpcClient:
+    AcurastRpcClientProtocol
+{
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    public required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    /// This constructor can be used to instantiate a fake object.
+    /// - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    ///
+    /// - Warning:
+    ///     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+    public init(noPointer _: NoPointer) {
+        pointer = nil
+    }
+
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_acurastsdk_fn_clone_acurastrpcclient(self.pointer, $0) }
+    }
+
+    public convenience init(acurastRpc: AcurastRpc) {
+        let pointer =
+            try! rustCall {
+                uniffi_acurastsdk_fn_constructor_acurastrpcclient_new(
+                    FfiConverterTypeAcurastRpc.lower(acurastRpc), $0
+                )
+            }
+        self.init(unsafeFromRawPointer: pointer)
+    }
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_acurastsdk_fn_free_acurastrpcclient(pointer, $0) }
+    }
+
+    open func getHeader(blockHash: Data?, timeout: UInt64?) async -> Header? {
+        return
+            try! await uniffiRustCallAsync(
+                rustFutureFunc: {
+                    uniffi_acurastsdk_fn_method_acurastrpcclient_get_header(
+                        self.uniffiClonePointer(),
+                        FfiConverterOptionData.lower(blockHash), FfiConverterOptionUInt64.lower(timeout)
+                    )
+                },
+                pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+                completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+                freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+                liftFunc: FfiConverterOptionTypeHeader.lift,
+                errorHandler: nil
+            )
+    }
+}
+
+public struct FfiConverterTypeAcurastRpcClient: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = AcurastRpcClient
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> AcurastRpcClient {
+        return AcurastRpcClient(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: AcurastRpcClient) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AcurastRpcClient {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if ptr == nil {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: AcurastRpcClient, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+public func FfiConverterTypeAcurastRpcClient_lift(_ pointer: UnsafeMutableRawPointer) throws -> AcurastRpcClient {
+    return try FfiConverterTypeAcurastRpcClient.lift(pointer)
+}
+
+public func FfiConverterTypeAcurastRpcClient_lower(_ value: AcurastRpcClient) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeAcurastRpcClient.lower(value)
 }
 
 public protocol AcurastStorageProtocol: AnyObject {}
@@ -807,19 +864,270 @@ public func FfiConverterTypeAcurastStorage_lower(_ value: AcurastStorage) -> Uns
     return FfiConverterTypeAcurastStorage.lower(value)
 }
 
+public protocol ProcessorUpdateInfoProtocol: AnyObject {}
+
+open class ProcessorUpdateInfo:
+    ProcessorUpdateInfoProtocol
+{
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    public required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    /// This constructor can be used to instantiate a fake object.
+    /// - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    ///
+    /// - Warning:
+    ///     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+    public init(noPointer _: NoPointer) {
+        pointer = nil
+    }
+
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_acurastsdk_fn_clone_processorupdateinfo(self.pointer, $0) }
+    }
+
+    // No primary constructor declared for this class.
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_acurastsdk_fn_free_processorupdateinfo(pointer, $0) }
+    }
+}
+
+public struct FfiConverterTypeProcessorUpdateInfo: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = ProcessorUpdateInfo
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> ProcessorUpdateInfo {
+        return ProcessorUpdateInfo(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: ProcessorUpdateInfo) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorUpdateInfo {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if ptr == nil {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: ProcessorUpdateInfo, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+public func FfiConverterTypeProcessorUpdateInfo_lift(_ pointer: UnsafeMutableRawPointer) throws -> ProcessorUpdateInfo {
+    return try FfiConverterTypeProcessorUpdateInfo.lift(pointer)
+}
+
+public func FfiConverterTypeProcessorUpdateInfo_lower(_ value: ProcessorUpdateInfo) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeProcessorUpdateInfo.lower(value)
+}
+
+public protocol ProcessorVersionProtocol: AnyObject {
+    func toU8a() -> Data
+}
+
+open class ProcessorVersion:
+    ProcessorVersionProtocol
+{
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    public required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    /// This constructor can be used to instantiate a fake object.
+    /// - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    ///
+    /// - Warning:
+    ///     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+    public init(noPointer _: NoPointer) {
+        pointer = nil
+    }
+
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_acurastsdk_fn_clone_processorversion(self.pointer, $0) }
+    }
+
+    // No primary constructor declared for this class.
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_acurastsdk_fn_free_processorversion(pointer, $0) }
+    }
+
+    open func toU8a() -> Data {
+        return try! FfiConverterData.lift(try! rustCall {
+            uniffi_acurastsdk_fn_method_processorversion_to_u8a(self.uniffiClonePointer(), $0)
+        })
+    }
+}
+
+public struct FfiConverterTypeProcessorVersion: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = ProcessorVersion
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> ProcessorVersion {
+        return ProcessorVersion(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: ProcessorVersion) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorVersion {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if ptr == nil {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: ProcessorVersion, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+public func FfiConverterTypeProcessorVersion_lift(_ pointer: UnsafeMutableRawPointer) throws -> ProcessorVersion {
+    return try FfiConverterTypeProcessorVersion.lift(pointer)
+}
+
+public func FfiConverterTypeProcessorVersion_lower(_ value: ProcessorVersion) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeProcessorVersion.lower(value)
+}
+
+public protocol RuntimeVersionProtocol: AnyObject {}
+
+open class RuntimeVersion:
+    RuntimeVersionProtocol
+{
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    public required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    /// This constructor can be used to instantiate a fake object.
+    /// - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    ///
+    /// - Warning:
+    ///     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+    public init(noPointer _: NoPointer) {
+        pointer = nil
+    }
+
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_acurastsdk_fn_clone_runtimeversion(self.pointer, $0) }
+    }
+
+    // No primary constructor declared for this class.
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_acurastsdk_fn_free_runtimeversion(pointer, $0) }
+    }
+}
+
+public struct FfiConverterTypeRuntimeVersion: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = RuntimeVersion
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> RuntimeVersion {
+        return RuntimeVersion(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: RuntimeVersion) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeVersion {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if ptr == nil {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: RuntimeVersion, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+public func FfiConverterTypeRuntimeVersion_lift(_ pointer: UnsafeMutableRawPointer) throws -> RuntimeVersion {
+    return try FfiConverterTypeRuntimeVersion.lift(pointer)
+}
+
+public func FfiConverterTypeRuntimeVersion_lower(_ value: RuntimeVersion) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeRuntimeVersion.lower(value)
+}
+
 public struct Header {
     public var parentHash: String
+    public var number: BigUint
     public var stateRoot: String
     public var extrinsicsRoot: String
-    public var number: BigUint
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(parentHash: String, stateRoot: String, extrinsicsRoot: String, number: BigUint) {
+    public init(parentHash: String, number: BigUint, stateRoot: String, extrinsicsRoot: String) {
         self.parentHash = parentHash
+        self.number = number
         self.stateRoot = stateRoot
         self.extrinsicsRoot = extrinsicsRoot
-        self.number = number
     }
 }
 
@@ -828,13 +1136,13 @@ extension Header: Equatable, Hashable {
         if lhs.parentHash != rhs.parentHash {
             return false
         }
+        if lhs.number != rhs.number {
+            return false
+        }
         if lhs.stateRoot != rhs.stateRoot {
             return false
         }
         if lhs.extrinsicsRoot != rhs.extrinsicsRoot {
-            return false
-        }
-        if lhs.number != rhs.number {
             return false
         }
         return true
@@ -842,9 +1150,9 @@ extension Header: Equatable, Hashable {
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(parentHash)
+        hasher.combine(number)
         hasher.combine(stateRoot)
         hasher.combine(extrinsicsRoot)
-        hasher.combine(number)
     }
 }
 
@@ -853,17 +1161,17 @@ public struct FfiConverterTypeHeader: FfiConverterRustBuffer {
         return
             try Header(
                 parentHash: FfiConverterString.read(from: &buf),
+                number: FfiConverterTypeBigUint.read(from: &buf),
                 stateRoot: FfiConverterString.read(from: &buf),
-                extrinsicsRoot: FfiConverterString.read(from: &buf),
-                number: FfiConverterTypeBigUint.read(from: &buf)
+                extrinsicsRoot: FfiConverterString.read(from: &buf)
             )
     }
 
     public static func write(_ value: Header, into buf: inout [UInt8]) {
         FfiConverterString.write(value.parentHash, into: &buf)
+        FfiConverterTypeBigUint.write(value.number, into: &buf)
         FfiConverterString.write(value.stateRoot, into: &buf)
         FfiConverterString.write(value.extrinsicsRoot, into: &buf)
-        FfiConverterTypeBigUint.write(value.number, into: &buf)
     }
 }
 
@@ -873,162 +1181,6 @@ public func FfiConverterTypeHeader_lift(_ buf: RustBuffer) throws -> Header {
 
 public func FfiConverterTypeHeader_lower(_ value: Header) -> RustBuffer {
     return FfiConverterTypeHeader.lower(value)
-}
-
-public struct ProcessorUpdateInfo {
-    public var binaryLocation: Data
-    public var version: ProcessorVersion
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(binaryLocation: Data, version: ProcessorVersion) {
-        self.binaryLocation = binaryLocation
-        self.version = version
-    }
-}
-
-extension ProcessorUpdateInfo: Equatable, Hashable {
-    public static func == (lhs: ProcessorUpdateInfo, rhs: ProcessorUpdateInfo) -> Bool {
-        if lhs.binaryLocation != rhs.binaryLocation {
-            return false
-        }
-        if lhs.version != rhs.version {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(binaryLocation)
-        hasher.combine(version)
-    }
-}
-
-public struct FfiConverterTypeProcessorUpdateInfo: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorUpdateInfo {
-        return
-            try ProcessorUpdateInfo(
-                binaryLocation: FfiConverterData.read(from: &buf),
-                version: FfiConverterTypeProcessorVersion.read(from: &buf)
-            )
-    }
-
-    public static func write(_ value: ProcessorUpdateInfo, into buf: inout [UInt8]) {
-        FfiConverterData.write(value.binaryLocation, into: &buf)
-        FfiConverterTypeProcessorVersion.write(value.version, into: &buf)
-    }
-}
-
-public func FfiConverterTypeProcessorUpdateInfo_lift(_ buf: RustBuffer) throws -> ProcessorUpdateInfo {
-    return try FfiConverterTypeProcessorUpdateInfo.lift(buf)
-}
-
-public func FfiConverterTypeProcessorUpdateInfo_lower(_ value: ProcessorUpdateInfo) -> RustBuffer {
-    return FfiConverterTypeProcessorUpdateInfo.lower(value)
-}
-
-public struct ProcessorVersion {
-    public var platform: Platform
-    public var buildNumber: UInt32
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(platform: Platform, buildNumber: UInt32) {
-        self.platform = platform
-        self.buildNumber = buildNumber
-    }
-}
-
-extension ProcessorVersion: Equatable, Hashable {
-    public static func == (lhs: ProcessorVersion, rhs: ProcessorVersion) -> Bool {
-        if lhs.platform != rhs.platform {
-            return false
-        }
-        if lhs.buildNumber != rhs.buildNumber {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(platform)
-        hasher.combine(buildNumber)
-    }
-}
-
-public struct FfiConverterTypeProcessorVersion: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorVersion {
-        return
-            try ProcessorVersion(
-                platform: FfiConverterTypePlatform.read(from: &buf),
-                buildNumber: FfiConverterUInt32.read(from: &buf)
-            )
-    }
-
-    public static func write(_ value: ProcessorVersion, into buf: inout [UInt8]) {
-        FfiConverterTypePlatform.write(value.platform, into: &buf)
-        FfiConverterUInt32.write(value.buildNumber, into: &buf)
-    }
-}
-
-public func FfiConverterTypeProcessorVersion_lift(_ buf: RustBuffer) throws -> ProcessorVersion {
-    return try FfiConverterTypeProcessorVersion.lift(buf)
-}
-
-public func FfiConverterTypeProcessorVersion_lower(_ value: ProcessorVersion) -> RustBuffer {
-    return FfiConverterTypeProcessorVersion.lower(value)
-}
-
-public struct RuntimeVersion {
-    public var specVersion: Int32
-    public var transactionVersion: Int32
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(specVersion: Int32, transactionVersion: Int32) {
-        self.specVersion = specVersion
-        self.transactionVersion = transactionVersion
-    }
-}
-
-extension RuntimeVersion: Equatable, Hashable {
-    public static func == (lhs: RuntimeVersion, rhs: RuntimeVersion) -> Bool {
-        if lhs.specVersion != rhs.specVersion {
-            return false
-        }
-        if lhs.transactionVersion != rhs.transactionVersion {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(specVersion)
-        hasher.combine(transactionVersion)
-    }
-}
-
-public struct FfiConverterTypeRuntimeVersion: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeVersion {
-        return
-            try RuntimeVersion(
-                specVersion: FfiConverterInt32.read(from: &buf),
-                transactionVersion: FfiConverterInt32.read(from: &buf)
-            )
-    }
-
-    public static func write(_ value: RuntimeVersion, into buf: inout [UInt8]) {
-        FfiConverterInt32.write(value.specVersion, into: &buf)
-        FfiConverterInt32.write(value.transactionVersion, into: &buf)
-    }
-}
-
-public func FfiConverterTypeRuntimeVersion_lift(_ buf: RustBuffer) throws -> RuntimeVersion {
-    return try FfiConverterTypeRuntimeVersion.lift(buf)
-}
-
-public func FfiConverterTypeRuntimeVersion_lower(_ value: RuntimeVersion) -> RustBuffer {
-    return FfiConverterTypeRuntimeVersion.lower(value)
 }
 
 // Note that we don't yet support `indirect` for enums.
@@ -1179,27 +1331,6 @@ private struct FfiConverterOptionTypeHeader: FfiConverterRustBuffer {
     }
 }
 
-private struct FfiConverterOptionTypeProcessorUpdateInfo: FfiConverterRustBuffer {
-    typealias SwiftType = ProcessorUpdateInfo?
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        guard let value = value else {
-            writeInt(&buf, Int8(0))
-            return
-        }
-        writeInt(&buf, Int8(1))
-        FfiConverterTypeProcessorUpdateInfo.write(value, into: &buf)
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
-        switch try readInt(&buf) as Int8 {
-        case 0: return nil
-        case 1: return try FfiConverterTypeProcessorUpdateInfo.read(from: &buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
-
 /**
  * Typealias from the type name used in the UDL file to the builtin type.  This
  * is needed because the UDL type name is used in function/method signatures.
@@ -1301,34 +1432,37 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if uniffi_acurastsdk_checksum_func_acurast_rpc() != 11636 {
+    if uniffi_acurastsdk_checksum_func_acurast_rpc() != 10420 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_call() != 19311 {
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 12223 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 7757 {
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 34120 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 26737 {
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 17701 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 21150 {
+    if uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 27101 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 24124 {
+    if uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 58399 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 11216 {
+    if uniffi_acurastsdk_checksum_method_acurastrpc_call() != 11842 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 18097 {
+    if uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 12291 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 1132 {
+    if uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 22438 {
         return InitializationResult.apiChecksumMismatch
     }
-    if uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 7021 {
+    if uniffi_acurastsdk_checksum_method_processorversion_to_u8a() != 47217 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570 {
         return InitializationResult.apiChecksumMismatch
     }
 

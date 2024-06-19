@@ -7,8 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4B1D77C12C20BDB20014E626 /* Acurast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1D77C02C20BDB20014E626 /* Acurast.swift */; };
-		4B1D77C32C20E2A60014E626 /* Acurastsdk.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4BE9686A2C19A7630069E7FD /* Acurastsdk.xcframework */; };
+		4BAC64362C222F4F00DAFA9A /* Acurastsdk.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4BE9686A2C19A7630069E7FD /* Acurastsdk.xcframework */; };
 		4BE9685B2C19A7160069E7FD /* AcurastRustSampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE9685A2C19A7160069E7FD /* AcurastRustSampleApp.swift */; };
 		4BE9685D2C19A7160069E7FD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE9685C2C19A7160069E7FD /* ContentView.swift */; };
 		4BE9685F2C19A71A0069E7FD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4BE9685E2C19A71A0069E7FD /* Assets.xcassets */; };
@@ -18,7 +17,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4B1D77C02C20BDB20014E626 /* Acurast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Acurast.swift; sourceTree = "<group>"; };
 		4BE968572C19A7160069E7FD /* AcurastRustSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AcurastRustSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BE9685A2C19A7160069E7FD /* AcurastRustSampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcurastRustSampleApp.swift; sourceTree = "<group>"; };
 		4BE9685C2C19A7160069E7FD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -35,7 +33,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4B1D77C32C20E2A60014E626 /* Acurastsdk.xcframework in Frameworks */,
+				4BAC64362C222F4F00DAFA9A /* Acurastsdk.xcframework in Frameworks */,
 				4BE968752C1A4AFE0069E7FD /* Security.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -69,7 +67,6 @@
 				4BE9685E2C19A71A0069E7FD /* Assets.xcassets */,
 				4BE968602C19A71A0069E7FD /* AcurastRustSample.entitlements */,
 				4BE968612C19A71A0069E7FD /* Preview Content */,
-				4B1D77C02C20BDB20014E626 /* Acurast.swift */,
 			);
 			path = AcurastRustSample;
 			sourceTree = "<group>";
@@ -164,7 +161,6 @@
 				4BE9685D2C19A7160069E7FD /* ContentView.swift in Sources */,
 				4BE9685B2C19A7160069E7FD /* AcurastRustSampleApp.swift in Sources */,
 				4BE9686F2C19BBBD0069E7FD /* Acurastsdk.swift in Sources */,
-				4B1D77C12C20BDB20014E626 /* Acurast.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

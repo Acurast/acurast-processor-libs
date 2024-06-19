@@ -16,7 +16,8 @@ PATH="$PATH:/opt/homebrew/bin" # Adds swiftformat to the path
 cd "$RUST_PROJ"
 
 # Compile the rust
-cargo build --target aarch64-apple-ios
+cargo build
+cargo build --target aarch64-apple-ios 
 cargo build --target aarch64-apple-ios-sim
 cargo build --target x86_64-apple-ios
 
@@ -36,7 +37,7 @@ rm -f include/ios/*
 mkdir -p include/ios
 
 # UniFfi bindgen
-cargo run --bin uniffi-bindgen generate "$LOCAL_UDL" --language swift --out-dir ./include/ios
+cargo run --bin uniffi-bindgen generate --library target/aarch64-apple-ios-sim/debug/libacurastsdk.a --language swift --out-dir ./include/ios
 
 # Make fat lib for sims
 lipo -create \

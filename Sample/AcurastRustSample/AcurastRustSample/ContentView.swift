@@ -21,7 +21,10 @@ struct ContentView: View {
         }
         .padding()
         .task {
-            await acurast.getHeader(blockHash: nil, timeout: nil)?.parentHash
+            let rpc = acurastRpc()
+            let client = AcurastRpcClient(acurastRpc: rpc)
+            let header = await client.getHeader(blockHash: nil, timeout: nil)
+            print(header?.parentHash)
         }
     }
 }

@@ -1,5 +1,7 @@
 use num_bigint::BigUint;
+use std::sync::Arc;
 
+#[derive(uniffi::Record)]
 pub struct Header {
     pub parent_hash: String,
     pub number: BigUint,
@@ -15,22 +17,5 @@ impl Header {
             state_root,
             extrinsics_root,
         }
-    }
-
-    // Getters
-    pub fn parent_hash(&self) -> &str {
-        &self.parent_hash
-    }
-
-    pub fn number(&self) -> &BigUint {
-        &self.number
-    }
-
-    pub fn state_root(&self) -> &str {
-        &self.state_root
-    }
-
-    pub fn extrinsics_root(&self) -> &str {
-        &self.extrinsics_root
     }
 }

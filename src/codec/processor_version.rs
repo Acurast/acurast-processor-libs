@@ -1,12 +1,21 @@
 use std::io::Cursor;
 use byteorder::{BigEndian, ReadBytesExt};
 use crate::codec::platform::Platform;
-use std::convert::TryInto;
 
+#[derive(uniffi::Object)] 
 #[derive(Debug)]
 pub struct ProcessorVersion {
     pub platform: Platform,
     pub build_number: u32,
+}
+
+#[uniffi::export]
+impl ProcessorVersion {
+    pub fn to_u8a(&self) -> Vec<u8> {
+        let mut result = self.platform.to_u8a();
+        result.extend_from_slice(&self.build_number.to_le_bytes());
+        result
+    }
 }
 
 impl ProcessorVersion {
@@ -17,11 +26,5 @@ impl ProcessorVersion {
             platform,
             build_number,
         }
-    }
-
-    pub fn to_u8a(&self) -> Vec<u8> {
-        let mut result = self.platform.to_u8a();
-        result.extend_from_slice(&self.build_number.to_le_bytes());
-        result
     }
 }
