@@ -3,7 +3,7 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 use crate::hex::ToHex;
 
-#[derive(uniffi::Object)] 
+#[derive(uniffi::Record)]
 pub struct RuntimeVersion {
     pub spec_version: i32,
     pub transaction_version: i32,

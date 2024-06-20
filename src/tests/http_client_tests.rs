@@ -2,7 +2,7 @@
 mod HttpClientTests {
     use crate::engine::engine::RpcEngine;
     use crate::engine::http::http_client::HttpClient;
-    use crate::engine::http_engine::HttpEngine;
+    use crate::engine::http_engine::HttpRpcEngine;
     use crate::engine::http::http_client_impl::HttpClientImpl;
 
     use super::*;

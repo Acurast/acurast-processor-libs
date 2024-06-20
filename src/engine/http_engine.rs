@@ -4,19 +4,19 @@ use serde_json::{json, Value};
 use std::time::Duration;
 use async_trait::async_trait;
 use std::sync::Arc;
-pub struct HttpEngine {
-    pub id: String,
+pub struct HttpRpcEngine {
+    pub url: String,
     pub client: Arc<dyn HttpClient + Send + Sync>,
 }
 
-impl HttpEngine {
-    pub fn new(id: String, client: Arc<dyn HttpClient + Send + Sync>) -> Self {
-        HttpEngine { id, client }
+impl HttpRpcEngine {
+    pub fn new(url: String, client: Arc<dyn HttpClient + Send + Sync>) -> Self {
+        HttpRpcEngine { url, client }
     }
 }
 
 #[async_trait]
-impl RpcEngine for HttpEngine {
+impl RpcEngine for HttpRpcEngine {
     fn id(&self) ->  &str {
         todo!()
     }
@@ -32,7 +32,7 @@ impl RpcEngine for HttpEngine {
         let headers = vec![content_type_header, host_header,];
         let response = self
             .client
-            .post("https://canarynet-ws-1.acurast-h-server-2.papers.tech", Some(&body_str), Some(&headers), None, timeout, None)
+            .post(self.url.as_str(), Some(&body_str), Some(&headers), None, timeout, None)
             .await?;
         println!("HttpEngine::response: {}", response);
         let response_body = response;

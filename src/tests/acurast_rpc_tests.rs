@@ -4,14 +4,14 @@
 pub mod acurastTests{
     use crate::engine::engine::RpcEngine;
     use crate::engine::http::http_client::HttpClient;
-    use crate::engine::http_engine::HttpEngine;
+    use crate::engine::http_engine::HttpRpcEngine;
     use crate::engine::http::http_client_impl::HttpClientImpl;
     use crate::acurast_rpc::{AcurastRpc, AcurastRpcImpl};
     use std::sync::Arc;
 
     lazy_static::lazy_static! {
         static ref CLIENT: Arc<dyn HttpClient + Send + Sync> = Arc::new(HttpClientImpl::new());
-        static ref ENGINE: Arc<dyn RpcEngine> = Arc::new(HttpEngine::new("example_id".to_string(), CLIENT.clone()));
+        static ref ENGINE: Arc<dyn RpcEngine> = Arc::new(HttpRpcEngine::new("example_id".to_string(), CLIENT.clone()));
         static ref AC_RPC: AcurastRpcImpl = AcurastRpcImpl::new(ENGINE.clone());
     }
  
