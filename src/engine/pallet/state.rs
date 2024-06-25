@@ -53,7 +53,7 @@ impl State {
         timeout: Option<u64>,
         engine: &Arc<dyn RpcEngine>,
     ) -> Result<Option<String>, Box<dyn std::error::Error>> {
-        let mut params = json!([storage_key]);
+        let mut params = json!([hex::encode(storage_key)]);
     
         if let Some(block_hash) = block_hash {
             params.as_array_mut().unwrap().push(Value::from(block_hash));

@@ -1,12 +1,14 @@
 use async_trait::async_trait;
 use blake2::{Blake2b, Digest};
+use byteorder::ByteOrder;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
-use hex::decode;
+use hex::{decode, FromHex};
 use std::collections::HashMap;
 use std::sync::Arc;
-use xxhash_rust::xxh3::{xxh3_64, xxh3_64_with_seed};
+use xxhash_rust::xxh3::{Xxh3, xxh3_64_with_seed, xxh3_128};
 use crate::hex::hex_to_ba;
-use crate::storage::acurast_storage::AcurastStorage;
+use crate::storage::v0_acurast_storage::V0AcurastStorage;
+use crate::storage::v0_acurast_storage::V0AcurastStorageImpl;
 use std::io::{Cursor};
 use crate::engine::engine::RpcEngine;
 use crate::engine::pallet::author::Author;
@@ -27,7 +29,7 @@ pub trait AcurastRpc: Send + Sync {
     async fn get_known_binary_hash(&self, version: ProcessorVersion, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<Vec<u8>>;
     async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Option<String>;
     async fn call(&self, method: String, data: Option<Vec<u8>>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<String>;
-    fn storage(&self, version: u32) -> Arc<dyn AcurastStorage>;
+    fn storage(&self, version: u32) -> Arc<dyn V0AcurastStorage>;
 }
 
 pub struct AcurastRpcImpl {
@@ -35,7 +37,7 @@ pub struct AcurastRpcImpl {
     state: Arc<State>,
     author: Arc<Author>,
     chain: Arc<Chain>,
-    storages: HashMap<u32, Arc<dyn AcurastStorage>>,
+    storages: HashMap<u32, Arc<dyn V0AcurastStorage>>,
 }
 
 impl AcurastRpcImpl {
@@ -44,8 +46,9 @@ impl AcurastRpcImpl {
         let chain = Arc::new(Chain::new());
         let state = Arc::new(State::new());
 
-        let storages: HashMap<u32, Arc<dyn AcurastStorage>> = vec![
-            //(0, Arc::new(V0AcurastStorage::new(engine.clone(), state.clone())) as Arc<dyn AcurastStorage>),
+        let storages: HashMap<u32, Arc<dyn V0AcurastStorage>> = vec![
+            
+            (0, Arc::new(V0AcurastStorageImpl::new(engine.clone(), state.clone())) as Arc<dyn V0AcurastStorage>),
             //(1, Arc::new(V1AcurastStorage::new(engine.clone(), state.clone())) as Arc<dyn AcurastStorage>),
         ].into_iter().collect();
 
@@ -62,12 +65,6 @@ impl AcurastRpcImpl {
         let prefix_hash = xxh128(prefix.as_bytes(), 0);
         let key_hash = xxh128(key.as_bytes(), 0);
         [prefix_hash.to_le_bytes(), key_hash.to_le_bytes()].concat()
-    }
-
-    fn hash_blake2b(data: &[u8]) -> Vec<u8> {
-        let mut hasher = Blake2b::new();
-        hasher.update(data);
-        hasher.finalize().to_vec()
     }
     
 }
@@ -113,7 +110,7 @@ impl AcurastRpc for AcurastRpcImpl {
     async fn get_update_info(&self, account_id: Vec<u8>, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Option<ProcessorUpdateInfo> {
         let key = [
             Self::generate_key("AcurastProcessorManager", "ProcessorUpdateInfo"),
-            Self::hash_blake2b(&account_id),
+            //Self::hash_blake2b(&account_id),
             account_id.clone(),
         ].concat();
 
@@ -135,7 +132,7 @@ impl AcurastRpc for AcurastRpcImpl {
         let version_bytes = version.to_u8a();
         let key = [
             Self::generate_key("AcurastProcessorManager", "KnownBinaryHash"),
-            Self::hash_blake2b(&version_bytes),
+            //Self::hash_blake2b(&version_bytes),
             version_bytes.clone(),
         ].concat();
         match self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
@@ -158,12 +155,12 @@ impl AcurastRpc for AcurastRpcImpl {
         self.call(method, data, block_hash, timeout).await
     }
 
-    fn storage(&self, version: u32) -> Arc<dyn AcurastStorage> {
+    fn storage(&self, version: u32) -> Arc<dyn V0AcurastStorage> {
         self.storages.get(&version).cloned().expect("Unsupported API version")
     }   
 }
 
-fn xxh128(data: &[u8], seed: u64) -> u128 {
+pub fn xxh128(data: &[u8], seed: u64) -> u128 {
     let mut buf = Cursor::new(data);
     let mut ret = Cursor::new(vec![0u8; 16]);
 

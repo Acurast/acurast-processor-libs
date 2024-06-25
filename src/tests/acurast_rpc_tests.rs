@@ -2,6 +2,8 @@
 
 #[cfg(test)]
 pub mod acurastTests{
+    use hex::ToHex;
+
     use crate::engine::engine::RpcEngine;
     use crate::engine::http::http_client::HttpClient;
     use crate::engine::http_engine::HttpRpcEngine;
@@ -11,7 +13,7 @@ pub mod acurastTests{
 
     lazy_static::lazy_static! {
         static ref CLIENT: Arc<dyn HttpClient + Send + Sync> = Arc::new(HttpClientImpl::new());
-        static ref ENGINE: Arc<dyn RpcEngine> = Arc::new(HttpRpcEngine::new("example_id".to_string(), CLIENT.clone()));
+        static ref ENGINE: Arc<dyn RpcEngine> = Arc::new(HttpRpcEngine::new("https://processor.canary.acurast.com".to_string(), CLIENT.clone()));
         static ref AC_RPC: AcurastRpcImpl = AcurastRpcImpl::new(ENGINE.clone());
     }
  
@@ -45,7 +47,26 @@ pub mod acurastTests{
     async fn test_get_runtime_version() {
         let res = AC_RPC.get_runtime_version(None, None).await;
         println!("test_get_runtime_version {}", res.spec_version);
-        assert!(res.spec_version == 13)
+        assert!(res.spec_version == 14)
+    }
+
+    #[tokio::test]
+    async fn test_get_storage() {
+        let storage = AC_RPC.storage(0);
+        let hex_str = "5a6ccbc98ee1293ea246e639b8b30a0454e3bf6bdb2318b8aec27b26e606db8d";
+        
+        let decoded_bytes = hex::decode(hex_str).expect("Decoding failed");
+        println!("test_get_storage: {:?}",decoded_bytes);
+        let byte_slice: &[u8] = &decoded_bytes;
+        let identifier = storage.get_manager_identifier(byte_slice, None, None).await;
+        match  identifier {
+            Some(r) =>  { 
+                assert!(true); 
+            }
+            None => { 
+                assert!(false); 
+            }
+        }
     }
 }
 

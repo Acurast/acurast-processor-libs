@@ -5,8 +5,11 @@ pub mod codec;
 pub mod types;
 pub mod tests;
 pub mod hex;
+pub mod xxhash;
+pub mod vec_slice;
 
 use async_trait::async_trait;
+use storage::v0_acurast_storage::V0AcurastStorageImpl;
 uniffi::setup_scaffolding!();
 use std::str::FromStr;
 use std::sync::Arc;
@@ -21,6 +24,8 @@ pub use crate::codec::processor_version::ProcessorVersion;
 pub use crate::codec::platform::Platform;
 use crate::engine::http::http_client::HttpClient;
 use crate::engine::http::http_client_impl::HttpClientImpl;
+use crate::storage::v0_acurast_storage::V0AcurastStorage;
+use crate::storage::acurast_storage::AcurastStorage;
 use num_bigint::BigUint;
 
 
@@ -72,6 +77,8 @@ impl AcurastRpcClient {
     pub async fn get_block_hash(&self, block_number: Option<i64>, timeout: Option<u64>) -> Option<String> {
         self.acurastrpc.get_block_hash(block_number, timeout).await
     }
-
-    
+    pub fn storage(&self, version: u32) -> Arc<AcurastStorage> {
+        let storage = self.acurastrpc.storage(version);
+        AcurastStorage::new(storage)
+    }
 }
