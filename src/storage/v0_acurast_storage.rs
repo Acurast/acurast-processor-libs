@@ -7,6 +7,7 @@ use std::io::Cursor;
 use std::sync::Arc;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::hex::{hex_to_ba, read_u128};
+use crate::types::system::{FrameSystemAccountInfo, FrameSystemAccountInfoData};
 use crate::u8a::{biguint_to_u8a, ToU8a};
 use crate::xxhash::{xxh128_signed, xxh128_unsigned};
 use crate::vec_slice::i8_slice_to_u8_slice;
@@ -29,6 +30,13 @@ pub trait V0AcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<PalletUniquesItemDetails>;
+
+    async fn get_account_info(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<FrameSystemAccountInfo>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -75,8 +83,6 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         let manager = &biguint_to_u8a(&BigUint::from(manager_id as u32));
         let collection_id = &biguint_to_u8a(&BigUint::zero());
         let mut key: Vec<u8> = Vec::new();
-        println!("manager {:?}", manager);
-        println!("manager {:?}", hex::encode(&blake2b_128(manager, 16)));
         key.extend_from_slice(&xxh128_unsigned("Uniques".as_bytes()));
         key.extend_from_slice(&xxh128_unsigned("Asset".as_bytes()));
         key.extend_from_slice(&blake2b_128(collection_id, 16));
@@ -88,6 +94,26 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
                 let ba = hex_to_ba(&storage);
                 let mut cursor = Cursor::new(&ba[..]); 
                 return Some(PalletUniquesItemDetails::read(&mut cursor))
+            }
+        }
+        None
+    }
+
+    async fn get_account_info(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<FrameSystemAccountInfo> {
+        let mut key: Vec<u8> = Vec::new();
+        key.extend_from_slice(&xxh128_unsigned("System".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("Account".as_bytes()));
+        key.extend_from_slice(&blake2b_128(account_id, 16));
+        key.extend_from_slice(account_id);
+        if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+            if let Some(storage) = storage_option {
+                let ba = hex_to_ba(&storage);
+                return Some(FrameSystemAccountInfo::read_account_info(ba.as_slice()))
             }
         }
         None
