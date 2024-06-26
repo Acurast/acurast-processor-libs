@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use blake2::Blake2bVar;
 use blake2::digest::{Update, VariableOutput};
 use std::sync::Arc;
-use crate::hex::hex_to_ba;
+use crate::hex::{hex_to_ba, read_u128};
 use crate::xxhash::{xxh128_signed, xxh128_unsigned};
 use crate::vec_slice::i8_slice_to_u8_slice;
 use crate::RpcEngine;
@@ -16,7 +16,7 @@ pub trait V0AcurastStorage: Send + Sync {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<u32>;
+    ) -> Option<i32>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -37,7 +37,7 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<u32> {
+    ) -> Option<i32> {
         let mut key = Vec::new();
         key.extend_from_slice(&xxh128_unsigned("AcurastProcessorManager".as_bytes()));
         key.extend_from_slice(&xxh128_unsigned("ProcessorToManagerIdIndex".as_bytes()));
@@ -51,10 +51,9 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
-                let z = u32::from_be_bytes(ba, 16);
-                if let Ok(result) = z {
-                    return Some(result);
-                }
+                let value_u128 = read_u128(&ba);
+                let value_i32 = value_u128 as i32;
+                return Some(value_i32)
             }
         }
         None

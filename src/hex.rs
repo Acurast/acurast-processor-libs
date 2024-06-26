@@ -1,23 +1,23 @@
+use std::io::Cursor;
+use byteorder::{LittleEndian, ReadBytesExt};
 
-pub fn hex_to_ba(hex_string: &str) -> Option<Vec<u8>> {
-    // Check if the string has the correct format (even number of characters)
-    if hex_string.len() % 2 != 0 {
-        return None; // Invalid format
-    }
+fn pure_hex_to_ba(hex: &str) -> Vec<u8> {
+    (0..hex.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).unwrap())
+        .collect()
+}
 
-    let mut bytes = Vec::new();
+pub fn hex_to_ba(hex: &str) -> Vec<u8> {
+    let hex_str = hex.trim_start_matches("0x");
+    pure_hex_to_ba(hex_str)
+}
 
-    // Iterate over pairs of characters and convert them to bytes
-    for i in 0..hex_string.len() / 2 {
-        let byte_str = &hex_string[i * 2..(i + 1) * 2];
-        if let Ok(byte) = u8::from_str_radix(byte_str, 16) {
-            bytes.push(byte);
-        } else {
-            return None; // Invalid hexadecimal character
-        }
-    }
-
-    Some(bytes)
+pub fn read_u128(bytes: &[u8]) -> u128 {
+    let mut arr = [0u8; 16];
+    arr.copy_from_slice(bytes);
+    let mut cursor = Cursor::new(arr);
+    cursor.read_u128::<LittleEndian>().unwrap()
 }
 
 pub trait ToHex {

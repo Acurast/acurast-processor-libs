@@ -22,7 +22,7 @@ impl AcurastStorage {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<u32> {
+    ) -> Option<i32> {
         self.storage.get_manager_identifier(account_id, block_hash, timeout).await
     }
 }

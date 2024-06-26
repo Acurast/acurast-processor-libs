@@ -117,7 +117,7 @@ impl AcurastRpc for AcurastRpcImpl {
         match self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
             Ok(storage_option) => {
                 if let Some(storage) = storage_option {
-                    let byte_array = hex_to_ba(&storage).unwrap();
+                    let byte_array = hex_to_ba(&storage);
                     let mut cursor = Cursor::new(&byte_array[..]); 
                     Some(ProcessorUpdateInfo::read(&mut cursor))
                 } else {
