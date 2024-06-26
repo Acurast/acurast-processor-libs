@@ -61,7 +61,18 @@ pub mod acurastTests{
         let identifier = storage.get_manager_identifier(byte_slice, None, None).await;
         match  identifier {
             Some(r) =>  { 
+                println!("identifier! {}", r);
                 assert!(true); 
+
+                match storage.get_asset(r, None, None).await {
+                    Some(address) => {
+                        println!("address owner: {:?}", address.owner);
+                        assert!(true); 
+                    }
+                    None => {
+                        assert!(false); 
+                    }
+                }
             }
             None => { 
                 assert!(false); 

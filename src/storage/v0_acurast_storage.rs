@@ -1,8 +1,13 @@
 use async_trait::async_trait;
 use blake2::Blake2bVar;
 use blake2::digest::{Update, VariableOutput};
+use num_bigint::{BigInt, BigUint};
+use num_traits::Zero;
+use std::io::Cursor;
 use std::sync::Arc;
+use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::hex::{hex_to_ba, read_u128};
+use crate::u8a::{biguint_to_u8a, ToU8a};
 use crate::xxhash::{xxh128_signed, xxh128_unsigned};
 use crate::vec_slice::i8_slice_to_u8_slice;
 use crate::RpcEngine;
@@ -17,6 +22,13 @@ pub trait V0AcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<i32>;
+
+    async fn get_asset(
+        &self,
+        manager_id: i32,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<PalletUniquesItemDetails>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -48,6 +60,34 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
                 let value_u128 = read_u128(&ba);
                 let value_i32 = value_u128 as i32;
                 return Some(value_i32)
+            }
+        }
+        None
+    }
+
+    async fn get_asset(
+        &self,
+        manager_id: i32,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<PalletUniquesItemDetails> {
+        
+        let manager = &biguint_to_u8a(&BigUint::from(manager_id as u32));
+        let collection_id = &biguint_to_u8a(&BigUint::zero());
+        let mut key: Vec<u8> = Vec::new();
+        println!("manager {:?}", manager);
+        println!("manager {:?}", hex::encode(&blake2b_128(manager, 16)));
+        key.extend_from_slice(&xxh128_unsigned("Uniques".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("Asset".as_bytes()));
+        key.extend_from_slice(&blake2b_128(collection_id, 16));
+        key.extend_from_slice(collection_id);
+        key.extend_from_slice(&blake2b_128(manager, 16));
+        key.extend_from_slice(manager);
+        if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+            if let Some(storage) = storage_option {
+                let ba = hex_to_ba(&storage);
+                let mut cursor = Cursor::new(&ba[..]); 
+                return Some(PalletUniquesItemDetails::read(&mut cursor))
             }
         }
         None
