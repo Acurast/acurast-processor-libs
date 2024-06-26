@@ -42,12 +42,6 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         key.extend_from_slice(&xxh128_unsigned("AcurastProcessorManager".as_bytes()));
         key.extend_from_slice(&xxh128_unsigned("ProcessorToManagerIdIndex".as_bytes()));
         key.extend_from_slice(&blake2b_128(account_id, 16));
-        //let unsigned = i8_slice_to_u8_slice(key.as_slice());
-        //println!("get_manager_identifier AcurastProcessorManager: {:?}",&blake2b_128(account_id).to_le_bytes());
-        println!("get_manager_identifier AcurastProcessorManager: {:?}",&xxh128_signed("AcurastProcessorManager".as_bytes()));
-        println!("get_manager_identifier ProcessorToManagerIdIndex: {:?}",&xxh128_signed("ProcessorToManagerIdIndex".as_bytes()));
-        //println!("get_manager_identifier key: {:?}",&xxh128_signed("AcurastProcessorManager".as_bytes()));
-        println!("get_manager_identifier key: {:?}",key);
         if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
