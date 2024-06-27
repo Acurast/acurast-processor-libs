@@ -68,6 +68,16 @@ pub mod acurastTests{
                     Some(address) => {
                         println!("address owner: {:?}", address.owner);
                         assert!(true); 
+
+                        match storage.get_account_info(&address.owner.bytes, None, None).await {
+                            Some(account_info) => {
+                                println!("account_info: {:?}", account_info);
+                                assert!(true); 
+                            }
+                            None => {
+                                assert!(false); 
+                            }
+                        }
                     }
                     None => {
                         assert!(false); 

@@ -3,18 +3,18 @@ use std::io::{Cursor, Read};
 #[derive(uniffi::Enum)]
 #[derive(Debug)]
 pub enum AccountIdentifier {
-    AccountID,
-    AccountIndex,
-    Raw,
-    Address32,
-    Address20,
+    AccountID = 0,
+    AccountIndex = 1,
+    Raw = 2,
+    Address32 = 3,
+    Address20 = 4,
 }
 
 #[derive(uniffi::Record)]
 #[derive(Debug)]
 pub struct MultiAddress {
-    account_identifier: AccountIdentifier,
-    bytes: Vec<u8>
+    pub account_identifier: AccountIdentifier,
+    pub bytes: Vec<u8>
 }
 
 impl MultiAddress {
