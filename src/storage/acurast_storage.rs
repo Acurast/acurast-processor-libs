@@ -40,7 +40,7 @@ impl AcurastStorage {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<FrameSystemAccountInfo> {
+    ) -> FrameSystemAccountInfo {
         self.storage.get_account_info(account_id, block_hash, timeout).await
     }
 }

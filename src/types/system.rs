@@ -1,6 +1,7 @@
 use std::io::{Cursor, Read};
 use num_bigint::BigUint;
 use byteorder::{LittleEndian, ReadBytesExt};
+use num_traits::Zero;
 
 #[derive(uniffi::Record)]
 #[derive(Debug)]
@@ -44,6 +45,16 @@ impl FrameSystemAccountInfo {
             sufficients,
             data,
         }
+    }
+
+    pub fn empty() -> Self {
+        let data = FrameSystemAccountInfoData { 
+            free: BigUint::zero(),
+            reserved: BigUint::zero(),
+            misc_frozen: BigUint::zero(),
+            fee_frozen: BigUint::zero(),
+        };
+        FrameSystemAccountInfo { nonce: 0, consumers: 0, providers: 0, sufficients: 0, data: data }
     }
 
     fn read_u128(cursor: &mut Cursor<&[u8]>) -> BigUint {

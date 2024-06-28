@@ -36,7 +36,7 @@ pub trait V0AcurastStorage: Send + Sync {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<FrameSystemAccountInfo>;
+    ) -> FrameSystemAccountInfo;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -104,7 +104,7 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<FrameSystemAccountInfo> {
+    ) -> FrameSystemAccountInfo {
         let mut key: Vec<u8> = Vec::new();
         key.extend_from_slice(&xxh128_unsigned("System".as_bytes()));
         key.extend_from_slice(&xxh128_unsigned("Account".as_bytes()));
@@ -113,10 +113,10 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
-                return Some(FrameSystemAccountInfo::read_account_info(ba.as_slice()))
+                return FrameSystemAccountInfo::read_account_info(ba.as_slice())
             }
         }
-        None
+        FrameSystemAccountInfo::empty()
     }
 }
 
