@@ -5,6 +5,7 @@ use num_bigint::{BigInt, BigUint};
 use num_traits::Zero;
 use std::io::Cursor;
 use std::sync::Arc;
+use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::hex::{hex_to_ba, read_u128};
 use crate::types::system::{FrameSystemAccountInfo, FrameSystemAccountInfoData};
@@ -37,6 +38,12 @@ pub trait V0AcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> FrameSystemAccountInfo;
+
+    async fn get_assigned_jobs(
+        &self, account_id: &[u8], 
+        block_hash: Option<Vec<u8>>, 
+        timeout: Option<u64>
+    ) -> Vec<JobAssignment>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -117,6 +124,38 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
             }
         }
         FrameSystemAccountInfo::empty()
+    }
+
+    async fn get_assigned_jobs(
+        &self, 
+        account_id: &[u8], 
+        block_hash: Option<Vec<u8>>, 
+        timeout: Option<u64>
+    ) -> Vec<JobAssignment> {
+        let mut key: Vec<u8> = Vec::new();
+        key.extend_from_slice(&xxh128_unsigned("AcurastMarketplace".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("StoredMatches".as_bytes()));
+        key.extend_from_slice(&blake2b_128(account_id, 16));
+        key.extend_from_slice(account_id);
+
+        let mut jobs: Vec<JobAssignment> = Vec::new();
+        
+        let keys = self.state.get_keys(&key, block_hash, timeout, &self.engine).await.unwrap_or(Vec::new());
+        if let Ok(storage) = self.state.get_storage_at(keys, None, None, &self.engine).await {
+            println!("get_assigned_jobs {:?}", storage);
+            if !storage.is_empty() {
+                
+                for change in &storage[0].changes {
+                    let job_assignment = JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0).unwrap();
+                    jobs.push(job_assignment);
+                    /*if let Ok(job_assignment) = JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0) {
+                        jobs.push(job_assignment);
+                    }*/
+                }
+            }
+            return jobs
+        }
+        jobs
     }
 }
 

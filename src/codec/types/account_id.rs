@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read};
+use std::{error::Error, io::{Cursor, Read}};
 
 #[derive(uniffi::Enum)]
 #[derive(Debug)]
@@ -29,5 +29,23 @@ impl MultiAddress {
             account_identifier: AccountIdentifier::AccountID,
             bytes: ba,
         }
+    }
+}
+
+#[derive(uniffi::Record)]
+#[derive(Debug)]
+pub struct AccountId32 {
+    bytes: Vec<u8>,
+}
+
+impl AccountId32 {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let mut bytes = vec![0; 32];
+        cursor.read_exact(&mut bytes)?;
+        Ok(AccountId32 { bytes })
+    }
+
+    pub fn to_u8a(&self) -> Vec<u8> {
+        self.bytes.clone()
     }
 }

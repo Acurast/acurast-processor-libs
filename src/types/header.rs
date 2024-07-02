@@ -1,5 +1,4 @@
 use num_bigint::BigUint;
-use std::sync::Arc;
 
 #[derive(uniffi::Record)]
 pub struct Header {

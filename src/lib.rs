@@ -8,6 +8,7 @@ pub mod hex;
 pub mod xxhash;
 pub mod vec_slice;
 pub mod u8a;
+pub mod big_uint_utils;
 
 use async_trait::async_trait;
 use storage::v0_acurast_storage::V0AcurastStorageImpl;
