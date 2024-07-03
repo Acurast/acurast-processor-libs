@@ -30,7 +30,6 @@ impl SLA {
     fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let total =  cursor.read_i64::<LittleEndian>()?;
         let met = cursor.read_i64::<LittleEndian>()?;
-        println!("SLA::read {} {} {} {:?}", total, met, cursor.position(), cursor);
         Ok(SLA { total, met })
     }
 }
@@ -62,19 +61,13 @@ pub struct JobAssignment {
 
 impl JobAssignment {
     pub fn read(l: Vec<&str>, api_version: u32) -> Result<Self, Box<dyn Error>> {
-        // Assuming l[0] and l[1] are hex strings
-        println!("JobAssignment::read {:?}", l);
-        
         let key_bytes = hex_to_ba(l[0]);
         let value_bytes = hex_to_ba(l[1]);
-        println!("JobAssignment::value_bytes {:?}", value_bytes.to_i8());
         let mut key_cursor = Cursor::new(key_bytes);
         let _ = read_bytes(&mut key_cursor, 48);
         let processor = AccountId32::read(&mut key_cursor)?;
-        println!("JobAssignment::processor {:?}", processor.bytes.to_i8());
         let _ = read_bytes(&mut key_cursor, 16);
         let job_id = JobIdentifier::read(&mut key_cursor)?;
-        println!("JobAssignment::job_id {}", job_id);
         let mut value_cursor = Cursor::new(value_bytes);
         
         let slot = value_cursor.read_u8()?;
@@ -83,7 +76,6 @@ impl JobAssignment {
         let acknowledged = value_cursor.read_u8()? != 0;
         let sla = SLA::read(&mut value_cursor)?;
         let public_keys = read_list(&mut value_cursor, PublicKey::read)?;
-        println!("JobAssignment::public_keys {:?}", public_keys);
         let execution_specifier = if api_version > 0 {
             ExecutionSpecifier::read(&mut value_cursor)?
         } else {

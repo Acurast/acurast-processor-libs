@@ -57,7 +57,6 @@ impl MultiOrigin {
         let source = match kind {
             Kind::Acurast => {
                 let address = AccountId32::read(cursor)?;
-                println!("MultiOrigin: {:?} ", address.bytes);
                 address.to_u8a()
             },
             Kind::Tezos => {
