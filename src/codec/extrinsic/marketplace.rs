@@ -1,8 +1,12 @@
 use std::io::{Cursor, Read};
 use byteorder::{ReadBytesExt};
+use num_bigint::{BigInt, BigUint};
 use std::error::Error;
 use std::fmt;
 use hex::FromHex;
+
+use crate::big_uint::BigIntToInt;
+use crate::cursor::read_compact_integer;
 
 #[derive(uniffi::Enum)]
 #[derive(Debug)]
@@ -29,6 +33,7 @@ impl TryFrom<u8> for Tag {
     type Error = ();
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
+        println!("Tag::try_from {}", value);
         match value {
             0 => Ok(Tag::Secp256r1),
             1 => Ok(Tag::Secp256k1),
@@ -49,12 +54,8 @@ pub enum PublicKey {
 impl PublicKey {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let tag = Tag::read(cursor)?;
-
-        let mut length_buffer = [0u8; 1];
-        cursor.read_exact(&mut length_buffer)?;
-        let length = length_buffer[0] as usize;
-
-        let mut value = vec![0; length];
+        let length = read_compact_integer(cursor)?.to_u32();
+        let mut value = vec![0; length as usize];
         cursor.read_exact(&mut value)?;
 
         match tag {
@@ -93,21 +94,4 @@ impl fmt::Display for PublicKey {
             PublicKey::Ed25519(bytes) => write!(f, "Ed25519({:?})", bytes),
         }
     }
-}
-
-
-fn read_list<T, F>(cursor: &mut Cursor<&[u8]>, read_item: F) -> Result<Vec<T>, Box<dyn Error>>
-where
-    F: Fn(&mut Cursor<&[u8]>) -> Result<T, Box<dyn Error>>,
-{
-    let mut length_buffer = [0u8; 1];
-    cursor.read_exact(&mut length_buffer)?;
-    let length = length_buffer[0] as usize;
-
-    let mut items = Vec::with_capacity(length);
-    for _ in 0..length {
-        items.push(read_item(cursor)?);
-    }
-
-    Ok(items)
 }

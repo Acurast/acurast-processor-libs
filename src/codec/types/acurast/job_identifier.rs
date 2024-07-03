@@ -2,7 +2,7 @@ use std::{error::Error, fmt, io::{Cursor, Read}};
 use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
 
-use crate::{big_uint_utils::read_u128, codec::types::account_id::AccountId32};
+use crate::{cursor::read_u128, codec::types::account_id::AccountId32, u8a::ToSigned};
 
 #[derive(uniffi::Enum)]
 #[derive(Debug)]
@@ -31,8 +31,8 @@ impl Kind {
 #[derive(uniffi::Record)]
 #[derive(Debug)]
 struct MultiOrigin {
-    kind: Kind,
-    source: Vec<u8>,
+    pub kind: Kind,
+    pub source: Vec<u8>,
 }
 
 impl MultiOrigin {
@@ -57,6 +57,7 @@ impl MultiOrigin {
         let source = match kind {
             Kind::Acurast => {
                 let address = AccountId32::read(cursor)?;
+                println!("MultiOrigin: {:?} ", address.bytes);
                 address.to_u8a()
             },
             Kind::Tezos => {
@@ -79,15 +80,15 @@ impl MultiOrigin {
 
 impl fmt::Display for MultiOrigin {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "(kind: {:?}, source: {:?})", self.kind, self.source)
+        write!(f, "(kind: {:?}, source: {:?})", self.kind, self.source.to_i8())
     }
 }
 
 #[derive(uniffi::Record)]
 #[derive(Debug)]
 pub struct JobIdentifier {
-    origin: MultiOrigin,
-    id: BigUint,
+    pub origin: MultiOrigin,
+    pub id: BigUint,
 }
 
 impl JobIdentifier {
@@ -95,5 +96,11 @@ impl JobIdentifier {
         let origin = MultiOrigin::read(cursor)?;
         let id = read_u128(cursor)?;
         Ok(JobIdentifier { origin, id })
+    }
+}
+
+impl fmt::Display for JobIdentifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "job_identifier = (origin: {:?}, id: {:?})", self.origin, self.id.to_str_radix(10))
     }
 }

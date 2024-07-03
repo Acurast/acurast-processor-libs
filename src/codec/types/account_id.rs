@@ -35,7 +35,7 @@ impl MultiAddress {
 #[derive(uniffi::Record)]
 #[derive(Debug)]
 pub struct AccountId32 {
-    bytes: Vec<u8>,
+    pub bytes: Vec<u8>,
 }
 
 impl AccountId32 {

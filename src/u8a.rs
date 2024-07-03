@@ -31,3 +31,24 @@ pub fn biguint_to_u8a(value: &BigUint) -> [u8; 16] {
 
     result
 }
+
+pub fn biguint_to_u8a_8(value: &BigUint) -> [u8; 8] {
+    let encoded = value.to_bytes_be();
+    let mut result = [0u8; 8];
+
+    let start = 8 - encoded.len();
+    result[start..].copy_from_slice(&encoded);
+    result.reverse();
+
+    result
+}
+
+pub trait ToSigned {
+    fn to_i8(&self) -> Vec<i8>;
+}
+
+impl ToSigned for Vec<u8> {
+    fn to_i8(&self) -> Vec<i8> {
+        self.iter().map(|&x| x as i8).collect()
+    }
+}

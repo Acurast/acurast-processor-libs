@@ -1,8 +1,8 @@
-use std::{error::Error, fmt, io::{Cursor, Read}, u128};
-use byteorder::{BigEndian, ReadBytesExt};
-use hex::FromHex;
+use std::{error::Error, fmt, io::Cursor};
+use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::BigUint;
-use crate::{big_uint_utils::read_u128, codec::{extrinsic::marketplace::PublicKey, types::{account_id::AccountId32, acurast::job_identifier::JobIdentifier}}, hex::hex_to_ba};
+
+use crate::{codec::{extrinsic::marketplace::PublicKey, types::{account_id::AccountId32, acurast::job_identifier::JobIdentifier}}, cursor::{read_bytes, read_compact_integer, read_list, read_u128}, hex::hex_to_ba, u8a::{biguint_to_u8a, biguint_to_u8a_8, ToSigned}};
 
 #[derive(uniffi::Record)]
 #[derive(Debug)]
@@ -28,8 +28,9 @@ struct SLA {
 
 impl SLA {
     fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        let total = cursor.read_i64::<BigEndian>()?;
-        let met = cursor.read_i64::<BigEndian>()?;
+        let total =  cursor.read_i64::<LittleEndian>()?;
+        let met = cursor.read_i64::<LittleEndian>()?;
+        println!("SLA::read {} {} {} {:?}", total, met, cursor.position(), cursor);
         Ok(SLA { total, met })
     }
 }
@@ -66,22 +67,23 @@ impl JobAssignment {
         
         let key_bytes = hex_to_ba(l[0]);
         let value_bytes = hex_to_ba(l[1]);
-
+        println!("JobAssignment::value_bytes {:?}", value_bytes.to_i8());
         let mut key_cursor = Cursor::new(key_bytes);
-        key_cursor.set_position(48); // Skip <pallet_name>, <method_name>, <processor_hash>
+        let _ = read_bytes(&mut key_cursor, 48);
         let processor = AccountId32::read(&mut key_cursor)?;
-
-        key_cursor.set_position(key_cursor.position() + 16); // Skip <requester_hash>
+        println!("JobAssignment::processor {:?}", processor.bytes.to_i8());
+        let _ = read_bytes(&mut key_cursor, 16);
         let job_id = JobIdentifier::read(&mut key_cursor)?;
-
+        println!("JobAssignment::job_id {}", job_id);
         let mut value_cursor = Cursor::new(value_bytes);
+        
         let slot = value_cursor.read_u8()?;
-        let start_delay = value_cursor.read_i64::<BigEndian>()?;
+        let start_delay = value_cursor.read_i64::<LittleEndian>()?;
         let fee_per_execution = read_u128(&mut value_cursor)?;
         let acknowledged = value_cursor.read_u8()? != 0;
         let sla = SLA::read(&mut value_cursor)?;
         let public_keys = read_list(&mut value_cursor, PublicKey::read)?;
-
+        println!("JobAssignment::public_keys {:?}", public_keys);
         let execution_specifier = if api_version > 0 {
             ExecutionSpecifier::read(&mut value_cursor)?
         } else {
@@ -100,17 +102,4 @@ impl JobAssignment {
             execution_specifier,
         })
     }
-}
-
-
-// Helper function to read a list of items from the cursor
-fn read_list<T, F>(cursor: &mut Cursor<Vec<u8>>, read_item: F) -> Result<Vec<T>, Box<dyn Error>>
-where
-    F: Fn(&mut Cursor<Vec<u8>>) -> Result<T, Box<dyn Error>>,
-{
-    let mut items = Vec::new();
-    while (cursor.position() as usize) < cursor.get_ref().len() {
-        items.push(read_item(cursor)?);
-    }
-    Ok(items)
 }
