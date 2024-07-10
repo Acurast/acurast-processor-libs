@@ -1,4 +1,4 @@
-use std::{error::Error, fmt, io::Cursor};
+use std::{error::Error, fmt, io::{Cursor, Read}};
 use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::BigUint;
 
@@ -6,16 +6,27 @@ use crate::{codec::{extrinsic::marketplace::PublicKey, types::{account_id::Accou
 
 #[derive(uniffi::Record)]
 #[derive(Debug)]
-struct ExecutionSpecifier;
+pub struct ExecutionSpecifier {
+    pub kind: ExecutionSpecifierKind,
+    pub index: Option<u64>,
+}
 
 impl ExecutionSpecifier {
     fn new(kind: ExecutionSpecifierKind) -> Self {
-        ExecutionSpecifier {}
+        ExecutionSpecifier { kind, index: None }
     }
 
     fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        // Your implementation here
-        Ok(ExecutionSpecifier {})
+        let kind = ExecutionSpecifierKind::read(cursor)?;
+        let index = match kind {
+            ExecutionSpecifierKind::All => None,
+            ExecutionSpecifierKind::Index => {
+                let mut buffer = [0u8; 8];
+                cursor.read_exact(&mut buffer)?;
+                Some(u64::from_le_bytes(buffer))
+            }
+        };
+        Ok(ExecutionSpecifier { kind, index })
     }
 }
 
@@ -40,9 +51,23 @@ impl fmt::Display for SLA {
     }
 }
 
+#[derive(uniffi::Enum)]
 #[derive(Debug)]
-enum ExecutionSpecifierKind {
+pub enum ExecutionSpecifierKind {
     All,
+    Index,
+}
+
+impl ExecutionSpecifierKind {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let mut kind = [0u8; 1];
+        cursor.read_exact(&mut kind)?;
+        match kind[0] {
+            0 => Ok(ExecutionSpecifierKind::All),
+            1 => Ok(ExecutionSpecifierKind::Index),
+            _ => Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid kind"))),
+        }
+    }
 }
 
 #[derive(uniffi::Record)]
