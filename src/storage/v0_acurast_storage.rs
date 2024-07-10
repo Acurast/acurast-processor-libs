@@ -139,7 +139,7 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         key.extend_from_slice(account_id);
 
         let mut jobs: Vec<JobAssignment> = Vec::new();
-        
+        println!("get_assigned_jobs: {:?}", account_id);
         let keys = self.state.get_keys(&key, block_hash, timeout, &self.engine).await.unwrap_or(Vec::new());
         if let Ok(storage) = self.state.get_storage_at(keys, None, None, &self.engine).await {
             println!("get_assigned_jobs {:?}", storage);

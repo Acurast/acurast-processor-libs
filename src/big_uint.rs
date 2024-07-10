@@ -22,6 +22,9 @@ impl BigIntToInt for BigInt {
 impl BigIntToInt for BigUint {
     fn to_u32(&self) -> u32 {
         let mask = BigUint::from(u32::MAX);
-        (self & mask).to_u32_digits().first().unwrap().clone()
+        match (self & mask).to_u32_digits().first() {
+            Some(&digit) => digit,
+            None => 0,
+        }
     }
 }

@@ -86,7 +86,9 @@ pub mod acurastTests{
     #[tokio::test]
     async fn test_get_assigned_jobs() {
         let storage = AC_RPC.storage(0);
-        let account_hex = "5a6ccbc98ee1293ea246e639b8b30a0454e3bf6bdb2318b8aec27b26e606db8d";
+        //5a6ccbc98ee1293ea246e639b8b30a0454e3bf6bdb2318b8aec27b26e606db8d
+        //8edb923e73edfc8ef26bc373653d1cc556ba8a9e3736efef2375a64518427908
+        let account_hex = "8edb923e73edfc8ef26bc373653d1cc556ba8a9e3736efef2375a64518427908";
         let decoded_bytes = hex::decode(account_hex).expect("Decoding failed");
         
         let job_assignment = storage.get_assigned_jobs(&decoded_bytes, None, None).await;
