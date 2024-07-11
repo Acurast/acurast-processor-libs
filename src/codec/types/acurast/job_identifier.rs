@@ -6,7 +6,7 @@ use crate::{cursor::read_u128, codec::types::account_id::AccountId32, u8a::ToSig
 
 #[derive(uniffi::Enum)]
 #[derive(Debug)]
-enum Kind {
+pub enum Kind {
     Acurast,
     Tezos,
 }
@@ -30,7 +30,7 @@ impl Kind {
 
 #[derive(uniffi::Record)]
 #[derive(Debug)]
-struct MultiOrigin {
+pub struct MultiOrigin {
     pub kind: Kind,
     pub source: Vec<u8>,
 }
@@ -70,7 +70,7 @@ impl MultiOrigin {
         Ok(MultiOrigin { kind, source })
     }
 
-    fn to_u8a(&self) -> Vec<u8> {
+    pub fn to_u8a(&self) -> Vec<u8> {
         let mut bytes = vec![self.kind.to_u8()];
         bytes.extend_from_slice(&self.source);
         bytes

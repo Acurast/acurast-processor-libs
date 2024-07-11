@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::{codec::types::{marketplace::job_assigment::JobAssignment, uniques::pallet_uniques_item_details::PalletUniquesItemDetails}, types::system::FrameSystemAccountInfo};
+use crate::{codec::types::{acurast::{job_identifier::JobIdentifier, job_registration::JobRegistration}, marketplace::job_assigment::JobAssignment, uniques::pallet_uniques_item_details::PalletUniquesItemDetails}, types::system::FrameSystemAccountInfo};
 use super::v0_acurast_storage::V0AcurastStorage;
 
 #[derive(uniffi::Object)]
@@ -51,5 +51,14 @@ impl AcurastStorage {
         timeout: Option<u64>
     ) -> Vec<JobAssignment> {
         self.storage.get_assigned_jobs(account_id, block_hash, timeout).await
+    }
+
+    async fn get_job_registration(
+        &self, 
+        job_identifier: JobIdentifier, 
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>
+    ) -> Option<JobRegistration> {
+        self.storage.get_job_registration(job_identifier, block_hash, timeout).await
     }
 }

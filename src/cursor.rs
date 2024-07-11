@@ -67,3 +67,45 @@ where
 
     Ok(list)
 }
+
+pub fn read_byte_array(cursor: &mut Cursor<Vec<u8>>) -> Result<Vec<u8>, Box<dyn Error>> {
+    let length = read_compact_integer(cursor)?.to_u32() as usize;
+    let mut buffer = vec![0; length];
+    cursor.read_exact(&mut buffer)?;
+    Ok(buffer)
+}
+
+pub trait CursorExt {
+    fn read_boolean(&mut self) -> Result<bool, Box<dyn Error>>;
+    fn read_optional_boolean(&mut self) -> Result<Option<bool>, Box<dyn Error>>;
+    fn read_optional<T, F>(&mut self, optional_parser: F) -> Result<Option<T>, Box<dyn Error>>
+    where
+        F: Fn(&mut Cursor<Vec<u8>>) -> Result<T, Box<dyn Error>>;
+}
+
+impl CursorExt for Cursor<Vec<u8>> {
+    fn read_boolean(&mut self) -> Result<bool, Box<dyn Error>> {
+        let mut byte = [0u8; 1];
+        self.read_exact(&mut byte)?;
+        Ok(byte[0] == 0x01)
+    }
+
+    fn read_optional_boolean(&mut self) -> Result<Option<bool>, Box<dyn Error>> {
+        match self.read_boolean()? {
+            true => Ok(Some(true)),
+            false => Ok(Some(false)),
+        }
+    }
+
+    fn read_optional<T, F>(&mut self, optional_parser: F) -> Result<Option<T>, Box<dyn Error>>
+    where
+        F: Fn(&mut Cursor<Vec<u8>>) -> Result<T, Box<dyn Error>>,
+    {
+        let is_present = self.read_boolean()?;
+        if is_present {
+            optional_parser(self).map(Some)
+        } else {
+            Ok(None)
+        }
+    }
+}

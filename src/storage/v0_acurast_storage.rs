@@ -5,6 +5,9 @@ use num_bigint::{BigInt, BigUint};
 use num_traits::Zero;
 use std::io::Cursor;
 use std::sync::Arc;
+use crate::big_uint::BigIntToInt;
+use crate::codec::types::acurast::job_identifier::{self, JobIdentifier};
+use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::hex::{hex_to_ba, read_u128};
@@ -44,6 +47,13 @@ pub trait V0AcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>, 
         timeout: Option<u64>
     ) -> Vec<JobAssignment>;
+
+    async fn get_job_registration(
+        &self, 
+        job_identifier: JobIdentifier, 
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>
+    ) -> Option<JobRegistration>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -156,6 +166,31 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
             return jobs
         }
         jobs
+    }
+
+    async fn get_job_registration(
+        &self, 
+        job_identifier: JobIdentifier, 
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>
+    ) -> Option<JobRegistration> {
+        let mut key: Vec<u8> = Vec::new();
+        let origin = job_identifier.origin.to_u8a();
+        let jobId = job_identifier.id.to_u8a();
+        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("StoredJobRegistration".as_bytes()));
+        key.extend_from_slice(&blake2b_128(&origin, 16));
+        key.extend_from_slice(&origin);
+        key.extend_from_slice(&blake2b_128(&jobId, 16));
+        key.extend_from_slice(&jobId);
+        if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+            if let Some(storage) = storage_option {
+                let ba = hex_to_ba(&storage);
+                let mut cursor = Cursor::new(ba);
+                return Some(JobRegistration::read(&mut cursor, 0).unwrap())
+            }
+        }
+        None
     }
 }
 
