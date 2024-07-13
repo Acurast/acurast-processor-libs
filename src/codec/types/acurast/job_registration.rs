@@ -1,7 +1,7 @@
 use std::io::{self, Cursor, Read};
 use std::error::Error;
 use std::vec::Vec;
-use crate::big_uint::BigIntToInt;
+use byteorder::{LittleEndian, ReadBytesExt};
 use crate::codec::types::account_id::AccountId32;
 use crate::cursor::{read_byte_array, read_list, CursorExt};
 
@@ -34,9 +34,9 @@ impl JobRegistration {
         let allowed_sources = cursor.read_optional(|c| read_list(c, AccountId32::read))?;
         let allow_only_verified_sources = cursor.read_boolean()?;
         let schedule = JobSchedule::read(&mut cursor)?;
-        let memory = read_i32(&mut cursor)?;
-        let network_requests = read_i32(&mut cursor)?;
-        let storage = read_i32(&mut cursor)?;
+        let memory = cursor.read_i32::<LittleEndian>()?;
+        let network_requests = cursor.read_i32::<LittleEndian>()?;
+        let storage = cursor.read_i32::<LittleEndian>()?;
         let required_modules = read_list(&mut cursor, JobModule::read)?;
         let extra = if api_version > 0 {
             JobRegistrationExtra::read(&mut cursor)?
@@ -71,11 +71,11 @@ pub struct JobSchedule {
 impl JobSchedule {
     pub fn read(mut cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         Ok(JobSchedule {
-            duration: read_u64(&mut cursor)?,
-            start_time: read_u64(&mut cursor)?,
-            end_time: read_u64(&mut cursor)?,
-            interval: read_u64(&mut cursor)?,
-            max_start_delay: read_u64(&mut cursor)?,
+            duration: cursor.read_u64::<LittleEndian>()?,
+            start_time: cursor.read_u64::<LittleEndian>()?,
+            end_time: cursor.read_u64::<LittleEndian>()?,
+            interval: cursor.read_u64::<LittleEndian>()?,
+            max_start_delay: cursor.read_u64::<LittleEndian>()?,
         })
     }
 }
@@ -132,8 +132,8 @@ pub enum AssignmentStrategy {
 }
 
 impl AssignmentStrategy {
-    pub fn read(mut cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        let id = read_u8(&mut cursor)?;
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let id = cursor.read_u8()?;
         match id {
             0 => Ok(AssignmentStrategy::Single),
             1 => Ok(AssignmentStrategy::Competing),
@@ -141,30 +141,6 @@ impl AssignmentStrategy {
         }
     }
 }
-
-// Placeholder types and functions
-
-// Placeholder helper functions
-
-fn read_i32(cursor: &mut Cursor<Vec<u8>>) -> Result<i32, Box<dyn Error>> {
-    // Implementation to read an i32 value
-    unimplemented!()
-}
-
-fn read_u64(cursor: &mut Cursor<Vec<u8>>) -> Result<u64, Box<dyn Error>> {
-    // Implementation to read a u64 value
-    unimplemented!()
-}
-
-fn read_u8(cursor: &mut Cursor<Vec<u8>>) -> Result<u8, Box<dyn Error>> {
-    // Implementation to read a u8 value
-    unimplemented!()
-}
-
-/*fn read_compact_integer(cursor: &mut Cursor<Vec<u8>>) -> Result<u64, Box<dyn Error>> {
-    // Implementation to read a compact integer
-    unimplemented!()
-}*/
 
 #[derive(uniffi::Enum)]
 #[derive(Debug)]
@@ -174,7 +150,7 @@ pub enum JobModule {
 
 impl JobModule {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        let id = read_u8(cursor)?;
+        let id = cursor.read_u8()?;
         match id {
             0 => Ok(JobModule::DataEncryption),
             _ => Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, format!("Unknown JobModule {}", id)))),

@@ -73,7 +73,7 @@ impl ExecutionSpecifierKind {
 #[derive(uniffi::Record)]
 pub struct JobAssignment {
     processor: AccountId32,
-    job_id: JobIdentifier,
+    pub job_id: JobIdentifier,
     slot: u8,
     start_delay: i64,
     fee_per_execution: BigUint,

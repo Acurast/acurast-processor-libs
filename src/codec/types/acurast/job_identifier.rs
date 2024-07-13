@@ -28,6 +28,12 @@ impl Kind {
     }
 }
 
+impl Clone for Kind {
+    fn clone(&self) -> Self {
+        Kind::from_byte(self.to_u8()).unwrap()
+    }
+}
+
 #[derive(uniffi::Record)]
 #[derive(Debug)]
 pub struct MultiOrigin {
@@ -83,6 +89,12 @@ impl fmt::Display for MultiOrigin {
     }
 }
 
+impl Clone for MultiOrigin {
+    fn clone(&self) -> Self {
+        MultiOrigin { kind: self.kind.clone(), source: self.source.clone() }
+    }
+}
+
 #[derive(uniffi::Record)]
 #[derive(Debug)]
 pub struct JobIdentifier {
@@ -96,10 +108,20 @@ impl JobIdentifier {
         let id = read_u128(cursor)?;
         Ok(JobIdentifier { origin, id })
     }
+
+    pub fn empty() -> Self {
+        JobIdentifier { origin: MultiOrigin { kind: Kind::Acurast, source: vec![] }, id: BigUint::ZERO }
+    }
 }
 
 impl fmt::Display for JobIdentifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "job_identifier = (origin: {:?}, id: {:?})", self.origin, self.id.to_str_radix(10))
+    }
+}
+
+impl Clone for JobIdentifier {
+    fn clone(&self) -> Self {
+        JobIdentifier { origin: self.origin.clone(), id: self.id.clone() }
     }
 }

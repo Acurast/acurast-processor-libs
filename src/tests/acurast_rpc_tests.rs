@@ -4,6 +4,8 @@
 pub mod acurastTests{
     use hex::ToHex;
 
+    use crate::big_uint::BigIntToInt;
+    use crate::codec::types::acurast::job_identifier::JobIdentifier;
     use crate::engine::engine::RpcEngine;
     use crate::engine::http::http_client::HttpClient;
     use crate::engine::http_engine::HttpRpcEngine;
@@ -92,9 +94,21 @@ pub mod acurastTests{
         let decoded_bytes = hex::decode(account_hex).expect("Decoding failed");
         
         let job_assignment = storage.get_assigned_jobs(&decoded_bytes, None, None).await;
-
-        println!("job_assigments {}", job_assignment.len());
+        println!("job_assigments:job_id {:?}", job_assignment.first().unwrap().job_id.id.to_u8a());
+        println!("job_assigments:origin {:?}", job_assignment.first().unwrap().job_id.origin.to_u8a());
+        println!("job_assigments {}", job_assignment.first().unwrap().job_id.id);
+        let job_id = &job_assignment.first().unwrap().job_id;
+        let job_registration = storage.get_job_registration(job_id.clone(), None, None).await;
+        println!("job_registration {:?}", job_registration);
 
     }
+
+    /*#[tokio::test]
+    async fn test_get_job_registration() {
+        let storage = AC_RPC.storage(0);
+        let job_registration = storage.get_job_registration(JobIdentifier::empty(), None, None).await;
+        println!("job_registration {:?}", job_registration);
+
+    }*/
 }
 

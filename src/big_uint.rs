@@ -41,13 +41,12 @@ impl BigIntToInt for BigUint {
     }
 
     fn to_u8a(&self) -> Vec<u8> {
-        let mut encoded = self.to_bigint().unwrap().to_signed_bytes_le();
-        let pad_length = 16 - encoded.len();
-        
-        let mut result = vec![0; pad_length];
-        result.extend(encoded);
-        
-        result.reverse();
-        result
+        let mut encoded = self.to_bytes_be();
+        if encoded.len() < 16 {
+         let pad_left = vec![0u8; 16 - encoded.len()];
+            encoded = [pad_left, encoded].concat();
+        }
+        encoded.reverse();
+        encoded
     }
 }
