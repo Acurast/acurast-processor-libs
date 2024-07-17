@@ -1,4 +1,4 @@
-use std::{error::Error, fmt, io::{Cursor, Read}};
+use std::{error::Error, fmt, io::{Cursor, Read}, sync::Arc};
 use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::BigUint;
 
@@ -79,7 +79,7 @@ pub struct JobAssignment {
     fee_per_execution: BigUint,
     acknowledged: bool,
     sla: SLA,
-    public_keys: Vec<PublicKey>,
+    public_keys: Vec< Arc<dyn PublicKey>>,
     execution_specifier: ExecutionSpecifier,
 }
 
@@ -100,7 +100,7 @@ impl JobAssignment {
         let fee_per_execution = read_u128(&mut value_cursor)?;
         let acknowledged = value_cursor.read_u8()? != 0;
         let sla = SLA::read(&mut value_cursor)?;
-        let public_keys = read_list(&mut value_cursor, PublicKey::read)?;
+        let public_keys = read_list(&mut value_cursor, <dyn PublicKey>::read)?;
         let execution_specifier = if api_version > 0 {
             ExecutionSpecifier::read(&mut value_cursor)?
         } else {

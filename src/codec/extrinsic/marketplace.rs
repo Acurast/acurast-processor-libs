@@ -1,4 +1,5 @@
 use std::io::{Cursor, Read};
+use std::sync::Arc;
 use byteorder::{ReadBytesExt};
 use num_bigint::{BigInt, BigUint};
 use std::error::Error;
@@ -43,50 +44,96 @@ impl TryFrom<u8> for Tag {
     }
 }
 
-#[derive(uniffi::Enum)]
+
+#[uniffi::export(with_foreign)]
+pub trait PublicKey: Send + Sync {
+    fn to_u8a(&self) -> Vec<u8>;
+}
+#[derive(uniffi::Object)]
 #[derive(Debug)]
-pub enum PublicKey {
-    Secp256r1(Vec<u8>),
-    Secp256k1(Vec<u8>),
-    Ed25519(Vec<u8>),
+struct Secp256r1 {
+    pub bytes: Vec<u8>
 }
 
-impl PublicKey {
-    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+#[uniffi::export]
+impl PublicKey for Secp256r1 {
+    fn to_u8a(&self) -> Vec<u8> {
+        let mut vec = vec![Tag::Secp256r1.to_u8a()];
+        vec.extend_from_slice(&self.bytes);
+        vec
+    }
+}
+
+#[uniffi::export]
+impl Secp256r1 {
+    #[uniffi::constructor]
+    fn new(value: Vec<u8>) -> Self {
+        Secp256r1 { bytes: value }
+    }
+}
+
+#[derive(uniffi::Object)]
+#[derive(Debug)]
+struct Secp256k1 {
+    pub bytes: Vec<u8>
+}
+
+#[uniffi::export]
+impl PublicKey for Secp256k1 {
+    fn to_u8a(&self) -> Vec<u8> {
+        let mut vec = vec![Tag::Secp256k1.to_u8a()];
+        vec.extend_from_slice(&self.bytes);
+        vec
+    }
+}
+
+#[uniffi::export]
+impl Secp256k1 {
+    #[uniffi::constructor]
+    fn new(value: Vec<u8>) -> Self {
+        Secp256k1 { bytes: value }
+    }
+}
+
+#[derive(uniffi::Object)]
+#[derive(Debug)]
+pub struct Ed25519 {
+    pub bytes: Vec<u8>
+}
+
+#[uniffi::export]
+impl PublicKey for Ed25519 {
+    fn to_u8a(&self) -> Vec<u8> {
+        let mut vec = vec![Tag::Ed25519.to_u8a()];
+        vec.extend_from_slice(&self.bytes);
+        vec
+    }
+}
+
+#[uniffi::export]
+impl Ed25519 {
+    #[uniffi::constructor]
+    fn new(value: Vec<u8>) -> Self {
+        Ed25519 { bytes: value }
+    }
+}
+
+impl dyn PublicKey {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Arc<dyn PublicKey>, Box<dyn Error>> {
         let tag = Tag::read(cursor)?;
         let length = read_compact_integer(cursor)?.to_u32();
         let mut value = vec![0; length as usize];
         cursor.read_exact(&mut value)?;
-
+        
         match tag {
-            Tag::Secp256r1 => Ok(PublicKey::Secp256r1(value)),
-            Tag::Secp256k1 => Ok(PublicKey::Secp256k1(value)),
-            Tag::Ed25519 => Ok(PublicKey::Ed25519(value)),
-        }
-    }
-
-    fn to_u8a(&self) -> Vec<u8> {
-        match self {
-            PublicKey::Secp256r1(bytes) => {
-                let mut vec = vec![Tag::Secp256r1.to_u8a()];
-                vec.extend_from_slice(&bytes);
-                vec
-            }
-            PublicKey::Secp256k1(bytes) => {
-                let mut vec = vec![Tag::Secp256k1.to_u8a()];
-                vec.extend_from_slice(&bytes);
-                vec
-            }
-            PublicKey::Ed25519(bytes) => {
-                let mut vec = vec![Tag::Ed25519.to_u8a()];
-                vec.extend_from_slice(&bytes);
-                vec
-            }
+            Tag::Secp256r1 => Ok(Arc::new(Secp256r1::new(value))),
+            Tag::Secp256k1 => Ok(Arc::new(Secp256r1::new(value))),
+            Tag::Ed25519 => Ok(Arc::new(Secp256r1::new(value))),
         }
     }
 }
 
-impl fmt::Display for PublicKey {
+/*impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             PublicKey::Secp256r1(bytes) => write!(f, "Secp256r1({:?})", bytes),
@@ -94,4 +141,4 @@ impl fmt::Display for PublicKey {
             PublicKey::Ed25519(bytes) => write!(f, "Ed25519({:?})", bytes),
         }
     }
-}
+}*/
