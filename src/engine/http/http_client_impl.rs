@@ -116,6 +116,7 @@ impl HttpClient for HttpClientImpl {
         request_timeout: Option<u64>,
         connection_timeout: Option<u64>,
     ) -> Result<String, Error> {
+        println!("HttpClientImpl::post: {}", base_url);
         let response = self.client
             .post(base_url)
             .headers(self.build_headers(headers))
