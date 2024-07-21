@@ -52,3 +52,69 @@ impl ToSigned for Vec<u8> {
         self.iter().map(|&x| x as i8).collect()
     }
 }
+
+pub trait VecU8aToU8a {
+    fn to_u8a(&self) -> Vec<u8>;
+}
+
+impl VecU8aToU8a for Vec<u8> {
+    fn to_u8a(&self) -> Vec<u8> {
+        let size_bytes = self.len().to_compact_u8a();
+        [size_bytes, self.to_vec()].concat()
+    }
+}
+
+enum CompactMode {
+    One,
+    Two,
+    Four,
+    Big,
+}
+
+impl CompactMode {
+    fn value(&self) -> u8 {
+        match self {
+            CompactMode::One => 0,
+            CompactMode::Two => 1,
+            CompactMode::Four => 2,
+            CompactMode::Big => 3,
+        }
+    }
+}
+
+trait ToCompactU8a {
+    fn to_compact_u8a(&self) -> Vec<u8>;
+}
+
+impl ToCompactU8a for usize {
+    fn to_compact_u8a(&self) -> Vec<u8> {
+        let mode = if *self <= 0x3f {
+            CompactMode::One
+        } else if *self <= 0x3fff {
+            CompactMode::Two
+        } else if *self <= 0x3fffffff {
+            CompactMode::Four
+        } else {
+            CompactMode::Big
+        };
+
+        let mut compact = (*self << 2) + mode.value() as usize;
+
+        let n_bytes = match mode {
+            CompactMode::One => 1,
+            CompactMode::Two => 2,
+            CompactMode::Four => 4,
+            CompactMode::Big => {
+                return panic!("Big mode not implemented");
+            }
+        };
+
+        let mut ret = Vec::with_capacity(n_bytes);
+        for _ in 0..n_bytes {
+            ret.push((compact & 0xff) as u8);
+            compact >>= 8;
+        }
+
+        ret
+    }
+}

@@ -8,6 +8,7 @@ use hex::FromHex;
 
 use crate::big_uint::BigIntToInt;
 use crate::cursor::read_compact_integer;
+use crate::u8a::VecU8aToU8a;
 
 #[derive(uniffi::Enum)]
 #[derive(Debug)]
@@ -59,7 +60,7 @@ struct Secp256r1 {
 impl PublicKey for Secp256r1 {
     fn to_u8a(&self) -> Vec<u8> {
         let mut vec = vec![Tag::Secp256r1.to_u8a()];
-        vec.extend_from_slice(&self.bytes);
+        vec.extend_from_slice(&self.bytes.to_u8a());
         vec
     }
 }
@@ -82,7 +83,7 @@ struct Secp256k1 {
 impl PublicKey for Secp256k1 {
     fn to_u8a(&self) -> Vec<u8> {
         let mut vec = vec![Tag::Secp256k1.to_u8a()];
-        vec.extend_from_slice(&self.bytes);
+        vec.extend_from_slice(&self.bytes.to_u8a());
         vec
     }
 }
@@ -105,7 +106,7 @@ pub struct Ed25519 {
 impl PublicKey for Ed25519 {
     fn to_u8a(&self) -> Vec<u8> {
         let mut vec = vec![Tag::Ed25519.to_u8a()];
-        vec.extend_from_slice(&self.bytes);
+        vec.extend_from_slice(&self.bytes.to_u8a());
         vec
     }
 }
