@@ -7,6 +7,7 @@
 !/Acurastsdk.xcframework/ios-arm64/Acurastsdk.framework/Modules
 !/Acurastsdk.xcframework/ios-arm64/Acurastsdk.framework/Headers
 !/Acurastsdk.xcframework/ios-arm64/Acurastsdk.framework/Headers/acurastsdkFFI.h
+!/Acurastsdk.xcframework/ios-arm64/Acurastsdk.framework/Headers/Export.h
 
 /Acurastsdk.xcframework/ios-arm64_x86_64-simulator/Acurastsdk.framework/*
 /Acurastsdk.xcframework/ios-arm64_x86_64-simulator/Acurastsdk.framework/Headers/*
@@ -14,3 +15,4 @@
 !/Acurastsdk.xcframework/ios-arm64_x86_64-simulator/Acurastsdk.framework/Modules
 !/Acurastsdk.xcframework/ios-arm64_x86_64-simulator/Acurastsdk.framework/Headers
 !/Acurastsdk.xcframework/ios-arm64_x86_64-simulator/Acurastsdk.framework/Headers/acurastsdkFFI.h
+!/Acurastsdk.xcframework/ios-arm64_x86_64-simulator/Acurastsdk.framework/Headers/Export.h
