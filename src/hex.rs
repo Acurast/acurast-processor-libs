@@ -8,6 +8,7 @@ fn pure_hex_to_ba(hex: &str) -> Vec<u8> {
         .collect()
 }
 
+#[uniffi::export]
 pub fn hex_to_ba(hex: &str) -> Vec<u8> {
     let hex_str = hex.trim_start_matches("0x");
     pure_hex_to_ba(hex_str)
