@@ -9,7 +9,12 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn new(parent_hash: String, number: BigUint, state_root: String, extrinsics_root: String) -> Self {
+    pub fn new(
+        parent_hash: String,
+        number: BigUint,
+        state_root: String,
+        extrinsics_root: String,
+    ) -> Self {
         Self {
             parent_hash,
             number,

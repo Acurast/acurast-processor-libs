@@ -1,10 +1,9 @@
-use std::io::{Cursor, Read};
-use num_bigint::BigUint;
 use byteorder::{LittleEndian, ReadBytesExt};
+use num_bigint::BigUint;
 use num_traits::Zero;
+use std::io::{Cursor, Read};
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct FrameSystemAccountInfoData {
     pub free: BigUint,
     pub reserved: BigUint,
@@ -12,8 +11,7 @@ pub struct FrameSystemAccountInfoData {
     pub fee_frozen: BigUint,
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct FrameSystemAccountInfo {
     pub nonce: u32,
     pub consumers: u32,
@@ -48,13 +46,19 @@ impl FrameSystemAccountInfo {
     }
 
     pub fn empty() -> Self {
-        let data = FrameSystemAccountInfoData { 
+        let data = FrameSystemAccountInfoData {
             free: BigUint::zero(),
             reserved: BigUint::zero(),
             misc_frozen: BigUint::zero(),
             fee_frozen: BigUint::zero(),
         };
-        FrameSystemAccountInfo { nonce: 0, consumers: 0, providers: 0, sufficients: 0, data: data }
+        FrameSystemAccountInfo {
+            nonce: 0,
+            consumers: 0,
+            providers: 0,
+            sufficients: 0,
+            data: data,
+        }
     }
 
     fn read_u128(cursor: &mut Cursor<&[u8]>) -> BigUint {

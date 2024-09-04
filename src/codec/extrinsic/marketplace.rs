@@ -1,17 +1,12 @@
+use std::error::Error;
 use std::io::{Cursor, Read};
 use std::sync::Arc;
-use byteorder::{ReadBytesExt};
-use num_bigint::{BigInt, BigUint};
-use std::error::Error;
-use std::fmt;
-use hex::FromHex;
 
 use crate::big_uint::BigIntToInt;
 use crate::cursor::read_compact_integer;
 use crate::u8a::VecU8aToU8a;
 
-#[derive(uniffi::Enum)]
-#[derive(Debug)]
+#[derive(uniffi::Enum, Debug)]
 pub enum Tag {
     Secp256r1 = 0,
     Secp256k1 = 1,
@@ -45,15 +40,13 @@ impl TryFrom<u8> for Tag {
     }
 }
 
-
 #[uniffi::export(with_foreign)]
 pub trait PublicKey: Send + Sync {
     fn to_u8a(&self) -> Vec<u8>;
 }
-#[derive(uniffi::Object)]
-#[derive(Debug)]
+#[derive(uniffi::Object, Debug)]
 struct Secp256r1 {
-    pub bytes: Vec<u8>
+    pub bytes: Vec<u8>,
 }
 
 #[uniffi::export]
@@ -73,10 +66,9 @@ impl Secp256r1 {
     }
 }
 
-#[derive(uniffi::Object)]
-#[derive(Debug)]
+#[derive(uniffi::Object, Debug)]
 struct Secp256k1 {
-    pub bytes: Vec<u8>
+    pub bytes: Vec<u8>,
 }
 
 #[uniffi::export]
@@ -96,10 +88,9 @@ impl Secp256k1 {
     }
 }
 
-#[derive(uniffi::Object)]
-#[derive(Debug)]
+#[derive(uniffi::Object, Debug)]
 pub struct Ed25519 {
-    pub bytes: Vec<u8>
+    pub bytes: Vec<u8>,
 }
 
 #[uniffi::export]
@@ -125,7 +116,7 @@ impl dyn PublicKey {
         let length = read_compact_integer(cursor)?.to_u32();
         let mut value = vec![0; length as usize];
         cursor.read_exact(&mut value)?;
-        
+
         match tag {
             Tag::Secp256r1 => Ok(Arc::new(Secp256r1::new(value))),
             Tag::Secp256k1 => Ok(Arc::new(Secp256r1::new(value))),

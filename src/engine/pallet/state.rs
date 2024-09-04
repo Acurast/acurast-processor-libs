@@ -1,8 +1,11 @@
-use crate::{engine::engine::{rpc_engine_request, RpcEngine}, types::storage::StorageQueryResult};
-use std::sync::Arc;
-use serde_json::{json, Value};
 use crate::hex::ToHex;
+use crate::{
+    engine::engine::{rpc_engine_request, RpcEngine},
+    types::storage::StorageQueryResult,
+};
+use serde_json::{json, Value};
 use std::error::Error;
+use std::sync::Arc;
 
 #[derive(uniffi::Record)]
 pub struct RuntimeVersion {
@@ -19,12 +22,11 @@ impl RuntimeVersion {
     }
 }
 
-
 pub struct State;
 
 impl State {
     pub fn new() -> Self {
-        State {  }
+        State {}
     }
 
     pub async fn get_runtime_version(
@@ -34,17 +36,27 @@ impl State {
         engine: &Arc<dyn RpcEngine>,
     ) -> Result<RuntimeVersion, Box<dyn Error>> {
         let params = json!([block_hash.map(|b| hex::encode(b))]);
-        let response = rpc_engine_request(engine, "state_getRuntimeVersion", params, timeout).await?;
+        let response =
+            rpc_engine_request(engine, "state_getRuntimeVersion", params, timeout).await?;
 
         let result = response
             .get("result")
             .and_then(|r| r.as_object())
             .ok_or("Invalid response")?;
 
-        let spec_version = result.get("specVersion").and_then(|v| v.as_i64()).map(|v| v as i32);
-        let transaction_version = result.get("transactionVersion").and_then(|v| v.as_i64()).map(|v| v as i32);
-        
-        Ok(RuntimeVersion::new(spec_version.unwrap(), transaction_version.unwrap()))
+        let spec_version = result
+            .get("specVersion")
+            .and_then(|v| v.as_i64())
+            .map(|v| v as i32);
+        let transaction_version = result
+            .get("transactionVersion")
+            .and_then(|v| v.as_i64())
+            .map(|v| v as i32);
+
+        Ok(RuntimeVersion::new(
+            spec_version.unwrap(),
+            transaction_version.unwrap(),
+        ))
     }
 
     pub async fn get_storage(
@@ -55,7 +67,7 @@ impl State {
         engine: &Arc<dyn RpcEngine>,
     ) -> Result<Option<String>, Box<dyn Error>> {
         let mut params = json!([hex::encode(storage_key)]);
-    
+
         if let Some(block_hash) = block_hash {
             params.as_array_mut().unwrap().push(Value::from(block_hash));
         }
@@ -65,12 +77,12 @@ impl State {
     }
 
     pub async fn get_storage_at(
-        &self, 
+        &self,
         storage_keys: Vec<String>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
         engine: &Arc<dyn RpcEngine>,
-    ) -> Result<Vec<StorageQueryResult>, Box<dyn Error>>{
+    ) -> Result<Vec<StorageQueryResult>, Box<dyn Error>> {
         let mut params = json!([storage_keys]);
         if let Some(block_hash) = block_hash {
             params.as_array_mut().unwrap().push(Value::from(block_hash));
@@ -99,7 +111,10 @@ impl State {
             params.as_array_mut().unwrap().push(json!(data.to_hex()));
         }
         if let Some(block_hash) = block_hash {
-            params.as_array_mut().unwrap().push(json!(block_hash.to_hex()));
+            params
+                .as_array_mut()
+                .unwrap()
+                .push(json!(block_hash.to_hex()));
         }
         match rpc_engine_request(&engine, "state_call", params, timeout).await {
             Ok(response) => {
@@ -127,22 +142,21 @@ impl State {
         if let Some(block_hash) = block_hash {
             params.as_array_mut().unwrap().push(Value::from(block_hash));
         }
-        match rpc_engine_request(&engine, "state_getKeys", params, timeout).await  {
-            Ok(response) => {
-                match response["result"].as_array() {
-                    Some(array) => Ok(array.iter().filter_map(|v| v.as_str().map(String::from)).collect()),
-                    None => Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "Failed to retrieve keys",
-                    ))),
-                }
-            }
-            Err(err) => {
-                Err(Box::new(std::io::Error::new(
+        match rpc_engine_request(&engine, "state_getKeys", params, timeout).await {
+            Ok(response) => match response["result"].as_array() {
+                Some(array) => Ok(array
+                    .iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()),
+                None => Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::Other,
                     "Failed to retrieve keys",
-                )))
-            }
+                ))),
+            },
+            Err(_err) => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to retrieve keys",
+            ))),
         }
     }
 }

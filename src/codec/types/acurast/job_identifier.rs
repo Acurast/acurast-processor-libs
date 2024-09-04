@@ -1,11 +1,14 @@
-use std::{error::Error, fmt, io::{Cursor, Read}};
 use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
+use std::{
+    error::Error,
+    fmt,
+    io::{Cursor, Read},
+};
 
-use crate::{cursor::read_u128, codec::types::account_id::AccountId32, u8a::ToSigned};
+use crate::{codec::types::account_id::AccountId32, cursor::read_u128, u8a::ToSigned};
 
-#[derive(uniffi::Enum)]
-#[derive(Debug)]
+#[derive(uniffi::Enum, Debug)]
 pub enum Kind {
     Acurast,
     Tezos,
@@ -34,14 +37,14 @@ impl Clone for Kind {
     }
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct MultiOrigin {
     pub kind: Kind,
     pub source: Vec<u8>,
 }
 
 impl MultiOrigin {
+    #[allow(dead_code)]
     fn acurast(address: AccountId32) -> Self {
         MultiOrigin {
             kind: Kind::Acurast,
@@ -49,6 +52,7 @@ impl MultiOrigin {
         }
     }
 
+    #[allow(dead_code)]
     fn tezos(payload: Vec<u8>) -> Self {
         MultiOrigin {
             kind: Kind::Tezos,
@@ -64,7 +68,7 @@ impl MultiOrigin {
             Kind::Acurast => {
                 let address = AccountId32::read(cursor)?;
                 address.to_u8a()
-            },
+            }
             Kind::Tezos => {
                 let payload_length = cursor.read_u8()? as usize;
                 let mut payload = vec![0; payload_length];
@@ -85,18 +89,25 @@ impl MultiOrigin {
 
 impl fmt::Display for MultiOrigin {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "(kind: {:?}, source: {:?})", self.kind, self.source.to_i8())
+        write!(
+            f,
+            "(kind: {:?}, source: {:?})",
+            self.kind,
+            self.source.to_i8()
+        )
     }
 }
 
 impl Clone for MultiOrigin {
     fn clone(&self) -> Self {
-        MultiOrigin { kind: self.kind.clone(), source: self.source.clone() }
+        MultiOrigin {
+            kind: self.kind.clone(),
+            source: self.source.clone(),
+        }
     }
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct JobIdentifier {
     pub origin: MultiOrigin,
     pub id: BigUint,
@@ -110,18 +121,32 @@ impl JobIdentifier {
     }
 
     pub fn empty() -> Self {
-        JobIdentifier { origin: MultiOrigin { kind: Kind::Acurast, source: vec![] }, id: BigUint::ZERO }
+        JobIdentifier {
+            origin: MultiOrigin {
+                kind: Kind::Acurast,
+                source: vec![],
+            },
+            id: BigUint::ZERO,
+        }
     }
 }
 
 impl fmt::Display for JobIdentifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "job_identifier = (origin: {:?}, id: {:?})", self.origin, self.id.to_str_radix(10))
+        write!(
+            f,
+            "job_identifier = (origin: {:?}, id: {:?})",
+            self.origin,
+            self.id.to_str_radix(10)
+        )
     }
 }
 
 impl Clone for JobIdentifier {
     fn clone(&self) -> Self {
-        JobIdentifier { origin: self.origin.clone(), id: self.id.clone() }
+        JobIdentifier {
+            origin: self.origin.clone(),
+            id: self.id.clone(),
+        }
     }
 }

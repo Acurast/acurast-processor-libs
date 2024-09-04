@@ -1,21 +1,21 @@
-use async_trait::async_trait;
-use blake2::Blake2bVar;
-use blake2::digest::{Update, VariableOutput};
-use num_bigint::BigUint;
-use num_traits::Zero;
-use std::io::Cursor;
-use std::sync::Arc;
 use crate::big_uint::BigIntToInt;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
+use crate::engine::pallet::state::State;
 use crate::hex::{hex_to_ba, read_u128};
 use crate::types::system::FrameSystemAccountInfo;
-use crate::u8a::{biguint_to_u8a, ToSigned};
+use crate::u8a::biguint_to_u8a;
 use crate::xxhash::xxh128_unsigned;
 use crate::RpcEngine;
-use crate::engine::pallet::state::State;
+use async_trait::async_trait;
+use blake2::digest::{Update, VariableOutput};
+use blake2::Blake2bVar;
+use num_bigint::BigUint;
+use num_traits::Zero;
+use std::io::Cursor;
+use std::sync::Arc;
 
 #[uniffi::export]
 #[async_trait]
@@ -42,16 +42,17 @@ pub trait V0AcurastStorage: Send + Sync {
     ) -> FrameSystemAccountInfo;
 
     async fn get_assigned_jobs(
-        &self, account_id: &[u8], 
-        block_hash: Option<Vec<u8>>, 
-        timeout: Option<u64>
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
     ) -> Vec<JobAssignment>;
 
     async fn get_job_registration(
-        &self, 
-        job_identifier: JobIdentifier, 
+        &self,
+        job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
-        timeout: Option<u64>
+        timeout: Option<u64>,
     ) -> Option<JobRegistration>;
 }
 
@@ -78,12 +79,16 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         key.extend_from_slice(&xxh128_unsigned("AcurastProcessorManager".as_bytes()));
         key.extend_from_slice(&xxh128_unsigned("ProcessorToManagerIdIndex".as_bytes()));
         key.extend_from_slice(&blake2b_128(account_id, 16));
-        if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+        if let Ok(storage_option) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
                 let value_u128 = read_u128(&ba);
                 let value_i32 = value_u128 as i32;
-                return Some(value_i32)
+                return Some(value_i32);
             }
         }
         None
@@ -95,7 +100,6 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<PalletUniquesItemDetails> {
-        
         let manager = &biguint_to_u8a(&BigUint::from(manager_id as u32));
         let collection_id = &biguint_to_u8a(&BigUint::zero());
         let mut key: Vec<u8> = Vec::new();
@@ -105,11 +109,15 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         key.extend_from_slice(collection_id);
         key.extend_from_slice(&blake2b_128(manager, 16));
         key.extend_from_slice(manager);
-        if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+        if let Ok(storage_option) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
-                let mut cursor = Cursor::new(&ba[..]); 
-                return Some(PalletUniquesItemDetails::read(&mut cursor))
+                let mut cursor = Cursor::new(&ba[..]);
+                return Some(PalletUniquesItemDetails::read(&mut cursor));
             }
         }
         None
@@ -126,20 +134,24 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         key.extend_from_slice(&xxh128_unsigned("Account".as_bytes()));
         key.extend_from_slice(&blake2b_128(account_id, 16));
         key.extend_from_slice(account_id);
-        if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+        if let Ok(storage_option) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
-                return FrameSystemAccountInfo::read_account_info(ba.as_slice())
+                return FrameSystemAccountInfo::read_account_info(ba.as_slice());
             }
         }
         FrameSystemAccountInfo::empty()
     }
 
     async fn get_assigned_jobs(
-        &self, 
-        account_id: &[u8], 
-        block_hash: Option<Vec<u8>>, 
-        timeout: Option<u64>
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
     ) -> Vec<JobAssignment> {
         let mut key: Vec<u8> = Vec::new();
         key.extend_from_slice(&xxh128_unsigned("AcurastMarketplace".as_bytes()));
@@ -149,29 +161,38 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
 
         let mut jobs: Vec<JobAssignment> = Vec::new();
         println!("get_assigned_jobs: {:?}", account_id);
-        let keys = self.state.get_keys(&key, block_hash, timeout, &self.engine).await.unwrap_or(Vec::new());
-        if let Ok(storage) = self.state.get_storage_at(keys, None, None, &self.engine).await {
+        let keys = self
+            .state
+            .get_keys(&key, block_hash, timeout, &self.engine)
+            .await
+            .unwrap_or(Vec::new());
+        if let Ok(storage) = self
+            .state
+            .get_storage_at(keys, None, None, &self.engine)
+            .await
+        {
             println!("get_assigned_jobs {:?}", storage);
             if !storage.is_empty() {
-                
                 for change in &storage[0].changes {
-                    let job_assignment = JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0).unwrap();
+                    let job_assignment =
+                        JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0)
+                            .unwrap();
                     jobs.push(job_assignment);
                     /*if let Ok(job_assignment) = JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0) {
                         jobs.push(job_assignment);
                     }*/
                 }
             }
-            return jobs
+            return jobs;
         }
         jobs
     }
 
     async fn get_job_registration(
-        &self, 
-        job_identifier: JobIdentifier, 
+        &self,
+        job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
-        timeout: Option<u64>
+        timeout: Option<u64>,
     ) -> Option<JobRegistration> {
         let mut key: Vec<u8> = Vec::new();
         let origin = job_identifier.origin.to_u8a();
@@ -183,12 +204,16 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
         key.extend_from_slice(&origin);
         key.extend_from_slice(&blake2b_128(&job_id, 16));
         key.extend_from_slice(&job_id);
-        
-        if let Ok(storage_option) = self.state.get_storage(&key, block_hash, timeout, &self.engine).await {
+
+        if let Ok(storage_option) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
                 let mut cursor = Cursor::new(ba);
-                return Some(JobRegistration::read(&mut cursor, 0).unwrap())
+                return Some(JobRegistration::read(&mut cursor, 0).unwrap());
             }
         }
         None
@@ -200,7 +225,9 @@ fn blake2b_128(input: &[u8], hash_size: usize) -> [u8; 16] {
     let mut hasher = Blake2bVar::new(hash_size).expect("Invalid hash size");
     hasher.update(input);
     let mut hash = vec![0u8; hash_size];
-    hasher.finalize_variable(&mut hash).expect("Failed to finalize hash");
+    hasher
+        .finalize_variable(&mut hash)
+        .expect("Failed to finalize hash");
 
     // Convert to [i8; 16]
     /*let mut signed_hash = [0i8; 16];

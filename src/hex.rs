@@ -1,5 +1,5 @@
-use std::io::Cursor;
 use byteorder::{LittleEndian, ReadBytesExt};
+use std::io::Cursor;
 
 fn pure_hex_to_ba(hex: &str) -> Vec<u8> {
     (0..hex.len())

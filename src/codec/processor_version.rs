@@ -1,9 +1,8 @@
-use std::io::Cursor;
-use byteorder::{BigEndian, ReadBytesExt};
 use crate::codec::platform::Platform;
+use byteorder::{BigEndian, ReadBytesExt};
+use std::io::Cursor;
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct ProcessorVersion {
     pub platform: Platform,
     pub build_number: u32,
@@ -20,7 +19,9 @@ impl ProcessorVersion {
 impl ProcessorVersion {
     pub fn read(value: &mut Cursor<&[u8]>) -> Self {
         let platform = Platform::read(value);
-        let build_number = value.read_u32::<BigEndian>().expect("Failed to read build number");
+        let build_number = value
+            .read_u32::<BigEndian>()
+            .expect("Failed to read build number");
         Self {
             platform,
             build_number,
