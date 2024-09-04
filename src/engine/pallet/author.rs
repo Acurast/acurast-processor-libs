@@ -1,18 +1,21 @@
 use crate::engine::engine::{rpc_engine_request, RpcEngine};
-use std::sync::Arc;
-use serde_json::{json, Value}; 
 use crate::hex::ToHex;
+use serde_json::{json, Value};
+use std::sync::Arc;
 
-pub struct Author {
-
-}
+pub struct Author {}
 
 impl Author {
     pub fn new() -> Self {
         Author {}
     }
 
-    pub async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>,  engine: &Arc<dyn RpcEngine>) -> Result<String, String> {
+    pub async fn submit_extrinsic(
+        &self,
+        extrinsic: Vec<u8>,
+        timeout: Option<u64>,
+        engine: &Arc<dyn RpcEngine>,
+    ) -> Result<String, String> {
         let params = json!([extrinsic.to_hex()]);
         match rpc_engine_request(engine, "author_submitExtrinsic", params, timeout).await {
             Ok(response) => {

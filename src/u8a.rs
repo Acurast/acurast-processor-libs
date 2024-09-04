@@ -105,7 +105,7 @@ impl ToCompactU8a for usize {
             CompactMode::Two => 2,
             CompactMode::Four => 4,
             CompactMode::Big => {
-                return panic!("Big mode not implemented");
+                panic!("Big mode not implemented");
             }
         };
 

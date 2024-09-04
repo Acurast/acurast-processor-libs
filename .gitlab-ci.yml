@@ -1,0 +1,16 @@
+include:
+  - project: "papers/papers-internal/internal"
+    file: "/.base-gitlab-ci.yml"
+
+stages:
+  - build
+
+build-ios:
+  stage: build
+  script:
+    - make build
+  artifacts:
+    paths:
+      - AcurastSDK
+  tags:
+    - ios

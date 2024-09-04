@@ -1,10 +1,14 @@
 use async_trait::async_trait;
-use serde_json::{json, Value};
+use serde_json::json;
 use std::sync::Arc;
 
 #[async_trait]
 pub trait RpcEngine: Send + Sync {
-    async fn request(&self, body: Option<serde_json::Value>, timeout: Option<u64>) -> Result<serde_json::Value, Box<dyn std::error::Error>>;
+    async fn request(
+        &self,
+        body: Option<serde_json::Value>,
+        timeout: Option<u64>,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>>;
     fn id(&self) -> &str;
 }
 

@@ -1,6 +1,6 @@
-use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
-use std::u32;
+use num_bigint::{BigInt, BigUint};
 use num_traits::Signed;
+use std::u32;
 
 pub trait BigIntToInt {
     fn to_u32(&self) -> u32;
@@ -11,21 +11,21 @@ impl BigIntToInt for BigInt {
     fn to_u32(&self) -> u32 {
         let was_negative = self.is_negative();
         let abs = self.abs().to_biguint().unwrap();
-        let mut truncated = abs.to_u32();
+        let truncated = abs.to_u32();
         if was_negative {
-           truncated.wrapping_neg()
+            truncated.wrapping_neg()
         } else {
             truncated
         }
     }
 
     fn to_u8a(&self) -> Vec<u8> {
-        let mut encoded = self.to_signed_bytes_be();
+        let encoded = self.to_signed_bytes_be();
         let pad_length = 16 - encoded.len();
-        
+
         let mut result = vec![0; pad_length];
         result.extend(encoded);
-        
+
         result.reverse();
         result
     }
@@ -43,7 +43,7 @@ impl BigIntToInt for BigUint {
     fn to_u8a(&self) -> Vec<u8> {
         let mut encoded = self.to_bytes_be();
         if encoded.len() < 16 {
-         let pad_left = vec![0u8; 16 - encoded.len()];
+            let pad_left = vec![0u8; 16 - encoded.len()];
             encoded = [pad_left, encoded].concat();
         }
         encoded.reverse();

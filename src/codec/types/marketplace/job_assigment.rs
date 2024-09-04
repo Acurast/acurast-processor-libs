@@ -1,11 +1,22 @@
-use std::{error::Error, fmt, io::{Cursor, Read}, sync::Arc};
 use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::BigUint;
+use std::{
+    error::Error,
+    fmt,
+    io::{Cursor, Read},
+    sync::Arc,
+};
 
-use crate::{codec::{extrinsic::marketplace::PublicKey, types::{account_id::AccountId32, acurast::job_identifier::JobIdentifier}}, cursor::{read_bytes, read_compact_integer, read_list, read_u128}, hex::hex_to_ba, u8a::{biguint_to_u8a, biguint_to_u8a_8, ToSigned}};
+use crate::{
+    codec::{
+        extrinsic::marketplace::PublicKey,
+        types::{account_id::AccountId32, acurast::job_identifier::JobIdentifier},
+    },
+    cursor::{read_bytes, read_list, read_u128},
+    hex::hex_to_ba,
+};
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct ExecutionSpecifier {
     pub kind: ExecutionSpecifierKind,
     pub index: Option<u64>,
@@ -30,8 +41,7 @@ impl ExecutionSpecifier {
     }
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 struct SLA {
     total: i64,
     met: i64,
@@ -39,7 +49,7 @@ struct SLA {
 
 impl SLA {
     fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        let total =  cursor.read_i64::<LittleEndian>()?;
+        let total = cursor.read_i64::<LittleEndian>()?;
         let met = cursor.read_i64::<LittleEndian>()?;
         Ok(SLA { total, met })
     }
@@ -51,8 +61,7 @@ impl fmt::Display for SLA {
     }
 }
 
-#[derive(uniffi::Enum)]
-#[derive(Debug)]
+#[derive(uniffi::Enum, Debug)]
 pub enum ExecutionSpecifierKind {
     All,
     Index,
@@ -65,7 +74,10 @@ impl ExecutionSpecifierKind {
         match kind[0] {
             0 => Ok(ExecutionSpecifierKind::All),
             1 => Ok(ExecutionSpecifierKind::Index),
-            _ => Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid kind"))),
+            _ => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Invalid kind",
+            ))),
         }
     }
 }
@@ -79,10 +91,9 @@ pub struct JobAssignment {
     fee_per_execution: BigUint,
     acknowledged: bool,
     sla: SLA,
-    public_keys: Vec< Arc<dyn PublicKey>>,
+    public_keys: Vec<Arc<dyn PublicKey>>,
     execution_specifier: ExecutionSpecifier,
 }
-
 
 impl JobAssignment {
     pub fn read(l: Vec<&str>, api_version: u32) -> Result<Self, Box<dyn Error>> {
@@ -94,7 +105,7 @@ impl JobAssignment {
         let _ = read_bytes(&mut key_cursor, 16);
         let job_id = JobIdentifier::read(&mut key_cursor)?;
         let mut value_cursor = Cursor::new(value_bytes);
-        
+
         let slot = value_cursor.read_u8()?;
         let start_delay = value_cursor.read_i64::<LittleEndian>()?;
         let fee_per_execution = read_u128(&mut value_cursor)?;

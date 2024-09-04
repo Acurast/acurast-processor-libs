@@ -1,4 +1,4 @@
-use crate::codec::types::extrinsic::{ExtrinsicCallRust, BytesEncodableRust};
+use crate::codec::types::extrinsic::{BytesEncodableRust, ExtrinsicCallRust};
 use std::sync::Arc;
 
 #[derive(uniffi::Record)]

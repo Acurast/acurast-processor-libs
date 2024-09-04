@@ -1,6 +1,5 @@
-use serde_json::{json, Value};
 use async_trait::async_trait;
-use std::sync::Arc;
+use serde_json::Value;
 
 #[async_trait]
 pub trait PalletRpc {

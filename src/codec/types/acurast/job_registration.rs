@@ -1,12 +1,11 @@
-use std::io::{self, Cursor, Read};
-use std::error::Error;
-use std::vec::Vec;
-use byteorder::{LittleEndian, ReadBytesExt};
 use crate::codec::types::account_id::AccountId32;
 use crate::cursor::{read_byte_array, read_list, CursorExt};
+use byteorder::{LittleEndian, ReadBytesExt};
+use std::error::Error;
+use std::io::{self, Cursor};
+use std::vec::Vec;
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct JobRegistration {
     // The script to execute. It is a vector of bytes representing a utf8 string. The string needs to be an IPFS URL that points to the script.
     pub script: Vec<u8>,
@@ -29,7 +28,10 @@ pub struct JobRegistration {
 }
 
 impl JobRegistration {
-    pub fn read(mut cursor: &mut Cursor<Vec<u8>>, api_version: u32) -> Result<Self, Box<dyn Error>> {
+    pub fn read(
+        mut cursor: &mut Cursor<Vec<u8>>,
+        api_version: u32,
+    ) -> Result<Self, Box<dyn Error>> {
         let script = read_byte_array(&mut cursor)?;
         let allowed_sources = cursor.read_optional(|c| read_list(c, AccountId32::read))?;
         let allow_only_verified_sources = cursor.read_boolean()?;
@@ -58,8 +60,7 @@ impl JobRegistration {
     }
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct JobSchedule {
     pub duration: u64,
     pub start_time: u64,
@@ -69,7 +70,7 @@ pub struct JobSchedule {
 }
 
 impl JobSchedule {
-    pub fn read(mut cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         Ok(JobSchedule {
             duration: cursor.read_u64::<LittleEndian>()?,
             start_time: cursor.read_u64::<LittleEndian>()?,
@@ -80,8 +81,7 @@ impl JobSchedule {
     }
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct JobRegistrationExtra {
     pub requirements: JobRequirements,
 }
@@ -102,8 +102,7 @@ impl Default for JobRegistrationExtra {
     }
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct JobRequirements {
     pub assignment_strategy: AssignmentStrategy,
 }
@@ -124,8 +123,7 @@ impl Default for JobRequirements {
     }
 }
 
-#[derive(uniffi::Enum)]
-#[derive(Debug)]
+#[derive(uniffi::Enum, Debug)]
 pub enum AssignmentStrategy {
     Single,
     Competing,
@@ -137,13 +135,15 @@ impl AssignmentStrategy {
         match id {
             0 => Ok(AssignmentStrategy::Single),
             1 => Ok(AssignmentStrategy::Competing),
-            _ => Err(Box::new(io::Error::new(io::ErrorKind::InvalidData, "Unknown AssignmentStrategy"))),
+            _ => Err(Box::new(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Unknown AssignmentStrategy",
+            ))),
         }
     }
 }
 
-#[derive(uniffi::Enum)]
-#[derive(Debug)]
+#[derive(uniffi::Enum, Debug)]
 pub enum JobModule {
     DataEncryption,
 }
@@ -153,7 +153,10 @@ impl JobModule {
         let id = cursor.read_u8()?;
         match id {
             0 => Ok(JobModule::DataEncryption),
-            _ => Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, format!("Unknown JobModule {}", id)))),
+            _ => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Unknown JobModule {}", id),
+            ))),
         }
     }
 }

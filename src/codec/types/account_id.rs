@@ -1,7 +1,9 @@
-use std::{error::Error, io::{Cursor, Read}};
+use std::{
+    error::Error,
+    io::{Cursor, Read},
+};
 
-#[derive(uniffi::Enum)]
-#[derive(Debug)]
+#[derive(uniffi::Enum, Debug)]
 pub enum AccountIdentifier {
     AccountID = 0,
     AccountIndex = 1,
@@ -10,11 +12,10 @@ pub enum AccountIdentifier {
     Address20 = 4,
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct MultiAddress {
     pub account_identifier: AccountIdentifier,
-    pub bytes: Vec<u8>
+    pub bytes: Vec<u8>,
 }
 
 impl MultiAddress {
@@ -32,8 +33,7 @@ impl MultiAddress {
     }
 }
 
-#[derive(uniffi::Record)]
-#[derive(Debug)]
+#[derive(uniffi::Record, Debug)]
 pub struct AccountId32 {
     pub bytes: Vec<u8>,
 }

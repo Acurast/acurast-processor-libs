@@ -1,7 +1,10 @@
-use std::{error::Error, io::{Cursor, Read}};
 use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::{BigInt, BigUint};
 use num_traits::FromPrimitive;
+use std::{
+    error::Error,
+    io::{Cursor, Read},
+};
 
 use crate::big_uint::BigIntToInt;
 
@@ -11,7 +14,7 @@ pub fn read_bytes(cursor: &mut Cursor<Vec<u8>>, offset: usize) -> Result<Vec<i8>
 
     // Convert Vec<u8> to Vec<i8>
     let ba_signed: Vec<i8> = ba.into_iter().map(|x| x as i8).collect();
-    
+
     Ok(ba_signed)
 }
 
@@ -23,7 +26,7 @@ pub fn read_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<BigUint, Box<dyn Error>
 
 pub fn read_compact_integer(cursor: &mut Cursor<Vec<u8>>) -> Result<BigInt, Box<dyn Error>> {
     let compact_byte = cursor.read_u8()? as u64;
-    
+
     let compact_length = match compact_byte % 4 {
         0 => 1,
         1 => 2,
@@ -53,7 +56,10 @@ pub fn read_compact_integer(cursor: &mut Cursor<Vec<u8>>) -> Result<BigInt, Box<
     Ok(result)
 }
 
-pub fn read_list<T, F>(cursor: &mut Cursor<Vec<u8>>, element_parser: F) -> Result<Vec<T>, Box<dyn Error>>
+pub fn read_list<T, F>(
+    cursor: &mut Cursor<Vec<u8>>,
+    element_parser: F,
+) -> Result<Vec<T>, Box<dyn Error>>
 where
     F: Fn(&mut Cursor<Vec<u8>>) -> Result<T, Box<dyn Error>>,
 {
