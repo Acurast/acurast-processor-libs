@@ -12,9 +12,23 @@ use async_trait::async_trait;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex::decode;
 use std::collections::HashMap;
+use std::fmt;
 use std::io::Cursor;
 use std::sync::Arc;
 use xxhash_rust::xxh3::xxh3_64_with_seed;
+
+#[derive(Debug, PartialEq, uniffi::Enum)]
+pub enum AcurastRpcError {
+    RuntimeError(String),
+}
+
+impl fmt::Display for AcurastRpcError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AcurastRpcError::RuntimeError(msg) => write!(f, "Runtime Error: {}", msg),
+        }
+    }
+}
 
 #[uniffi::export]
 #[async_trait]
@@ -23,9 +37,9 @@ pub trait AcurastRpc: Send + Sync {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Option<String>;
+    ) -> Result<String, AcurastRpcError>;
     async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>)
-        -> Option<Header>;
+        -> Result<Header, AcurastRpcError>;
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32;
     async fn get_runtime_version(
         &self,
@@ -44,7 +58,7 @@ pub trait AcurastRpc: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>>;
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Option<String>;
+    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String, AcurastRpcError>;
     async fn call(
         &self,
         method: String,
@@ -102,26 +116,22 @@ impl AcurastRpc for AcurastRpcImpl {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Option<String> {
-        match self
-            .chain
+    ) -> Result<String, AcurastRpcError> {
+        self.chain
             .get_block_hash(block_number, timeout, &self.engine)
             .await
-        {
-            Ok(block_hash) => Some(block_hash.unwrap()),
-            Err(_error) => None, // You can handle the error case here, e.g., log the error or return a default value
-        }
+            .map_err(|e| AcurastRpcError::RuntimeError(format!("{}", e)))
     }
 
     async fn get_header(
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Header> {
+    ) -> Result<Header, AcurastRpcError> {
         self.chain
             .get_header(block_hash, timeout, &self.engine)
             .await
-            .ok()
+            .map_err(|e| AcurastRpcError::RuntimeError(format!("{}", e)))
     }
 
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32 {
@@ -215,11 +225,11 @@ impl AcurastRpc for AcurastRpcImpl {
         }
     }
 
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Option<String> {
+    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String, AcurastRpcError> {
         self.author
             .submit_extrinsic(extrinsic, timeout, &self.engine)
             .await
-            .ok()
+            .map_err(|e| AcurastRpcError::RuntimeError(e))
     }
 
     async fn call(

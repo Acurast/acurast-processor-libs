@@ -528,9 +528,9 @@ fileprivate struct FfiConverterData: FfiConverterRustBuffer {
 
 public protocol AcurastRpcProtocol : AnyObject {
     
-    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async  -> String?
+    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String
     
-    func getHeader(blockHash: Data?, timeout: UInt64?) async  -> Header?
+    func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
     func getApiVersion(blockHash: Data?, timeout: UInt64?) async  -> UInt32
     
@@ -540,7 +540,7 @@ public protocol AcurastRpcProtocol : AnyObject {
     
     func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeout: UInt64?) async  -> Data?
     
-    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async  -> String?
+    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async throws  -> String
     
     func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async  -> String?
     
@@ -589,9 +589,9 @@ open class AcurastRpc:
     
 
     
-open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async  -> String? {
+open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> String {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpc_get_block_hash(
                     self.uniffiClonePointer(),
@@ -601,15 +601,14 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async  -> String? {
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeAcurastRpcError.lift
         )
 }
     
-open func getHeader(blockHash: Data?, timeout: UInt64?)async  -> Header? {
+open func getHeader(blockHash: Data?, timeout: UInt64?)async throws  -> Header {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpc_get_header(
                     self.uniffiClonePointer(),
@@ -619,9 +618,8 @@ open func getHeader(blockHash: Data?, timeout: UInt64?)async  -> Header? {
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionTypeHeader.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterTypeHeader.lift,
+            errorHandler: FfiConverterTypeAcurastRpcError.lift
         )
 }
     
@@ -697,9 +695,9 @@ open func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeou
         )
 }
     
-open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async  -> String? {
+open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> String {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpc_submit_extrinsic(
                     self.uniffiClonePointer(),
@@ -709,9 +707,8 @@ open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async  -> String? {
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeAcurastRpcError.lift
         )
 }
     
@@ -793,15 +790,15 @@ public protocol AcurastRpcClientProtocol : AnyObject {
     
     func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async  -> String?
     
-    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async  -> String?
+    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String
     
-    func getHeader(blockHash: Data?, timeout: UInt64?) async  -> Header?
+    func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async  -> RuntimeVersion
     
     func storage(version: UInt32)  -> AcurastStorage
     
-    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async  -> String?
+    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async throws  -> String
     
 }
 
@@ -872,9 +869,9 @@ open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)a
         )
 }
     
-open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async  -> String? {
+open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> String {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpcclient_get_block_hash(
                     self.uniffiClonePointer(),
@@ -884,15 +881,14 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async  -> String? {
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeAcurastRpcError.lift
         )
 }
     
-open func getHeader(blockHash: Data?, timeout: UInt64?)async  -> Header? {
+open func getHeader(blockHash: Data?, timeout: UInt64?)async throws  -> Header {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpcclient_get_header(
                     self.uniffiClonePointer(),
@@ -902,9 +898,8 @@ open func getHeader(blockHash: Data?, timeout: UInt64?)async  -> Header? {
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionTypeHeader.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterTypeHeader.lift,
+            errorHandler: FfiConverterTypeAcurastRpcError.lift
         )
 }
     
@@ -934,9 +929,9 @@ open func storage(version: UInt32) -> AcurastStorage {
 })
 }
     
-open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async  -> String? {
+open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> String {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpcclient_submit_extrinsic(
                     self.uniffiClonePointer(),
@@ -946,9 +941,8 @@ open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async  -> String? {
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeAcurastRpcError.lift
         )
 }
     
@@ -3131,6 +3125,58 @@ extension AccountIdentifier: Equatable, Hashable {}
 
 
 
+
+public enum AcurastRpcError {
+
+    
+    
+    case RuntimeError(String
+    )
+}
+
+
+public struct FfiConverterTypeAcurastRpcError: FfiConverterRustBuffer {
+    typealias SwiftType = AcurastRpcError
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AcurastRpcError {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        
+
+        
+        case 1: return .RuntimeError(
+            try FfiConverterString.read(from: &buf)
+            )
+
+         default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: AcurastRpcError, into buf: inout [UInt8]) {
+        switch value {
+
+        
+
+        
+        
+        case let .RuntimeError(v1):
+            writeInt(&buf, Int32(1))
+            FfiConverterString.write(v1, into: &buf)
+            
+        }
+    }
+}
+
+
+extension AcurastRpcError: Equatable, Hashable {}
+
+extension AcurastRpcError: Foundation.LocalizedError {
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+}
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -3566,27 +3612,6 @@ fileprivate struct FfiConverterOptionData: FfiConverterRustBuffer {
     }
 }
 
-fileprivate struct FfiConverterOptionTypeHeader: FfiConverterRustBuffer {
-    typealias SwiftType = Header?
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        guard let value = value else {
-            writeInt(&buf, Int8(0))
-            return
-        }
-        writeInt(&buf, Int8(1))
-        FfiConverterTypeHeader.write(value, into: &buf)
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
-        switch try readInt(&buf) as Int8 {
-        case 0: return nil
-        case 1: return try FfiConverterTypeHeader.read(from: &buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
-
 fileprivate struct FfiConverterOptionTypeJobRegistration: FfiConverterRustBuffer {
     typealias SwiftType = JobRegistration?
 
@@ -3874,10 +3899,10 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_func_hex_to_ba() != 53494) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 12223) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 53879) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 34120) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 62959) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 17701) {
@@ -3892,7 +3917,7 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 18053) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 15314) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 31755) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 47860) {
@@ -3904,10 +3929,10 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_call() != 3780) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_block_hash() != 34290) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_block_hash() != 28279) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 22438) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 46799) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_runtime_version() != 44732) {
@@ -3916,7 +3941,7 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_storage() != 52623) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_submit_extrinsic() != 17829) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_submit_extrinsic() != 11227) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_account_info() != 141) {

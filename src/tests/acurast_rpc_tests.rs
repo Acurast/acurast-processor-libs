@@ -18,10 +18,10 @@ lazy_static::lazy_static! {
 async fn test_get_block_hash() {
     let res = AC_RPC.get_block_hash(Some(1), None).await;
     match res {
-        Some(_r) => {
+        Ok(_r) => {
             assert!(true);
         }
-        None => {
+        Err(_) => {
             assert!(false);
         }
     }
@@ -31,10 +31,10 @@ async fn test_get_block_hash() {
 async fn test_get_header() {
     let res = AC_RPC.get_header(None, None).await;
     match res {
-        Some(_r) => {
+        Ok(_r) => {
             assert!(true);
         }
-        None => {
+        Err(_) => {
             assert!(false);
         }
     }
