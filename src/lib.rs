@@ -22,10 +22,12 @@ pub use crate::engine::pallet::state::RuntimeVersion;
 use crate::storage::acurast_storage::AcurastStorage;
 pub use crate::types::header::Header;
 pub use acurast_rpc::AcurastRpc;
+use acurast_rpc::AcurastRpcError;
 pub use acurast_rpc::AcurastRpcImpl;
 use engine::engine::RpcEngine;
 use engine::http_engine::HttpRpcEngine;
 use num_bigint::BigUint;
+use std::fmt;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -71,7 +73,7 @@ impl AcurastRpcClient {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Header> {
+    ) -> Result<Header, AcurastRpcError> {
         self.acurastrpc.get_header(block_hash, timeout).await
     }
     pub async fn call(
@@ -98,14 +100,14 @@ impl AcurastRpcClient {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Option<String> {
+    ) -> Result<String, AcurastRpcError> {
         self.acurastrpc.get_block_hash(block_number, timeout).await
     }
     pub async fn submit_extrinsic(
         &self,
         extrinsic: Vec<u8>,
         timeout: Option<u64>,
-    ) -> Option<String> {
+    ) -> Result<String, AcurastRpcError> {
         self.acurastrpc.submit_extrinsic(extrinsic, timeout).await
     }
     pub fn storage(&self, version: u32) -> Arc<AcurastStorage> {

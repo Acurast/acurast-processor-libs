@@ -19,16 +19,18 @@ impl Chain {
         block_number: Option<i64>,
         timeout: Option<u64>,
         engine: &Arc<dyn RpcEngine>,
-    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let params = json!([block_number]);
-        let response: Value =
-            rpc_engine_request(engine, "chain_getBlockHash", params, timeout).await?;
+        let response: serde_json::Value = rpc_engine_request(engine, "chain_getBlockHash", params, timeout).await?;
         if let Some(result) = response.get("result") {
             if let Some(result_str) = result.as_str() {
-                return Ok(Some(result_str.to_string()));
+                return Ok(result_str.to_string());
             }
         }
-        Ok(None)
+        Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Block hash not found",
+        )))
     }
 
     pub async fn get_header(
