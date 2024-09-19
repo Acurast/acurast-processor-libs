@@ -30,8 +30,7 @@ impl RpcEngine for HttpRpcEngine {
             "Content-Type".to_string(),
             Some("application/json".to_string()),
         );
-        let host_header: HttpHeader = ("Host".to_string(), Some("rust".to_string()));
-        let headers = vec![content_type_header, host_header];
+        let headers = vec![content_type_header];
         let response = self
             .client
             .post(
