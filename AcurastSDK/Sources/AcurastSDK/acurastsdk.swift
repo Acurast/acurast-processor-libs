@@ -1004,6 +1004,8 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
     
+    func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> UInt64?
+    
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
     
 }
@@ -1124,6 +1126,24 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobRegistration.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> UInt64? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_manager_counter(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionUInt64.lift,
             errorHandler: nil
             
         )
@@ -1683,6 +1703,8 @@ public protocol V0AcurastStorageProtocol : AnyObject {
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
     
+    func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> UInt64?
+    
     func getAsset(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> PalletUniquesItemDetails?
     
     func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> FrameSystemAccountInfo
@@ -1747,6 +1769,24 @@ open func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt6
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionInt32.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> UInt64? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_v0acuraststorage_get_manager_counter(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionUInt64.lift,
             errorHandler: nil
             
         )
@@ -3956,6 +3996,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_registration() != 27665) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_counter() != 4301) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_identifier() != 46517) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -3974,16 +4017,19 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_manager_identifier() != 51828) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_asset() != 3368) {
+    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_manager_counter() != 50498) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_account_info() != 9252) {
+    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_asset() != 29411) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_assigned_jobs() != 42830) {
+    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_account_info() != 32075) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_job_registration() != 47247) {
+    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_assigned_jobs() != 38073) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_job_registration() != 49245) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {
