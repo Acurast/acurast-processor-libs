@@ -21,6 +21,13 @@ pub fn read_u128(bytes: &[u8]) -> u128 {
     cursor.read_u128::<LittleEndian>().unwrap()
 }
 
+pub fn read_u64(bytes: &[u8]) -> u64 {
+    let mut arr = [0u8; 8];
+    arr.copy_from_slice(bytes);
+    let mut cursor = Cursor::new(arr);
+    cursor.read_u64::<LittleEndian>().unwrap()
+}
+
 pub trait ToHex {
     fn to_hex(&self) -> String;
 }

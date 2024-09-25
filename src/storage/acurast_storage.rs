@@ -35,6 +35,17 @@ impl AcurastStorage {
             .await
     }
 
+    async fn get_manager_counter(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<u64> {
+        self.storage
+            .get_manager_counter(account_id, block_hash, timeout)
+            .await
+    }
+
     async fn get_asset(
         &self,
         manager_id: i32,

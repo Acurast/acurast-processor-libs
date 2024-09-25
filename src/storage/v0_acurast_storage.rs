@@ -4,7 +4,7 @@ use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::engine::pallet::state::State;
-use crate::hex::{hex_to_ba, read_u128};
+use crate::hex::{hex_to_ba, read_u128, read_u64};
 use crate::types::system::FrameSystemAccountInfo;
 use crate::u8a::biguint_to_u8a;
 use crate::xxhash::xxh128_unsigned;
@@ -26,6 +26,13 @@ pub trait V0AcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<i32>;
+
+    async fn get_manager_counter(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<u64>;
 
     async fn get_asset(
         &self,
@@ -89,6 +96,30 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
                 let value_u128 = read_u128(&ba);
                 let value_i32 = value_u128 as i32;
                 return Some(value_i32);
+            }
+        }
+        None
+    }
+
+    async fn get_manager_counter(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<u64> {
+        let mut key = Vec::new();
+        key.extend_from_slice(&xxh128_unsigned("AcurastProcessorManager".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("ManagerCounter".as_bytes()));
+        key.extend_from_slice(&blake2b_128(account_id, 16));
+        if let Ok(storage_option) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        {
+            if let Some(storage) = storage_option {
+                let ba = hex_to_ba(&storage);
+                let value_u64 = read_u64(&ba);
+                return Some(value_u64);
             }
         }
         None
