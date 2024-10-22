@@ -48,6 +48,21 @@ async fn test_get_runtime_version() {
 }
 
 #[tokio::test]
+async fn test_get_api_version() {
+    let res = AC_RPC.get_api_version(None, None).await;
+    println!("test_get_api_version {}", res);
+    assert!(res != 0)
+}
+
+#[tokio::test]
+async fn test_get_asset() {
+    let storage = AC_RPC.storage(1);
+    let asset = storage.get_asset(12, None, None).await;
+    println!("test_get_asset {:?}", asset);
+    assert!(asset.is_some())
+}
+
+#[tokio::test]
 async fn test_get_storage() {
     let storage = AC_RPC.storage(0);
     let hex_str = "5a6ccbc98ee1293ea246e639b8b30a0454e3bf6bdb2318b8aec27b26e606db8d";
