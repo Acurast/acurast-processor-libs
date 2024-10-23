@@ -5,8 +5,9 @@ use crate::engine::pallet::author::Author;
 use crate::engine::pallet::chain::Chain;
 use crate::engine::pallet::state::{RuntimeVersion, State};
 use crate::hex::hex_to_ba;
-use crate::storage::v0_acurast_storage::V0AcurastStorage;
+use crate::storage::v0_acurast_storage::VXAcurastStorage;
 use crate::storage::v0_acurast_storage::V0AcurastStorageImpl;
+use crate::storage::v1_acurast_storage::V1AcurastStorageImpl;
 use crate::types::header::Header;
 use async_trait::async_trait;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -16,6 +17,7 @@ use std::fmt;
 use std::io::Cursor;
 use std::sync::Arc;
 use xxhash_rust::xxh3::xxh3_64_with_seed;
+use crate::xxhash::xxh128_unsigned;
 
 #[derive(Debug, PartialEq, uniffi::Enum)]
 pub enum AcurastRpcError {
@@ -66,7 +68,7 @@ pub trait AcurastRpc: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<String>;
-    fn storage(&self, version: u32) -> Arc<dyn V0AcurastStorage>;
+    fn storage(&self, version: u32) -> Arc<dyn VXAcurastStorage>;
 }
 
 pub struct AcurastRpcImpl {
@@ -74,7 +76,7 @@ pub struct AcurastRpcImpl {
     state: Arc<State>,
     author: Arc<Author>,
     chain: Arc<Chain>,
-    storages: HashMap<u32, Arc<dyn V0AcurastStorage>>,
+    storages: HashMap<u32, Arc<dyn VXAcurastStorage>>,
 }
 
 impl AcurastRpcImpl {
@@ -83,13 +85,17 @@ impl AcurastRpcImpl {
         let chain = Arc::new(Chain::new());
         let state = Arc::new(State::new());
 
-        let storages: HashMap<u32, Arc<dyn V0AcurastStorage>> = vec![
+        let storages: HashMap<u32, Arc<dyn VXAcurastStorage>> = vec![
             (
                 0,
-                Arc::new(V0AcurastStorageImpl::new(engine.clone(), state.clone()))
-                    as Arc<dyn V0AcurastStorage>,
+                Arc::new(V0AcurastStorageImpl::new(engine.clone(), state.clone(), 0))
+                    as Arc<dyn VXAcurastStorage>,
             ),
-            //(1, Arc::new(V1AcurastStorage::new(engine.clone(), state.clone())) as Arc<dyn AcurastStorage>),
+            (
+                1,
+                Arc::new(V1AcurastStorageImpl::new(engine.clone(), state.clone()))
+                    as Arc<dyn VXAcurastStorage>,
+            )
         ]
         .into_iter()
         .collect();
@@ -104,9 +110,10 @@ impl AcurastRpcImpl {
     }
 
     fn generate_key(prefix: &str, key: &str) -> Vec<u8> {
-        let prefix_hash = xxh128(prefix.as_bytes(), 0);
-        let key_hash = xxh128(key.as_bytes(), 0);
-        [prefix_hash.to_le_bytes(), key_hash.to_le_bytes()].concat()
+        let mut _key = Vec::new();
+        _key.extend_from_slice(&xxh128_unsigned(prefix.as_bytes()));
+        _key.extend_from_slice(&xxh128_unsigned(key.as_bytes()));
+        return _key;
     }
 }
 
@@ -142,10 +149,11 @@ impl AcurastRpc for AcurastRpcImpl {
             .await
         {
             Ok(storage_option) => {
+                println!("get_api_version {:?}", storage_option);
                 if let Some(storage) = storage_option {
-                    let decoded_storage = decode(storage).expect("Decoding failed");
+                    let decoded_storage = hex_to_ba(&storage);
                     let mut cursor = std::io::Cursor::new(decoded_storage);
-                    cursor.read_u32::<BigEndian>().unwrap_or(0)
+                    cursor.read_u32::<LittleEndian>().unwrap_or(0)
                 } else {
                     0
                 }
@@ -242,7 +250,7 @@ impl AcurastRpc for AcurastRpcImpl {
         self.call(method, data, block_hash, timeout).await
     }
 
-    fn storage(&self, version: u32) -> Arc<dyn V0AcurastStorage> {
+    fn storage(&self, version: u32) -> Arc<dyn VXAcurastStorage> {
         self.storages
             .get(&version)
             .cloned()

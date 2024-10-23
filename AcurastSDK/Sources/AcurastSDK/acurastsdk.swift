@@ -544,7 +544,7 @@ public protocol AcurastRpcProtocol : AnyObject {
     
     func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async  -> String?
     
-    func storage(version: UInt32)  -> V0AcurastStorage
+    func storage(version: UInt32)  -> VxAcurastStorage
     
 }
 
@@ -730,8 +730,8 @@ open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)a
         )
 }
     
-open func storage(version: UInt32) -> V0AcurastStorage {
-    return try!  FfiConverterTypeV0AcurastStorage.lift(try! rustCall() {
+open func storage(version: UInt32) -> VxAcurastStorage {
+    return try!  FfiConverterTypeVXAcurastStorage.lift(try! rustCall() {
     uniffi_acurastsdk_fn_method_acurastrpc_storage(self.uniffiClonePointer(),
         FfiConverterUInt32.lower(version),$0
     )
@@ -795,6 +795,8 @@ public protocol AcurastRpcClientProtocol : AnyObject {
     func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async  -> RuntimeVersion
+    
+    func getStorageVersion(blockHash: Data?, timeout: UInt64?) async  -> UInt32
     
     func storage(version: UInt32)  -> AcurastStorage
     
@@ -921,6 +923,24 @@ open func getRuntimeVersion(blockHash: Data?, timeout: UInt64?)async  -> Runtime
         )
 }
     
+open func getStorageVersion(blockHash: Data?, timeout: UInt64?)async  -> UInt32 {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acurastrpcclient_get_storage_version(
+                    self.uniffiClonePointer(),
+                    FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_u32,
+            completeFunc: ffi_acurastsdk_rust_future_complete_u32,
+            freeFunc: ffi_acurastsdk_rust_future_free_u32,
+            liftFunc: FfiConverterUInt32.lift,
+            errorHandler: nil
+            
+        )
+}
+    
 open func storage(version: UInt32) -> AcurastStorage {
     return try!  FfiConverterTypeAcurastStorage.lift(try! rustCall() {
     uniffi_acurastsdk_fn_method_acurastrpcclient_storage(self.uniffiClonePointer(),
@@ -1038,11 +1058,11 @@ open class AcurastStorage:
     public func uniffiClonePointer() -> UnsafeMutableRawPointer {
         return try! rustCall { uniffi_acurastsdk_fn_clone_acuraststorage(self.pointer, $0) }
     }
-public convenience init(storage: V0AcurastStorage) {
+public convenience init(storage: VxAcurastStorage) {
     let pointer =
         try! rustCall() {
     uniffi_acurastsdk_fn_constructor_acuraststorage_new(
-        FfiConverterTypeV0AcurastStorage.lower(storage),$0
+        FfiConverterTypeVXAcurastStorage.lower(storage),$0
     )
 }
     self.init(unsafeFromRawPointer: pointer)
@@ -1699,7 +1719,7 @@ public func FfiConverterTypeSecp256r1_lower(_ value: Secp256r1) -> UnsafeMutable
 
 
 
-public protocol V0AcurastStorageProtocol : AnyObject {
+public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
     
@@ -1715,8 +1735,8 @@ public protocol V0AcurastStorageProtocol : AnyObject {
     
 }
 
-open class V0AcurastStorage:
-    V0AcurastStorageProtocol {
+open class VxAcurastStorage:
+    VxAcurastStorageProtocol {
     fileprivate let pointer: UnsafeMutableRawPointer!
 
     /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
@@ -1741,7 +1761,7 @@ open class V0AcurastStorage:
     }
 
     public func uniffiClonePointer() -> UnsafeMutableRawPointer {
-        return try! rustCall { uniffi_acurastsdk_fn_clone_v0acuraststorage(self.pointer, $0) }
+        return try! rustCall { uniffi_acurastsdk_fn_clone_vxacuraststorage(self.pointer, $0) }
     }
     // No primary constructor declared for this class.
 
@@ -1750,7 +1770,7 @@ open class V0AcurastStorage:
             return
         }
 
-        try! rustCall { uniffi_acurastsdk_fn_free_v0acuraststorage(pointer, $0) }
+        try! rustCall { uniffi_acurastsdk_fn_free_vxacuraststorage(pointer, $0) }
     }
 
     
@@ -1760,7 +1780,7 @@ open func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt6
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_v0acuraststorage_get_manager_identifier(
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_manager_identifier(
                     self.uniffiClonePointer(),
                     FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
@@ -1778,7 +1798,7 @@ open func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?)
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_v0acuraststorage_get_manager_counter(
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_manager_counter(
                     self.uniffiClonePointer(),
                     FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
@@ -1796,7 +1816,7 @@ open func getAsset(managerId: Int32, blockHash: Data?, timeout: UInt64?)async  -
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_v0acuraststorage_get_asset(
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_asset(
                     self.uniffiClonePointer(),
                     FfiConverterInt32.lower(managerId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
@@ -1814,7 +1834,7 @@ open func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_v0acuraststorage_get_account_info(
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_account_info(
                     self.uniffiClonePointer(),
                     FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
@@ -1832,7 +1852,7 @@ open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)as
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_v0acuraststorage_get_assigned_jobs(
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_assigned_jobs(
                     self.uniffiClonePointer(),
                     FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
@@ -1850,7 +1870,7 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_v0acuraststorage_get_job_registration(
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_job_registration(
                     self.uniffiClonePointer(),
                     FfiConverterTypeJobIdentifier.lower(jobIdentifier),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
@@ -1867,20 +1887,20 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
 
 }
 
-public struct FfiConverterTypeV0AcurastStorage: FfiConverter {
+public struct FfiConverterTypeVXAcurastStorage: FfiConverter {
 
     typealias FfiType = UnsafeMutableRawPointer
-    typealias SwiftType = V0AcurastStorage
+    typealias SwiftType = VxAcurastStorage
 
-    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> V0AcurastStorage {
-        return V0AcurastStorage(unsafeFromRawPointer: pointer)
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> VxAcurastStorage {
+        return VxAcurastStorage(unsafeFromRawPointer: pointer)
     }
 
-    public static func lower(_ value: V0AcurastStorage) -> UnsafeMutableRawPointer {
+    public static func lower(_ value: VxAcurastStorage) -> UnsafeMutableRawPointer {
         return value.uniffiClonePointer()
     }
 
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> V0AcurastStorage {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> VxAcurastStorage {
         let v: UInt64 = try readInt(&buf)
         // The Rust code won't compile if a pointer won't fit in a UInt64.
         // We have to go via `UInt` because that's the thing that's the size of a pointer.
@@ -1891,7 +1911,7 @@ public struct FfiConverterTypeV0AcurastStorage: FfiConverter {
         return try lift(ptr!)
     }
 
-    public static func write(_ value: V0AcurastStorage, into buf: inout [UInt8]) {
+    public static func write(_ value: VxAcurastStorage, into buf: inout [UInt8]) {
         // This fiddling is because `Int` is the thing that's the same size as a pointer.
         // The Rust code won't compile if a pointer won't fit in a `UInt64`.
         writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
@@ -1901,12 +1921,12 @@ public struct FfiConverterTypeV0AcurastStorage: FfiConverter {
 
 
 
-public func FfiConverterTypeV0AcurastStorage_lift(_ pointer: UnsafeMutableRawPointer) throws -> V0AcurastStorage {
-    return try FfiConverterTypeV0AcurastStorage.lift(pointer)
+public func FfiConverterTypeVXAcurastStorage_lift(_ pointer: UnsafeMutableRawPointer) throws -> VxAcurastStorage {
+    return try FfiConverterTypeVXAcurastStorage.lift(pointer)
 }
 
-public func FfiConverterTypeV0AcurastStorage_lower(_ value: V0AcurastStorage) -> UnsafeMutableRawPointer {
-    return FfiConverterTypeV0AcurastStorage.lower(value)
+public func FfiConverterTypeVXAcurastStorage_lower(_ value: VxAcurastStorage) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeVXAcurastStorage.lower(value)
 }
 
 
@@ -3963,7 +3983,7 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 47860) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 43777) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 52316) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_call() != 3780) {
@@ -3976,6 +3996,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_runtime_version() != 44732) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_storage_version() != 7929) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_storage() != 52623) {
@@ -4014,28 +4037,28 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_secp256r1_to_u8a() != 28270) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_manager_identifier() != 51828) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_manager_identifier() != 12443) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_manager_counter() != 50498) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_manager_counter() != 56558) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_asset() != 29411) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_asset() != 56054) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_account_info() != 32075) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_account_info() != 12690) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_assigned_jobs() != 38073) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_assigned_jobs() != 13508) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_v0acuraststorage_get_job_registration() != 49245) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_registration() != 2370) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_constructor_acuraststorage_new() != 47104) {
+    if (uniffi_acurastsdk_checksum_constructor_acuraststorage_new() != 43717) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_ed25519_new() != 65413) {

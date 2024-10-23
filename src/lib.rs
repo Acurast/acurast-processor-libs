@@ -114,4 +114,11 @@ impl AcurastRpcClient {
         let storage = self.acurastrpc.storage(version);
         AcurastStorage::new(storage)
     }
+    pub async fn get_storage_version(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> u32 {
+        self.acurastrpc.get_api_version(block_hash, timeout).await
+    }
 }

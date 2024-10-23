@@ -1,4 +1,4 @@
-use super::v0_acurast_storage::V0AcurastStorage;
+use super::v0_acurast_storage::VXAcurastStorage;
 use crate::{
     codec::types::{
         acurast::{job_identifier::JobIdentifier, job_registration::JobRegistration},
@@ -11,13 +11,13 @@ use std::sync::Arc;
 
 #[derive(uniffi::Object)]
 pub struct AcurastStorage {
-    pub storage: Arc<dyn V0AcurastStorage>,
+    pub storage: Arc<dyn VXAcurastStorage>,
 }
 
 #[uniffi::export]
 impl AcurastStorage {
     #[uniffi::constructor]
-    pub fn new(storage: Arc<dyn V0AcurastStorage>) -> Arc<Self> {
+    pub fn new(storage: Arc<dyn VXAcurastStorage>) -> Arc<Self> {
         Arc::new(Self { storage: storage })
     }
 }

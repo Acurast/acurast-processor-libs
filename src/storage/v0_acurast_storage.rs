@@ -19,7 +19,7 @@ use std::sync::Arc;
 
 #[uniffi::export]
 #[async_trait]
-pub trait V0AcurastStorage: Send + Sync {
+pub trait VXAcurastStorage: Send + Sync {
     async fn get_manager_identifier(
         &self,
         account_id: &[u8],
@@ -66,16 +66,17 @@ pub trait V0AcurastStorage: Send + Sync {
 pub struct V0AcurastStorageImpl {
     engine: Arc<dyn RpcEngine>,
     state: Arc<State>,
+    version: u32,
 }
 
 impl V0AcurastStorageImpl {
-    pub fn new(engine: Arc<dyn RpcEngine>, state: Arc<State>) -> Self {
-        Self { engine, state }
+    pub fn new(engine: Arc<dyn RpcEngine>, state: Arc<State>, version: u32) -> Self {
+        Self { engine, state, version: version }
     }
 }
 
 #[async_trait]
-impl V0AcurastStorage for V0AcurastStorageImpl {
+impl VXAcurastStorage for V0AcurastStorageImpl {
     async fn get_manager_identifier(
         &self,
         account_id: &[u8],
@@ -206,7 +207,7 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
             if !storage.is_empty() {
                 for change in &storage[0].changes {
                     let job_assignment =
-                        JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0)
+                        JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), self.version)
                             .unwrap();
                     jobs.push(job_assignment);
                     /*if let Ok(job_assignment) = JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0) {
@@ -244,7 +245,7 @@ impl V0AcurastStorage for V0AcurastStorageImpl {
             if let Some(storage) = storage_option {
                 let ba = hex_to_ba(&storage);
                 let mut cursor = Cursor::new(ba);
-                return Some(JobRegistration::read(&mut cursor, 0).unwrap());
+                return Some(JobRegistration::read(&mut cursor, self.version).unwrap());
             }
         }
         None
