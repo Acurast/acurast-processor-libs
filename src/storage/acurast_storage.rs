@@ -1,7 +1,7 @@
 use super::v0_acurast_storage::VXAcurastStorage;
 use crate::{
     codec::types::{
-        acurast::{job_identifier::JobIdentifier, job_registration::JobRegistration},
+        acurast::{job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration},
         marketplace::job_assigment::JobAssignment,
         uniques::pallet_uniques_item_details::PalletUniquesItemDetails,
     },
@@ -87,6 +87,18 @@ impl AcurastStorage {
     ) -> Option<JobRegistration> {
         self.storage
             .get_job_registration(job_identifier, block_hash, timeout)
+            .await
+    }
+
+    async fn get_job_environment(
+        &self,
+        job_identifier: JobIdentifier,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<JobEnvironment> {
+        self.storage
+            .get_job_environment(job_identifier, account_id, block_hash, timeout)
             .await
     }
 }

@@ -129,6 +129,16 @@ impl JobIdentifier {
             id: BigUint::ZERO,
         }
     }
+
+    pub fn from_integer(id: u128, source: Vec<u8>) -> Self {
+        JobIdentifier {
+            origin: MultiOrigin {
+                kind: Kind::Acurast,
+                source,
+            },
+            id: BigUint::from(id),
+        }
+    }
 }
 
 impl fmt::Display for JobIdentifier {
