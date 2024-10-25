@@ -1,4 +1,5 @@
-use crate::codec::types::acurast::job_identifier::JobIdentifier;
+use crate::codec::types::account_id;
+use crate::codec::types::acurast::{job_environment::JobEnvironment, job_identifier::JobIdentifier};
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
@@ -74,5 +75,15 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<JobRegistration> {
         self.base.get_job_registration(job_identifier, block_hash, timeout).await
+    }
+
+    async fn get_job_environment(
+        &self,
+        job_identifier: JobIdentifier,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<JobEnvironment> {
+        self.base.get_job_environment(job_identifier, account_id, block_hash, timeout).await
     }
 }

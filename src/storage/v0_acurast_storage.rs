@@ -1,4 +1,5 @@
 use crate::big_uint::BigIntToInt;
+use crate::codec::types::acurast::job_environment::JobEnvironment;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
@@ -61,6 +62,14 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<JobRegistration>;
+
+    async fn get_job_environment(
+        &self,
+        job_identifier: JobIdentifier,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<JobEnvironment>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -246,6 +255,39 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                 let ba = hex_to_ba(&storage);
                 let mut cursor = Cursor::new(ba);
                 return Some(JobRegistration::read(&mut cursor, self.version).unwrap());
+            }
+        }
+        None
+    }
+
+    async fn get_job_environment(
+        &self,
+        job_identifier: JobIdentifier,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<JobEnvironment> {
+        let mut key: Vec<u8> = Vec::new();
+        let mut origin = job_identifier.origin.to_u8a();
+        let job_id = job_identifier.id.to_u8a();
+        origin.extend(job_id);
+
+        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("ExecutionEnvironment".as_bytes()));
+        key.extend_from_slice(&blake2b_128(&origin, 16));
+        key.extend_from_slice(&origin);
+        key.extend_from_slice(&blake2b_128(&account_id, 16));
+        key.extend_from_slice(&account_id);
+
+        if let Ok(storage_option) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        {
+            if let Some(storage) = storage_option {
+                let ba = hex_to_ba(&storage);
+                let mut cursor = Cursor::new(ba);
+                return Some(JobEnvironment::read(&mut cursor, self.version).unwrap());
             }
         }
         None

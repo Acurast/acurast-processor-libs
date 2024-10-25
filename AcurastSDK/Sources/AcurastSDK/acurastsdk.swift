@@ -1022,6 +1022,8 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> [JobAssignment]
     
+    func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> JobEnvironment?
+    
     func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
     
     func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> UInt64?
@@ -1128,6 +1130,24 @@ open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)as
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeJobAssignment.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> JobEnvironment? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_job_environment(
+                    self.uniffiClonePointer(),
+                    FfiConverterTypeJobIdentifier.lower(jobIdentifier),FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeJobEnvironment.lift,
             errorHandler: nil
             
         )
@@ -1733,6 +1753,8 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
     
+    func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> JobEnvironment?
+    
 }
 
 open class VxAcurastStorage:
@@ -1879,6 +1901,24 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobRegistration.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> JobEnvironment? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_job_environment(
+                    self.uniffiClonePointer(),
+                    FfiConverterTypeJobIdentifier.lower(jobIdentifier),FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeJobEnvironment.lift,
             errorHandler: nil
             
         )
@@ -2327,6 +2367,63 @@ public func FfiConverterTypeJobAssignment_lift(_ buf: RustBuffer) throws -> JobA
 
 public func FfiConverterTypeJobAssignment_lower(_ value: JobAssignment) -> RustBuffer {
     return FfiConverterTypeJobAssignment.lower(value)
+}
+
+
+public struct JobEnvironment {
+    public var publicKey: Data
+    public var vars: [Variable]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(publicKey: Data, vars: [Variable]) {
+        self.publicKey = publicKey
+        self.vars = vars
+    }
+}
+
+
+
+extension JobEnvironment: Equatable, Hashable {
+    public static func ==(lhs: JobEnvironment, rhs: JobEnvironment) -> Bool {
+        if lhs.publicKey != rhs.publicKey {
+            return false
+        }
+        if lhs.vars != rhs.vars {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(publicKey)
+        hasher.combine(vars)
+    }
+}
+
+
+public struct FfiConverterTypeJobEnvironment: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> JobEnvironment {
+        return
+            try JobEnvironment(
+                publicKey: FfiConverterData.read(from: &buf), 
+                vars: FfiConverterSequenceTypeVariable.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: JobEnvironment, into buf: inout [UInt8]) {
+        FfiConverterData.write(value.publicKey, into: &buf)
+        FfiConverterSequenceTypeVariable.write(value.vars, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeJobEnvironment_lift(_ buf: RustBuffer) throws -> JobEnvironment {
+    return try FfiConverterTypeJobEnvironment.lift(buf)
+}
+
+public func FfiConverterTypeJobEnvironment_lower(_ value: JobEnvironment) -> RustBuffer {
+    return FfiConverterTypeJobEnvironment.lower(value)
 }
 
 
@@ -3109,6 +3206,63 @@ public func FfiConverterTypeSubmitAttestationExtrinsic_lower(_ value: SubmitAtte
     return FfiConverterTypeSubmitAttestationExtrinsic.lower(value)
 }
 
+
+public struct Variable {
+    public var key: String
+    public var value: Data
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(key: String, value: Data) {
+        self.key = key
+        self.value = value
+    }
+}
+
+
+
+extension Variable: Equatable, Hashable {
+    public static func ==(lhs: Variable, rhs: Variable) -> Bool {
+        if lhs.key != rhs.key {
+            return false
+        }
+        if lhs.value != rhs.value {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(key)
+        hasher.combine(value)
+    }
+}
+
+
+public struct FfiConverterTypeVariable: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Variable {
+        return
+            try Variable(
+                key: FfiConverterString.read(from: &buf), 
+                value: FfiConverterData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Variable, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.key, into: &buf)
+        FfiConverterData.write(value.value, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeVariable_lift(_ buf: RustBuffer) throws -> Variable {
+    return try FfiConverterTypeVariable.lift(buf)
+}
+
+public func FfiConverterTypeVariable_lower(_ value: Variable) -> RustBuffer {
+    return FfiConverterTypeVariable.lower(value)
+}
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
@@ -3672,6 +3826,27 @@ fileprivate struct FfiConverterOptionData: FfiConverterRustBuffer {
     }
 }
 
+fileprivate struct FfiConverterOptionTypeJobEnvironment: FfiConverterRustBuffer {
+    typealias SwiftType = JobEnvironment?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeJobEnvironment.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeJobEnvironment.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionTypeJobRegistration: FfiConverterRustBuffer {
     typealias SwiftType = JobRegistration?
 
@@ -3817,6 +3992,28 @@ fileprivate struct FfiConverterSequenceTypeJobAssignment: FfiConverterRustBuffer
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeJobAssignment.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceTypeVariable: FfiConverterRustBuffer {
+    typealias SwiftType = [Variable]
+
+    public static func write(_ value: [Variable], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeVariable.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Variable] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Variable]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeVariable.read(from: &buf))
         }
         return seq
     }
@@ -4016,6 +4213,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_assigned_jobs() != 59376) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_environment() != 382) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_registration() != 27665) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -4053,6 +4253,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_registration() != 2370) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_environment() != 2561) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {
