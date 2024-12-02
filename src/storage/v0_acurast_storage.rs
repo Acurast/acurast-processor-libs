@@ -70,6 +70,13 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<JobEnvironment>;
+
+    async fn is_attested(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> bool;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -291,6 +298,35 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             }
         }
         None
+    }
+
+    async fn is_attested(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> bool {
+        let mut key: Vec<u8> = Vec::new();
+        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("StoredAttestation".as_bytes()));
+        key.extend_from_slice(&blake2b_128(account_id, 16));
+        key.extend_from_slice(account_id);
+
+        println!("is_attested: {:?}", account_id);
+        let keys = self
+            .state
+            .get_keys(&key, block_hash, timeout, &self.engine)
+            .await
+            .unwrap_or(Vec::new());
+        if let Ok(storage) = self
+            .state
+            .get_storage_at(keys, None, None, &self.engine)
+            .await
+        {
+            println!("is_attested {:?}", storage);
+            return !storage.is_empty();
+        }
+        false
     }
 }
 
