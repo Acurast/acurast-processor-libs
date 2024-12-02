@@ -1030,6 +1030,8 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
     
+    func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Bool
+    
 }
 
 open class AcurastStorage:
@@ -1202,6 +1204,24 @@ open func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt6
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionInt32.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> Bool {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_is_attested(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_i8,
+            completeFunc: ffi_acurastsdk_rust_future_complete_i8,
+            freeFunc: ffi_acurastsdk_rust_future_free_i8,
+            liftFunc: FfiConverterBool.lift,
             errorHandler: nil
             
         )
@@ -1755,6 +1775,8 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> JobEnvironment?
     
+    func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Bool
+    
 }
 
 open class VxAcurastStorage:
@@ -1919,6 +1941,24 @@ open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, block
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobEnvironment.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> Bool {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_is_attested(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_i8,
+            completeFunc: ffi_acurastsdk_rust_future_complete_i8,
+            freeFunc: ffi_acurastsdk_rust_future_free_i8,
+            liftFunc: FfiConverterBool.lift,
             errorHandler: nil
             
         )
@@ -4225,6 +4265,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_identifier() != 46517) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_is_attested() != 2160) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_ed25519_to_u8a() != 60190) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -4256,6 +4299,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_environment() != 2561) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_is_attested() != 50117) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {

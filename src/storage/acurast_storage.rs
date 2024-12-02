@@ -101,4 +101,15 @@ impl AcurastStorage {
             .get_job_environment(job_identifier, account_id, block_hash, timeout)
             .await
     }
+
+    async fn is_attested(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> bool {
+        self.storage
+            .is_attested(account_id, block_hash, timeout)
+            .await
+    }
 }
