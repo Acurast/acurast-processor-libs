@@ -1022,6 +1022,8 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> [JobAssignment]
     
+    func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
+    
     func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> JobEnvironment?
     
     func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
@@ -1132,6 +1134,24 @@ open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)as
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeJobAssignment.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> Attestation? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_attestation(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeAttestation.lift,
             errorHandler: nil
             
         )
@@ -1777,6 +1797,8 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Bool
     
+    func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
+    
 }
 
 open class VxAcurastStorage:
@@ -1964,6 +1986,24 @@ open func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?)async  
         )
 }
     
+open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> Attestation? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_attestation(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeAttestation.lift,
+            errorHandler: nil
+            
+        )
+}
+    
 
 }
 
@@ -2056,6 +2096,339 @@ public func FfiConverterTypeAccountId32_lift(_ buf: RustBuffer) throws -> Accoun
 
 public func FfiConverterTypeAccountId32_lower(_ value: AccountId32) -> RustBuffer {
     return FfiConverterTypeAccountId32.lower(value)
+}
+
+
+public struct Attestation {
+    public var certIds: [CertId]
+    public var content: AttestationContent
+    public var validity: AttestationValidity
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(certIds: [CertId], content: AttestationContent, validity: AttestationValidity) {
+        self.certIds = certIds
+        self.content = content
+        self.validity = validity
+    }
+}
+
+
+
+extension Attestation: Equatable, Hashable {
+    public static func ==(lhs: Attestation, rhs: Attestation) -> Bool {
+        if lhs.certIds != rhs.certIds {
+            return false
+        }
+        if lhs.content != rhs.content {
+            return false
+        }
+        if lhs.validity != rhs.validity {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(certIds)
+        hasher.combine(content)
+        hasher.combine(validity)
+    }
+}
+
+
+public struct FfiConverterTypeAttestation: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Attestation {
+        return
+            try Attestation(
+                certIds: FfiConverterSequenceTypeCertId.read(from: &buf), 
+                content: FfiConverterTypeAttestationContent.read(from: &buf), 
+                validity: FfiConverterTypeAttestationValidity.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Attestation, into buf: inout [UInt8]) {
+        FfiConverterSequenceTypeCertId.write(value.certIds, into: &buf)
+        FfiConverterTypeAttestationContent.write(value.content, into: &buf)
+        FfiConverterTypeAttestationValidity.write(value.validity, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeAttestation_lift(_ buf: RustBuffer) throws -> Attestation {
+    return try FfiConverterTypeAttestation.lift(buf)
+}
+
+public func FfiConverterTypeAttestation_lower(_ value: Attestation) -> RustBuffer {
+    return FfiConverterTypeAttestation.lower(value)
+}
+
+
+public struct AttestationValidity {
+    public var notBefore: UInt64
+    public var notAfter: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(notBefore: UInt64, notAfter: UInt64) {
+        self.notBefore = notBefore
+        self.notAfter = notAfter
+    }
+}
+
+
+
+extension AttestationValidity: Equatable, Hashable {
+    public static func ==(lhs: AttestationValidity, rhs: AttestationValidity) -> Bool {
+        if lhs.notBefore != rhs.notBefore {
+            return false
+        }
+        if lhs.notAfter != rhs.notAfter {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(notBefore)
+        hasher.combine(notAfter)
+    }
+}
+
+
+public struct FfiConverterTypeAttestationValidity: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AttestationValidity {
+        return
+            try AttestationValidity(
+                notBefore: FfiConverterUInt64.read(from: &buf), 
+                notAfter: FfiConverterUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AttestationValidity, into buf: inout [UInt8]) {
+        FfiConverterUInt64.write(value.notBefore, into: &buf)
+        FfiConverterUInt64.write(value.notAfter, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeAttestationValidity_lift(_ buf: RustBuffer) throws -> AttestationValidity {
+    return try FfiConverterTypeAttestationValidity.lift(buf)
+}
+
+public func FfiConverterTypeAttestationValidity_lower(_ value: AttestationValidity) -> RustBuffer {
+    return FfiConverterTypeAttestationValidity.lower(value)
+}
+
+
+public struct CertId {
+    public var issuerName: Data
+    public var serialNumber: Data
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(issuerName: Data, serialNumber: Data) {
+        self.issuerName = issuerName
+        self.serialNumber = serialNumber
+    }
+}
+
+
+
+extension CertId: Equatable, Hashable {
+    public static func ==(lhs: CertId, rhs: CertId) -> Bool {
+        if lhs.issuerName != rhs.issuerName {
+            return false
+        }
+        if lhs.serialNumber != rhs.serialNumber {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(issuerName)
+        hasher.combine(serialNumber)
+    }
+}
+
+
+public struct FfiConverterTypeCertId: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CertId {
+        return
+            try CertId(
+                issuerName: FfiConverterData.read(from: &buf), 
+                serialNumber: FfiConverterData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: CertId, into buf: inout [UInt8]) {
+        FfiConverterData.write(value.issuerName, into: &buf)
+        FfiConverterData.write(value.serialNumber, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeCertId_lift(_ buf: RustBuffer) throws -> CertId {
+    return try FfiConverterTypeCertId.lift(buf)
+}
+
+public func FfiConverterTypeCertId_lower(_ value: CertId) -> RustBuffer {
+    return FfiConverterTypeCertId.lower(value)
+}
+
+
+public struct DeviceAttestation {
+    public var keyUsageProperties: KeyUsageProperties
+    public var deviceOsInformation: DeviceOsInformation
+    public var nonce: Nonce
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(keyUsageProperties: KeyUsageProperties, deviceOsInformation: DeviceOsInformation, nonce: Nonce) {
+        self.keyUsageProperties = keyUsageProperties
+        self.deviceOsInformation = deviceOsInformation
+        self.nonce = nonce
+    }
+}
+
+
+
+extension DeviceAttestation: Equatable, Hashable {
+    public static func ==(lhs: DeviceAttestation, rhs: DeviceAttestation) -> Bool {
+        if lhs.keyUsageProperties != rhs.keyUsageProperties {
+            return false
+        }
+        if lhs.deviceOsInformation != rhs.deviceOsInformation {
+            return false
+        }
+        if lhs.nonce != rhs.nonce {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(keyUsageProperties)
+        hasher.combine(deviceOsInformation)
+        hasher.combine(nonce)
+    }
+}
+
+
+public struct FfiConverterTypeDeviceAttestation: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DeviceAttestation {
+        return
+            try DeviceAttestation(
+                keyUsageProperties: FfiConverterTypeKeyUsageProperties.read(from: &buf), 
+                deviceOsInformation: FfiConverterTypeDeviceOsInformation.read(from: &buf), 
+                nonce: FfiConverterTypeNonce.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: DeviceAttestation, into buf: inout [UInt8]) {
+        FfiConverterTypeKeyUsageProperties.write(value.keyUsageProperties, into: &buf)
+        FfiConverterTypeDeviceOsInformation.write(value.deviceOsInformation, into: &buf)
+        FfiConverterTypeNonce.write(value.nonce, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeDeviceAttestation_lift(_ buf: RustBuffer) throws -> DeviceAttestation {
+    return try FfiConverterTypeDeviceAttestation.lift(buf)
+}
+
+public func FfiConverterTypeDeviceAttestation_lower(_ value: DeviceAttestation) -> RustBuffer {
+    return FfiConverterTypeDeviceAttestation.lower(value)
+}
+
+
+public struct DeviceOsInformation {
+    public var t1400: Data?
+    public var t1104: UInt64?
+    public var t1403: Data?
+    public var t1420: Data?
+    public var t1026: Data?
+    public var t1029: Data?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(t1400: Data?, t1104: UInt64?, t1403: Data?, t1420: Data?, t1026: Data?, t1029: Data?) {
+        self.t1400 = t1400
+        self.t1104 = t1104
+        self.t1403 = t1403
+        self.t1420 = t1420
+        self.t1026 = t1026
+        self.t1029 = t1029
+    }
+}
+
+
+
+extension DeviceOsInformation: Equatable, Hashable {
+    public static func ==(lhs: DeviceOsInformation, rhs: DeviceOsInformation) -> Bool {
+        if lhs.t1400 != rhs.t1400 {
+            return false
+        }
+        if lhs.t1104 != rhs.t1104 {
+            return false
+        }
+        if lhs.t1403 != rhs.t1403 {
+            return false
+        }
+        if lhs.t1420 != rhs.t1420 {
+            return false
+        }
+        if lhs.t1026 != rhs.t1026 {
+            return false
+        }
+        if lhs.t1029 != rhs.t1029 {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(t1400)
+        hasher.combine(t1104)
+        hasher.combine(t1403)
+        hasher.combine(t1420)
+        hasher.combine(t1026)
+        hasher.combine(t1029)
+    }
+}
+
+
+public struct FfiConverterTypeDeviceOsInformation: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DeviceOsInformation {
+        return
+            try DeviceOsInformation(
+                t1400: FfiConverterOptionData.read(from: &buf), 
+                t1104: FfiConverterOptionUInt64.read(from: &buf), 
+                t1403: FfiConverterOptionData.read(from: &buf), 
+                t1420: FfiConverterOptionData.read(from: &buf), 
+                t1026: FfiConverterOptionData.read(from: &buf), 
+                t1029: FfiConverterOptionData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: DeviceOsInformation, into buf: inout [UInt8]) {
+        FfiConverterOptionData.write(value.t1400, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1104, into: &buf)
+        FfiConverterOptionData.write(value.t1403, into: &buf)
+        FfiConverterOptionData.write(value.t1420, into: &buf)
+        FfiConverterOptionData.write(value.t1026, into: &buf)
+        FfiConverterOptionData.write(value.t1029, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeDeviceOsInformation_lift(_ buf: RustBuffer) throws -> DeviceOsInformation {
+    return try FfiConverterTypeDeviceOsInformation.lift(buf)
+}
+
+public func FfiConverterTypeDeviceOsInformation_lower(_ value: DeviceOsInformation) -> RustBuffer {
+    return FfiConverterTypeDeviceOsInformation.lower(value)
 }
 
 
@@ -2816,6 +3189,200 @@ public func FfiConverterTypeJobSchedule_lower(_ value: JobSchedule) -> RustBuffe
 }
 
 
+public struct KeyDescription {
+    public var attestationSecurityLevel: UInt8
+    public var keyMintSecurityLevel: UInt8
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(attestationSecurityLevel: UInt8, keyMintSecurityLevel: UInt8) {
+        self.attestationSecurityLevel = attestationSecurityLevel
+        self.keyMintSecurityLevel = keyMintSecurityLevel
+    }
+}
+
+
+
+extension KeyDescription: Equatable, Hashable {
+    public static func ==(lhs: KeyDescription, rhs: KeyDescription) -> Bool {
+        if lhs.attestationSecurityLevel != rhs.attestationSecurityLevel {
+            return false
+        }
+        if lhs.keyMintSecurityLevel != rhs.keyMintSecurityLevel {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(attestationSecurityLevel)
+        hasher.combine(keyMintSecurityLevel)
+    }
+}
+
+
+public struct FfiConverterTypeKeyDescription: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> KeyDescription {
+        return
+            try KeyDescription(
+                attestationSecurityLevel: FfiConverterUInt8.read(from: &buf), 
+                keyMintSecurityLevel: FfiConverterUInt8.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: KeyDescription, into buf: inout [UInt8]) {
+        FfiConverterUInt8.write(value.attestationSecurityLevel, into: &buf)
+        FfiConverterUInt8.write(value.keyMintSecurityLevel, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeKeyDescription_lift(_ buf: RustBuffer) throws -> KeyDescription {
+    return try FfiConverterTypeKeyDescription.lift(buf)
+}
+
+public func FfiConverterTypeKeyDescription_lower(_ value: KeyDescription) -> RustBuffer {
+    return FfiConverterTypeKeyDescription.lower(value)
+}
+
+
+public struct KeyUsageProperties {
+    public var t4: UInt64?
+    public var t1200: UInt64?
+    public var t1201: UInt64?
+    public var t1202: UInt64?
+    public var t1203: UInt64?
+    public var t1204: Data?
+    public var t5: Data?
+    public var t1206: UInt64?
+    public var t1207: UInt64?
+    public var t1209: UInt64?
+    public var t1210: UInt64?
+    public var t1211: UInt64?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(t4: UInt64?, t1200: UInt64?, t1201: UInt64?, t1202: UInt64?, t1203: UInt64?, t1204: Data?, t5: Data?, t1206: UInt64?, t1207: UInt64?, t1209: UInt64?, t1210: UInt64?, t1211: UInt64?) {
+        self.t4 = t4
+        self.t1200 = t1200
+        self.t1201 = t1201
+        self.t1202 = t1202
+        self.t1203 = t1203
+        self.t1204 = t1204
+        self.t5 = t5
+        self.t1206 = t1206
+        self.t1207 = t1207
+        self.t1209 = t1209
+        self.t1210 = t1210
+        self.t1211 = t1211
+    }
+}
+
+
+
+extension KeyUsageProperties: Equatable, Hashable {
+    public static func ==(lhs: KeyUsageProperties, rhs: KeyUsageProperties) -> Bool {
+        if lhs.t4 != rhs.t4 {
+            return false
+        }
+        if lhs.t1200 != rhs.t1200 {
+            return false
+        }
+        if lhs.t1201 != rhs.t1201 {
+            return false
+        }
+        if lhs.t1202 != rhs.t1202 {
+            return false
+        }
+        if lhs.t1203 != rhs.t1203 {
+            return false
+        }
+        if lhs.t1204 != rhs.t1204 {
+            return false
+        }
+        if lhs.t5 != rhs.t5 {
+            return false
+        }
+        if lhs.t1206 != rhs.t1206 {
+            return false
+        }
+        if lhs.t1207 != rhs.t1207 {
+            return false
+        }
+        if lhs.t1209 != rhs.t1209 {
+            return false
+        }
+        if lhs.t1210 != rhs.t1210 {
+            return false
+        }
+        if lhs.t1211 != rhs.t1211 {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(t4)
+        hasher.combine(t1200)
+        hasher.combine(t1201)
+        hasher.combine(t1202)
+        hasher.combine(t1203)
+        hasher.combine(t1204)
+        hasher.combine(t5)
+        hasher.combine(t1206)
+        hasher.combine(t1207)
+        hasher.combine(t1209)
+        hasher.combine(t1210)
+        hasher.combine(t1211)
+    }
+}
+
+
+public struct FfiConverterTypeKeyUsageProperties: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> KeyUsageProperties {
+        return
+            try KeyUsageProperties(
+                t4: FfiConverterOptionUInt64.read(from: &buf), 
+                t1200: FfiConverterOptionUInt64.read(from: &buf), 
+                t1201: FfiConverterOptionUInt64.read(from: &buf), 
+                t1202: FfiConverterOptionUInt64.read(from: &buf), 
+                t1203: FfiConverterOptionUInt64.read(from: &buf), 
+                t1204: FfiConverterOptionData.read(from: &buf), 
+                t5: FfiConverterOptionData.read(from: &buf), 
+                t1206: FfiConverterOptionUInt64.read(from: &buf), 
+                t1207: FfiConverterOptionUInt64.read(from: &buf), 
+                t1209: FfiConverterOptionUInt64.read(from: &buf), 
+                t1210: FfiConverterOptionUInt64.read(from: &buf), 
+                t1211: FfiConverterOptionUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: KeyUsageProperties, into buf: inout [UInt8]) {
+        FfiConverterOptionUInt64.write(value.t4, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1200, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1201, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1202, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1203, into: &buf)
+        FfiConverterOptionData.write(value.t1204, into: &buf)
+        FfiConverterOptionData.write(value.t5, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1206, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1207, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1209, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1210, into: &buf)
+        FfiConverterOptionUInt64.write(value.t1211, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeKeyUsageProperties_lift(_ buf: RustBuffer) throws -> KeyUsageProperties {
+    return try FfiConverterTypeKeyUsageProperties.lift(buf)
+}
+
+public func FfiConverterTypeKeyUsageProperties_lower(_ value: KeyUsageProperties) -> RustBuffer {
+    return FfiConverterTypeKeyUsageProperties.lower(value)
+}
+
+
 public struct MultiAddress {
     public var accountIdentifier: AccountIdentifier
     public var bytes: Data
@@ -2927,6 +3494,55 @@ public func FfiConverterTypeMultiOrigin_lift(_ buf: RustBuffer) throws -> MultiO
 
 public func FfiConverterTypeMultiOrigin_lower(_ value: MultiOrigin) -> RustBuffer {
     return FfiConverterTypeMultiOrigin.lower(value)
+}
+
+
+public struct Nonce {
+    public var nonce: Data?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(nonce: Data?) {
+        self.nonce = nonce
+    }
+}
+
+
+
+extension Nonce: Equatable, Hashable {
+    public static func ==(lhs: Nonce, rhs: Nonce) -> Bool {
+        if lhs.nonce != rhs.nonce {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(nonce)
+    }
+}
+
+
+public struct FfiConverterTypeNonce: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Nonce {
+        return
+            try Nonce(
+                nonce: FfiConverterOptionData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Nonce, into buf: inout [UInt8]) {
+        FfiConverterOptionData.write(value.nonce, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeNonce_lift(_ buf: RustBuffer) throws -> Nonce {
+    return try FfiConverterTypeNonce.lift(buf)
+}
+
+public func FfiConverterTypeNonce_lower(_ value: Nonce) -> RustBuffer {
+    return FfiConverterTypeNonce.lower(value)
 }
 
 
@@ -3489,6 +4105,67 @@ extension AssignmentStrategy: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
+public enum AttestationContent {
+    
+    case keyDescription(KeyDescription
+    )
+    case deviceAttestation(DeviceAttestation
+    )
+}
+
+
+public struct FfiConverterTypeAttestationContent: FfiConverterRustBuffer {
+    typealias SwiftType = AttestationContent
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AttestationContent {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .keyDescription(try FfiConverterTypeKeyDescription.read(from: &buf)
+        )
+        
+        case 2: return .deviceAttestation(try FfiConverterTypeDeviceAttestation.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: AttestationContent, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .keyDescription(v1):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeKeyDescription.write(v1, into: &buf)
+            
+        
+        case let .deviceAttestation(v1):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeDeviceAttestation.write(v1, into: &buf)
+            
+        }
+    }
+}
+
+
+public func FfiConverterTypeAttestationContent_lift(_ buf: RustBuffer) throws -> AttestationContent {
+    return try FfiConverterTypeAttestationContent.lift(buf)
+}
+
+public func FfiConverterTypeAttestationContent_lower(_ value: AttestationContent) -> RustBuffer {
+    return FfiConverterTypeAttestationContent.lower(value)
+}
+
+
+
+extension AttestationContent: Equatable, Hashable {}
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
 public enum ExecutionSpecifierKind {
     
     case all
@@ -3866,6 +4543,27 @@ fileprivate struct FfiConverterOptionData: FfiConverterRustBuffer {
     }
 }
 
+fileprivate struct FfiConverterOptionTypeAttestation: FfiConverterRustBuffer {
+    typealias SwiftType = Attestation?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeAttestation.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeAttestation.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionTypeJobEnvironment: FfiConverterRustBuffer {
     typealias SwiftType = JobEnvironment?
 
@@ -4010,6 +4708,28 @@ fileprivate struct FfiConverterSequenceTypeAccountId32: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeAccountId32.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceTypeCertId: FfiConverterRustBuffer {
+    typealias SwiftType = [CertId]
+
+    public static func write(_ value: [CertId], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeCertId.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [CertId] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [CertId]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeCertId.read(from: &buf))
         }
         return seq
     }
@@ -4253,6 +4973,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_assigned_jobs() != 59376) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_attestation() != 55529) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_environment() != 382) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -4302,6 +5025,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_is_attested() != 50117) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 53642) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {

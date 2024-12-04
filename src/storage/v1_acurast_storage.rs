@@ -1,4 +1,5 @@
 use crate::codec::types::account_id;
+use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::{job_environment::JobEnvironment, job_identifier::JobIdentifier};
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
@@ -94,5 +95,14 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> bool {
         self.base.is_attested(account_id, block_hash, timeout).await
+    }
+
+    async fn get_attestation(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Attestation> {
+        self.base.get_attestation(account_id, block_hash, timeout).await
     }
 }

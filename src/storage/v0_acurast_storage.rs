@@ -1,4 +1,5 @@
 use crate::big_uint::BigIntToInt;
+use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::job_environment::JobEnvironment;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
@@ -77,6 +78,13 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> bool;
+
+    async fn get_attestation(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Attestation>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -327,6 +335,32 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             return !storage.is_empty();
         }
         false
+    }
+
+    async fn get_attestation(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Attestation> {
+        let mut key: Vec<u8> = Vec::new();
+        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("StoredAttestation".as_bytes()));
+        key.extend_from_slice(&blake2b_128(account_id, 16));
+        key.extend_from_slice(account_id);
+
+        if let Ok(storage_option) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        {
+            if let Some(storage) = storage_option {
+                let ba = hex_to_ba(&storage);
+                let mut cursor = Cursor::new(ba);
+                return Some(Attestation::read(&mut cursor).unwrap());
+            }
+        }
+        None
     }
 }
 
