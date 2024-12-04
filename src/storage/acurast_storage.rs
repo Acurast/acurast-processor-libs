@@ -1,7 +1,7 @@
 use super::v0_acurast_storage::VXAcurastStorage;
 use crate::{
     codec::types::{
-        acurast::{job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration},
+        acurast::{attestation::Attestation, job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration},
         marketplace::job_assigment::JobAssignment,
         uniques::pallet_uniques_item_details::PalletUniquesItemDetails,
     },
@@ -110,6 +110,17 @@ impl AcurastStorage {
     ) -> bool {
         self.storage
             .is_attested(account_id, block_hash, timeout)
+            .await
+    }
+    
+    async fn get_attestation(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Attestation> {
+        self.storage
+            .get_attestation(account_id, block_hash, timeout)
             .await
     }
 }

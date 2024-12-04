@@ -111,6 +111,27 @@ async fn test_get_storage() {
 }
 
 #[tokio::test]
+async fn test_get_attestation() {
+    let storage = AC_RPC.storage(0);
+    let hex_str = "fff7dbe4dc65dd43bb4209aafd5a34d6a847547735894c2d2a5cedd4ab072133";
+
+    let decoded_bytes = hex::decode(hex_str).expect("Decoding failed");
+    println!("test_get_attestation: {:?}", decoded_bytes);
+    let byte_slice: &[u8] = &decoded_bytes;
+    let attestation = storage.get_attestation(byte_slice, None, None).await;
+    match attestation {
+        Some(r) => {
+            println!("attestation owner: {:?}", r.content);
+            assert!(true);
+        }
+        None => {
+            println!("No Attested");
+            assert!(false);
+        }
+    }
+}
+
+#[tokio::test]
 async fn test_get_assigned_jobs() {
     let storage = AC_RPC.storage(0);
     //5a6ccbc98ee1293ea246e639b8b30a0454e3bf6bdb2318b8aec27b26e606db8d
