@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::io::{Cursor, Read};
-use byteorder::{ReadBytesExt, BigEndian};
+use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::cursor::{read_byte_array, read_list, CursorExt};
 use crate::hex::read_u64;
@@ -40,8 +40,8 @@ impl AttestationValidity {
     pub fn read(
         cursor: &mut Cursor<Vec<u8>>,
     ) -> Result<Self, Box<dyn Error>> {
-        let not_before = cursor.read_u64::<BigEndian>()?;
-        let not_after = cursor.read_u64::<BigEndian>()?;
+        let not_before = cursor.read_u64::<LittleEndian>()?;
+        let not_after = cursor.read_u64::<LittleEndian>()?;
 
         Ok(AttestationValidity {
             not_before,
@@ -154,18 +154,18 @@ pub struct KeyUsageProperties {
 
 impl KeyUsageProperties {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        let t4 = cursor.read_u64::<BigEndian>().ok();
-        let t1200 = cursor.read_u64::<BigEndian>().ok();
-        let t1201 = cursor.read_u64::<BigEndian>().ok();
-        let t1202 = cursor.read_u64::<BigEndian>().ok();
-        let t1203 = cursor.read_u64::<BigEndian>().ok();
+        let t4 = cursor.read_u64::<LittleEndian>().ok();
+        let t1200 = cursor.read_u64::<LittleEndian>().ok();
+        let t1201 = cursor.read_u64::<LittleEndian>().ok();
+        let t1202 = cursor.read_u64::<LittleEndian>().ok();
+        let t1203 = cursor.read_u64::<LittleEndian>().ok();
         let t1204 = cursor.read_optional(read_byte_array)?;
         let t5 = cursor.read_optional(read_byte_array)?;
-        let t1206 = cursor.read_u64::<BigEndian>().ok();
-        let t1207 = cursor.read_u64::<BigEndian>().ok();
-        let t1209 = cursor.read_u64::<BigEndian>().ok();
-        let t1210 = cursor.read_u64::<BigEndian>().ok();
-        let t1211 = cursor.read_u64::<BigEndian>().ok();
+        let t1206 = cursor.read_u64::<LittleEndian>().ok();
+        let t1207 = cursor.read_u64::<LittleEndian>().ok();
+        let t1209 = cursor.read_u64::<LittleEndian>().ok();
+        let t1210 = cursor.read_u64::<LittleEndian>().ok();
+        let t1211 = cursor.read_u64::<LittleEndian>().ok();
 
         Ok(KeyUsageProperties {
             t4,
@@ -197,7 +197,7 @@ pub struct DeviceOsInformation {
 impl DeviceOsInformation {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let t1400 = cursor.read_optional(read_byte_array)?;
-        let t1104 = cursor.read_u64::<BigEndian>().ok();
+        let t1104 = cursor.read_u64::<LittleEndian>().ok();
         let t1403 = cursor.read_optional( read_byte_array)?;
         let t1420 = cursor.read_optional( read_byte_array)?;
         let t1026 = cursor.read_optional( read_byte_array)?;
