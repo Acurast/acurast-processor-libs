@@ -91,7 +91,7 @@ impl AcurastRpcClient {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> RuntimeVersion {
+    ) -> Result<RuntimeVersion, AcurastRpcError> {
         self.acurastrpc
             .get_runtime_version(block_hash, timeout)
             .await

@@ -47,7 +47,7 @@ pub trait AcurastRpc: Send + Sync {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> RuntimeVersion;
+    ) -> Result<RuntimeVersion, AcurastRpcError>;
     async fn get_update_info(
         &self,
         account_id: Vec<u8>,
@@ -166,11 +166,11 @@ impl AcurastRpc for AcurastRpcImpl {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> RuntimeVersion {
+    ) -> Result<RuntimeVersion, AcurastRpcError> {
         self.state
             .get_runtime_version(block_hash, timeout, &self.engine)
             .await
-            .unwrap()
+            .map_err(|e| AcurastRpcError::RuntimeError(format!("{}", e)))
     }
 
     async fn get_update_info(
