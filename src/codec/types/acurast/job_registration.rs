@@ -1,8 +1,12 @@
 use crate::codec::types::account_id::AccountId32;
-use crate::cursor::{read_byte_array, read_list, CursorExt};
+use crate::codec::types::acurast::runtime::Runtime;
+use crate::cursor::{read_byte_array, read_list, read_optional_u128, read_u128, CursorExt};
+use crate::uint128::UInt128;
 use byteorder::{LittleEndian, ReadBytesExt};
+use num_bigint::BigUint;
+use num_traits::ConstZero;
 use std::error::Error;
-use std::io::{self, Cursor};
+use std::io::{self, Cursor, Read};
 use std::vec::Vec;
 
 #[derive(uniffi::Record, Debug)]
@@ -102,15 +106,70 @@ impl Default for JobRegistrationExtra {
     }
 }
 
+#[derive(uniffi::Enum, Debug)]
+pub enum ProcessorVersionRequirements {
+    Min { platform: u32, build_number: u32 },
+}
+
+impl ProcessorVersionRequirements {
+    pub fn read(mut cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        // Read the ID byte
+        let mut id_buf = [0u8; 1];
+        cursor.read_exact(&mut id_buf)?;
+        let id = id_buf[0];
+
+        match id {
+            0 => {
+                let mut platform_buf = [0u8; 4];
+                cursor.read_exact(&mut platform_buf)?;
+                let platform = u32::from_le_bytes(platform_buf);
+
+                let mut build_number_buf = [0u8; 4];
+                cursor.read_exact(&mut build_number_buf)?;
+                let build_number = u32::from_le_bytes(build_number_buf);
+
+                Ok(ProcessorVersionRequirements::Min {
+                    platform,
+                    build_number,
+                })
+            }
+            _ => Err(format!("Unknown ProcessorVersionRequirements ID: {}", id).into()),
+        }
+    }
+
+    pub fn id(&self) -> u8 {
+        match self {
+            ProcessorVersionRequirements::Min { .. } => 0,
+        }
+    }
+}
+
 #[derive(uniffi::Record, Debug)]
 pub struct JobRequirements {
     pub assignment_strategy: AssignmentStrategy,
+    pub slots: u8,
+    pub reward: BigUint,
+    pub min_reputation: Option<BigUint>,
+    pub processor_version: Option<ProcessorVersionRequirements>,
+    pub runtime: Runtime,
 }
 
 impl JobRequirements {
     pub fn read(mut cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let assignment_strategy = AssignmentStrategy::read(&mut cursor)?;
+        let slots = cursor.read_u8()?;
+        let reward = read_u128(cursor)?;
+        let min_reputation = read_optional_u128(cursor)?;
+        let processor_version = cursor.read_optional(|c| ProcessorVersionRequirements::read(c))?; // Optional processor version
+        let runtime = Runtime::read(&mut cursor)?;
+
         Ok(JobRequirements {
-            assignment_strategy: AssignmentStrategy::read(&mut cursor)?,
+            assignment_strategy,
+            slots,
+            reward,
+            min_reputation,
+            processor_version,
+            runtime
         })
     }
 }
@@ -119,6 +178,11 @@ impl Default for JobRequirements {
     fn default() -> Self {
         JobRequirements {
             assignment_strategy: AssignmentStrategy::Single,
+            slots: 0,
+            reward: BigUint::ZERO,
+            min_reputation: Option::None,
+            processor_version: Option::None,
+            runtime: Runtime::NodeJS
         }
     }
 }

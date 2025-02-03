@@ -3059,11 +3059,21 @@ public func FfiConverterTypeJobRegistrationExtra_lower(_ value: JobRegistrationE
 
 public struct JobRequirements {
     public var assignmentStrategy: AssignmentStrategy
+    public var slots: UInt8
+    public var reward: BigUint
+    public var minReputation: BigUint?
+    public var processorVersion: ProcessorVersionRequirements?
+    public var runtime: Runtime
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(assignmentStrategy: AssignmentStrategy) {
+    public init(assignmentStrategy: AssignmentStrategy, slots: UInt8, reward: BigUint, minReputation: BigUint?, processorVersion: ProcessorVersionRequirements?, runtime: Runtime) {
         self.assignmentStrategy = assignmentStrategy
+        self.slots = slots
+        self.reward = reward
+        self.minReputation = minReputation
+        self.processorVersion = processorVersion
+        self.runtime = runtime
     }
 }
 
@@ -3074,11 +3084,31 @@ extension JobRequirements: Equatable, Hashable {
         if lhs.assignmentStrategy != rhs.assignmentStrategy {
             return false
         }
+        if lhs.slots != rhs.slots {
+            return false
+        }
+        if lhs.reward != rhs.reward {
+            return false
+        }
+        if lhs.minReputation != rhs.minReputation {
+            return false
+        }
+        if lhs.processorVersion != rhs.processorVersion {
+            return false
+        }
+        if lhs.runtime != rhs.runtime {
+            return false
+        }
         return true
     }
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(assignmentStrategy)
+        hasher.combine(slots)
+        hasher.combine(reward)
+        hasher.combine(minReputation)
+        hasher.combine(processorVersion)
+        hasher.combine(runtime)
     }
 }
 
@@ -3087,12 +3117,22 @@ public struct FfiConverterTypeJobRequirements: FfiConverterRustBuffer {
     public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> JobRequirements {
         return
             try JobRequirements(
-                assignmentStrategy: FfiConverterTypeAssignmentStrategy.read(from: &buf)
+                assignmentStrategy: FfiConverterTypeAssignmentStrategy.read(from: &buf), 
+                slots: FfiConverterUInt8.read(from: &buf), 
+                reward: FfiConverterTypeBigUint.read(from: &buf), 
+                minReputation: FfiConverterOptionTypeBigUint.read(from: &buf), 
+                processorVersion: FfiConverterOptionTypeProcessorVersionRequirements.read(from: &buf), 
+                runtime: FfiConverterTypeRuntime.read(from: &buf)
         )
     }
 
     public static func write(_ value: JobRequirements, into buf: inout [UInt8]) {
         FfiConverterTypeAssignmentStrategy.write(value.assignmentStrategy, into: &buf)
+        FfiConverterUInt8.write(value.slots, into: &buf)
+        FfiConverterTypeBigUint.write(value.reward, into: &buf)
+        FfiConverterOptionTypeBigUint.write(value.minReputation, into: &buf)
+        FfiConverterOptionTypeProcessorVersionRequirements.write(value.processorVersion, into: &buf)
+        FfiConverterTypeRuntime.write(value.runtime, into: &buf)
     }
 }
 
@@ -3861,6 +3901,55 @@ public func FfiConverterTypeSubmitAttestationExtrinsic_lower(_ value: SubmitAtte
 }
 
 
+public struct UInt128 {
+    public var bytes: Data
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(bytes: Data) {
+        self.bytes = bytes
+    }
+}
+
+
+
+extension UInt128: Equatable, Hashable {
+    public static func ==(lhs: UInt128, rhs: UInt128) -> Bool {
+        if lhs.bytes != rhs.bytes {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(bytes)
+    }
+}
+
+
+public struct FfiConverterTypeUInt128: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt128 {
+        return
+            try UInt128(
+                bytes: FfiConverterData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: UInt128, into buf: inout [UInt8]) {
+        FfiConverterData.write(value.bytes, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeUInt128_lift(_ buf: RustBuffer) throws -> UInt128 {
+    return try FfiConverterTypeUInt128.lift(buf)
+}
+
+public func FfiConverterTypeUInt128_lower(_ value: UInt128) -> RustBuffer {
+    return FfiConverterTypeUInt128.lower(value)
+}
+
+
 public struct Variable {
     public var key: String
     public var value: Data
@@ -4377,6 +4466,113 @@ extension Platform: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
+public enum ProcessorVersionRequirements {
+    
+    case min(platform: UInt32, buildNumber: UInt32
+    )
+}
+
+
+public struct FfiConverterTypeProcessorVersionRequirements: FfiConverterRustBuffer {
+    typealias SwiftType = ProcessorVersionRequirements
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorVersionRequirements {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .min(platform: try FfiConverterUInt32.read(from: &buf), buildNumber: try FfiConverterUInt32.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ProcessorVersionRequirements, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .min(platform,buildNumber):
+            writeInt(&buf, Int32(1))
+            FfiConverterUInt32.write(platform, into: &buf)
+            FfiConverterUInt32.write(buildNumber, into: &buf)
+            
+        }
+    }
+}
+
+
+public func FfiConverterTypeProcessorVersionRequirements_lift(_ buf: RustBuffer) throws -> ProcessorVersionRequirements {
+    return try FfiConverterTypeProcessorVersionRequirements.lift(buf)
+}
+
+public func FfiConverterTypeProcessorVersionRequirements_lower(_ value: ProcessorVersionRequirements) -> RustBuffer {
+    return FfiConverterTypeProcessorVersionRequirements.lower(value)
+}
+
+
+
+extension ProcessorVersionRequirements: Equatable, Hashable {}
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum Runtime {
+    
+    case nodeJs
+    case nodeJsWithBundle
+}
+
+
+public struct FfiConverterTypeRuntime: FfiConverterRustBuffer {
+    typealias SwiftType = Runtime
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Runtime {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .nodeJs
+        
+        case 2: return .nodeJsWithBundle
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: Runtime, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .nodeJs:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .nodeJsWithBundle:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+public func FfiConverterTypeRuntime_lift(_ buf: RustBuffer) throws -> Runtime {
+    return try FfiConverterTypeRuntime.lift(buf)
+}
+
+public func FfiConverterTypeRuntime_lower(_ value: Runtime) -> RustBuffer {
+    return FfiConverterTypeRuntime.lower(value)
+}
+
+
+
+extension Runtime: Equatable, Hashable {}
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
 public enum Tag {
     
     case secp256r1
@@ -4646,6 +4842,27 @@ fileprivate struct FfiConverterOptionTypeProcessorUpdateInfo: FfiConverterRustBu
     }
 }
 
+fileprivate struct FfiConverterOptionTypeProcessorVersionRequirements: FfiConverterRustBuffer {
+    typealias SwiftType = ProcessorVersionRequirements?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeProcessorVersionRequirements.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeProcessorVersionRequirements.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionSequenceTypeAccountId32: FfiConverterRustBuffer {
     typealias SwiftType = [AccountId32]?
 
@@ -4662,6 +4879,27 @@ fileprivate struct FfiConverterOptionSequenceTypeAccountId32: FfiConverterRustBu
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterSequenceTypeAccountId32.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+fileprivate struct FfiConverterOptionTypeBigUint: FfiConverterRustBuffer {
+    typealias SwiftType = BigUint?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeBigUint.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeBigUint.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
