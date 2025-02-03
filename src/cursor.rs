@@ -24,6 +24,17 @@ pub fn read_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<BigUint, Box<dyn Error>
     Ok(BigUint::from_bytes_le(&bytes))
 }
 
+pub fn read_optional_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<Option<BigUint>, Box<dyn Error>> {
+    let mut flag = [0u8; 1];
+    cursor.read_exact(&mut flag)?;
+
+    match flag[0] {
+        0 => Ok(None), // 0 indicates `None`
+        1 => Ok(Some(read_u128(cursor)?)), // 1 indicates `Some`, read the value
+        _ => Err("Invalid flag for optional BigUint".into()), // Invalid flag
+    }
+}
+
 pub fn read_compact_integer(cursor: &mut Cursor<Vec<u8>>) -> Result<BigInt, Box<dyn Error>> {
     let compact_byte = cursor.read_u8()? as u64;
 
