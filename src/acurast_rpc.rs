@@ -10,7 +10,7 @@ use crate::storage::v0_acurast_storage::V0AcurastStorageImpl;
 use crate::storage::v1_acurast_storage::V1AcurastStorageImpl;
 use crate::types::header::Header;
 use async_trait::async_trait;
-use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex::decode;
 use std::collections::HashMap;
 use std::fmt;
