@@ -4,9 +4,10 @@ use crate::codec::types::acurast::job_environment::JobEnvironment;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
+use crate::codec::types::metrics::MetricPool;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::engine::pallet::state::State;
-use crate::hex::{hex_to_ba, read_u128, read_u64};
+use crate::hex::{hex_to_ba, read_u128, read_u64, ToHex};
 use crate::types::system::FrameSystemAccountInfo;
 use crate::u8a::biguint_to_u8a;
 use crate::xxhash::xxh128_unsigned;
@@ -18,6 +19,7 @@ use num_bigint::BigUint;
 use num_traits::Zero;
 use std::io::Cursor;
 use std::sync::Arc;
+use byteorder::ReadBytesExt;
 
 #[uniffi::export]
 #[async_trait]
@@ -85,6 +87,20 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Attestation>;
+
+    async fn get_metric_pool_ids(
+        &self,
+        names: Vec<String>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Vec<u8>;
+
+    async fn get_metric_pools(
+        &self,
+        ids: Vec<u8>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Vec<MetricPool>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -361,6 +377,88 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             }
         }
         None
+    }
+
+    async fn get_metric_pool_ids(
+        &self,
+        names: Vec<String>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Vec<u8>{
+        let mut key: Vec<u8> = Vec::new();
+        key.extend_from_slice(&xxh128_unsigned("AcurastCompute".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("MetricPoolLookup".as_bytes()));
+
+        let keys: Vec<String> = names.into_iter()
+        .map(|name| {
+            let mut bytes = name.into_bytes();
+            bytes.resize(24, 0);
+            let combined = [key.clone(), bytes].concat();
+            combined.to_hex()
+        })
+        .collect();
+
+        let mut pool_ids: Vec<u8> = Vec::new();
+        println!("get_metric_pool_ids keys: {:?}", keys);
+
+        if let Ok(storage) = self
+            .state
+            .get_storage_at(keys, block_hash, timeout, &self.engine)
+            .await
+        {
+            if !storage.is_empty() {
+                for change in &storage[0].changes {
+                    let change_strs: Vec<&str> = change.iter().map(|s| s.as_str()).collect();
+                    if let Some(hex_str) = change_strs.get(1) {
+                        if let Ok(bytes) = hex::decode(hex_str) {
+                            let mut cursor = Cursor::new(bytes);
+                            if let Ok(byte) = cursor.read_u8() {
+                                pool_ids.push(byte);
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            println!("get_metric_pool_ids failed");
+        }
+        pool_ids
+    }
+
+    async fn get_metric_pools(
+        &self,
+        ids: Vec<u8>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Vec<MetricPool> {
+        let mut key: Vec<u8> = Vec::new();
+        key.extend_from_slice(&xxh128_unsigned("AcurastCompute".as_bytes()));
+        key.extend_from_slice(&xxh128_unsigned("MetricPools".as_bytes()));
+
+        let keys: Vec<String> = ids.into_iter()
+        .map(|id| {
+            let combined = [key.clone(), vec![id]].concat();
+            combined.to_hex()
+        })
+        .collect();
+        let mut metrics: Vec<MetricPool> = Vec::new();
+        if let Ok(storage) = self.state.get_storage_at(keys, block_hash, timeout, &self.engine).await {
+            if !storage.is_empty() {
+                for change in &storage[0].changes {
+                    let change_strs: Vec<&str> = change.iter().map(|s| s.as_str()).collect();
+                    if let Some(hex_str) = change_strs.get(1) {
+                        if let Ok(bytes) = hex::decode(hex_str) {
+                            let mut cursor = Cursor::new(bytes);
+                            let metric = MetricPool::read(&mut cursor);
+                                metrics.push(metric.unwrap());
+                        }
+                    }
+                }
+            }
+        } else {
+            println!("get_metric_pools failed");
+        }
+        metrics
     }
 }
 

@@ -1030,6 +1030,10 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
     
+    func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async  -> Data
+    
+    func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async  -> [MetricPool]
+    
     func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Bool
     
 }
@@ -1222,6 +1226,42 @@ open func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt6
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionInt32.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)async  -> Data {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_metric_pool_ids(
+                    self.uniffiClonePointer(),
+                    FfiConverterSequenceString.lower(names),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterData.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async  -> [MetricPool] {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_metric_pools(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(ids),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterSequenceTypeMetricPool.lift,
             errorHandler: nil
             
         )
@@ -1797,6 +1837,10 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
     
+    func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async  -> Data
+    
+    func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async  -> [MetricPool]
+    
 }
 
 open class VxAcurastStorage:
@@ -1997,6 +2041,42 @@ open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeAttestation.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)async  -> Data {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_metric_pool_ids(
+                    self.uniffiClonePointer(),
+                    FfiConverterSequenceString.lower(names),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterData.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async  -> [MetricPool] {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_metric_pools(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(ids),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterSequenceTypeMetricPool.lift,
             errorHandler: nil
             
         )
@@ -2273,6 +2353,71 @@ public func FfiConverterTypeCertId_lift(_ buf: RustBuffer) throws -> CertId {
 
 public func FfiConverterTypeCertId_lower(_ value: CertId) -> RustBuffer {
     return FfiConverterTypeCertId.lower(value)
+}
+
+
+public struct Config {
+    public var name: String
+    public var numerator: BigUint
+    public var denominator: BigUint
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(name: String, numerator: BigUint, denominator: BigUint) {
+        self.name = name
+        self.numerator = numerator
+        self.denominator = denominator
+    }
+}
+
+
+
+extension Config: Equatable, Hashable {
+    public static func ==(lhs: Config, rhs: Config) -> Bool {
+        if lhs.name != rhs.name {
+            return false
+        }
+        if lhs.numerator != rhs.numerator {
+            return false
+        }
+        if lhs.denominator != rhs.denominator {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+        hasher.combine(numerator)
+        hasher.combine(denominator)
+    }
+}
+
+
+public struct FfiConverterTypeConfig: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Config {
+        return
+            try Config(
+                name: FfiConverterString.read(from: &buf), 
+                numerator: FfiConverterTypeBigUint.read(from: &buf), 
+                denominator: FfiConverterTypeBigUint.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Config, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.name, into: &buf)
+        FfiConverterTypeBigUint.write(value.numerator, into: &buf)
+        FfiConverterTypeBigUint.write(value.denominator, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeConfig_lift(_ buf: RustBuffer) throws -> Config {
+    return try FfiConverterTypeConfig.lift(buf)
+}
+
+public func FfiConverterTypeConfig_lower(_ value: Config) -> RustBuffer {
+    return FfiConverterTypeConfig.lower(value)
 }
 
 
@@ -3418,6 +3563,55 @@ public func FfiConverterTypeKeyUsageProperties_lift(_ buf: RustBuffer) throws ->
 
 public func FfiConverterTypeKeyUsageProperties_lower(_ value: KeyUsageProperties) -> RustBuffer {
     return FfiConverterTypeKeyUsageProperties.lower(value)
+}
+
+
+public struct MetricPool {
+    public var config: [Config]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(config: [Config]) {
+        self.config = config
+    }
+}
+
+
+
+extension MetricPool: Equatable, Hashable {
+    public static func ==(lhs: MetricPool, rhs: MetricPool) -> Bool {
+        if lhs.config != rhs.config {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(config)
+    }
+}
+
+
+public struct FfiConverterTypeMetricPool: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MetricPool {
+        return
+            try MetricPool(
+                config: FfiConverterSequenceTypeConfig.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: MetricPool, into buf: inout [UInt8]) {
+        FfiConverterSequenceTypeConfig.write(value.config, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeMetricPool_lift(_ buf: RustBuffer) throws -> MetricPool {
+    return try FfiConverterTypeMetricPool.lift(buf)
+}
+
+public func FfiConverterTypeMetricPool_lower(_ value: MetricPool) -> RustBuffer {
+    return FfiConverterTypeMetricPool.lower(value)
 }
 
 
@@ -4905,6 +5099,28 @@ fileprivate struct FfiConverterOptionTypeBigUint: FfiConverterRustBuffer {
     }
 }
 
+fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
+    typealias SwiftType = [String]
+
+    public static func write(_ value: [String], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterString.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [String] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [String]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterString.read(from: &buf))
+        }
+        return seq
+    }
+}
+
 fileprivate struct FfiConverterSequenceTypePublicKey: FfiConverterRustBuffer {
     typealias SwiftType = [PublicKey]
 
@@ -4971,6 +5187,28 @@ fileprivate struct FfiConverterSequenceTypeCertId: FfiConverterRustBuffer {
     }
 }
 
+fileprivate struct FfiConverterSequenceTypeConfig: FfiConverterRustBuffer {
+    typealias SwiftType = [Config]
+
+    public static func write(_ value: [Config], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeConfig.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Config] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Config]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeConfig.read(from: &buf))
+        }
+        return seq
+    }
+}
+
 fileprivate struct FfiConverterSequenceTypeJobAssignment: FfiConverterRustBuffer {
     typealias SwiftType = [JobAssignment]
 
@@ -4988,6 +5226,28 @@ fileprivate struct FfiConverterSequenceTypeJobAssignment: FfiConverterRustBuffer
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeJobAssignment.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceTypeMetricPool: FfiConverterRustBuffer {
+    typealias SwiftType = [MetricPool]
+
+    public static func write(_ value: [MetricPool], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeMetricPool.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [MetricPool] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [MetricPool]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeMetricPool.read(from: &buf))
         }
         return seq
     }
@@ -5224,6 +5484,12 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_identifier() != 46517) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pool_ids() != 4510) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pools() != 48404) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_is_attested() != 2160) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5264,6 +5530,12 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 53642) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 65514) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 17992) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {

@@ -43,7 +43,7 @@ async fn test_get_header() {
 
 #[tokio::test]
 async fn test_get_runtime_version() {
-    let res = AC_RPC.get_runtime_version(None, None).await;
+    let res = AC_RPC.get_runtime_version(None, None).await.unwrap();
     println!("test_get_runtime_version {}", res.spec_version);
     assert!(res.spec_version != 0)
 }
@@ -157,6 +157,19 @@ async fn test_get_assigned_jobs() {
         .get_job_registration(job_id.clone(), None, None)
         .await;
     println!("job_registration {:?}", job_registration);
+}
+
+#[tokio::test]
+async fn test_pool_ids() {
+    println!("test_pool_ids start");
+    let storage = AC_RPC.storage(0);
+    let names: Vec<String> = vec!["v1_cpus_crypto__________".to_string()];
+    let pool_ids = storage.get_metric_pool_ids(names, None, None).await;
+    println!(
+        "pool_ids: {:?}",
+        pool_ids
+    );
+    assert!(pool_ids.len() > 0);
 }
 
 /*#[tokio::test]

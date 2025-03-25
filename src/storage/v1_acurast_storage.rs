@@ -3,6 +3,7 @@ use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::{job_environment::JobEnvironment, job_identifier::JobIdentifier};
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
+use crate::codec::types::metrics::MetricPool;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::engine::pallet::state::State;
 use crate::types::system::FrameSystemAccountInfo;
@@ -104,5 +105,23 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<Attestation> {
         self.base.get_attestation(account_id, block_hash, timeout).await
+    }
+
+    async fn get_metric_pool_ids(
+        &self,
+        names: Vec<String>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Vec<u8>{
+        self.base.get_metric_pool_ids(names, block_hash, timeout).await
+    }
+
+    async fn get_metric_pools(
+        &self,
+        ids: Vec<u8>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Vec<MetricPool> {
+        self.base.get_metric_pools(ids, block_hash, timeout).await
     }
 }
