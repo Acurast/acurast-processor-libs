@@ -3,3 +3,4 @@ install-cargo-swift:
 
 build:
 	cargo swift package --platforms ios --name AcurastSDK --xcframework-name AcurastSDKFFI --release --accept-all
+	./fix-framework-headers.sh
