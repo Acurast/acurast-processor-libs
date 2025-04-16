@@ -277,16 +277,14 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         key.extend_from_slice(&blake2b_128(&job_id, 16));
         key.extend_from_slice(&job_id);
 
-        if let Ok(storage_option) = self
+        if let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         {
-            if let Some(storage) = storage_option {
-                let ba = hex_to_ba(&storage);
-                let mut cursor = Cursor::new(ba);
-                return Some(JobRegistration::read(&mut cursor, self.version).unwrap());
-            }
+            let ba = hex_to_ba(&storage);
+            let mut cursor = Cursor::new(ba);
+            return Some(JobRegistration::read(&mut cursor, self.version).unwrap());
         }
         None
     }

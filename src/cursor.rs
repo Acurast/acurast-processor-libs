@@ -31,7 +31,7 @@ pub fn read_optional_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<Option<BigUint
     match flag[0] {
         0 => Ok(None), // 0 indicates `None`
         1 => Ok(Some(read_u128(cursor)?)), // 1 indicates `Some`, read the value
-        _ => Err("Invalid flag for optional BigUint".into()), // Invalid flag
+        _ => Err(format!("Invalid flag for optional BigUint: {:?}", flag[0]).into()), // Invalid flag
     }
 }
 

@@ -1,6 +1,6 @@
 
 use std::error::Error;
-use std::io::{self, Cursor, Read};
+use std::io::{Cursor, Read};
 use std::vec::Vec;
 use byteorder::{LittleEndian, ReadBytesExt};
 
@@ -18,7 +18,7 @@ pub struct JobEnvironment {
 
 impl Variable {
     pub fn read(
-        mut cursor: &mut Cursor<Vec<u8>>,
+        cursor: &mut Cursor<Vec<u8>>,
         _api_version: u32,
     ) -> Result<Self, Box<dyn Error>> {
         let key_len = cursor.read_u32::<LittleEndian>()? as usize;

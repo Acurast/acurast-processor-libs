@@ -28,7 +28,6 @@ pub use acurast_rpc::AcurastRpcImpl;
 use engine::engine::RpcEngine;
 use engine::http_engine::HttpRpcEngine;
 use num_bigint::BigUint;
-use std::fmt;
 use std::str::FromStr;
 use std::sync::Arc;
 

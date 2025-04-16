@@ -3827,6 +3827,63 @@ public func FfiConverterTypePalletUniquesItemDetails_lower(_ value: PalletUnique
 }
 
 
+public struct PlannedExecution {
+    public var source: AccountId32
+    public var startDelay: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(source: AccountId32, startDelay: UInt64) {
+        self.source = source
+        self.startDelay = startDelay
+    }
+}
+
+
+
+extension PlannedExecution: Equatable, Hashable {
+    public static func ==(lhs: PlannedExecution, rhs: PlannedExecution) -> Bool {
+        if lhs.source != rhs.source {
+            return false
+        }
+        if lhs.startDelay != rhs.startDelay {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(source)
+        hasher.combine(startDelay)
+    }
+}
+
+
+public struct FfiConverterTypePlannedExecution: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PlannedExecution {
+        return
+            try PlannedExecution(
+                source: FfiConverterTypeAccountId32.read(from: &buf), 
+                startDelay: FfiConverterUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PlannedExecution, into buf: inout [UInt8]) {
+        FfiConverterTypeAccountId32.write(value.source, into: &buf)
+        FfiConverterUInt64.write(value.startDelay, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypePlannedExecution_lift(_ buf: RustBuffer) throws -> PlannedExecution {
+    return try FfiConverterTypePlannedExecution.lift(buf)
+}
+
+public func FfiConverterTypePlannedExecution_lower(_ value: PlannedExecution) -> RustBuffer {
+    return FfiConverterTypePlannedExecution.lower(value)
+}
+
+
 public struct ProcessorUpdateInfo {
     public var version: ProcessorVersion
     public var binaryLocation: Data
