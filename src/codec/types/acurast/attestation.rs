@@ -1,9 +1,8 @@
 use std::error::Error;
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::cursor::{read_byte_array, read_list, CursorExt};
-use crate::hex::read_u64;
 
 #[derive(uniffi::Record, Debug)]
 pub struct Attestation {

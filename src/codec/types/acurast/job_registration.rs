@@ -1,10 +1,8 @@
 use crate::codec::types::account_id::AccountId32;
 use crate::codec::types::acurast::runtime::Runtime;
 use crate::cursor::{read_byte_array, read_list, read_optional_u128, read_u128, CursorExt};
-use crate::uint128::UInt128;
 use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::BigUint;
-use num_traits::ConstZero;
 use std::error::Error;
 use std::io::{self, Cursor, Read};
 use std::vec::Vec;
@@ -112,7 +110,7 @@ pub enum ProcessorVersionRequirements {
 }
 
 impl ProcessorVersionRequirements {
-    pub fn read(mut cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         // Read the ID byte
         let mut id_buf = [0u8; 1];
         cursor.read_exact(&mut id_buf)?;
@@ -157,6 +155,9 @@ pub struct JobRequirements {
 impl JobRequirements {
     pub fn read(mut cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let assignment_strategy = AssignmentStrategy::read(&mut cursor)?;
+        if let AssignmentStrategy::Single = assignment_strategy {
+            cursor.read_optional(|c| read_list(c, PlannedExecution::read))?;
+        }
         let slots = cursor.read_u8()?;
         let reward = read_u128(cursor)?;
         let min_reputation = read_optional_u128(cursor)?;
@@ -184,6 +185,26 @@ impl Default for JobRequirements {
             processor_version: Option::None,
             runtime: Runtime::NodeJS
         }
+    }
+}
+
+#[derive(uniffi::Record, Debug)]
+pub struct PlannedExecution {
+    pub source: AccountId32,
+    pub start_delay: u64,
+}
+
+impl PlannedExecution {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let mut source = [0u8; 32];
+        cursor.read_exact(&mut source)?;
+        let start_delay = cursor.read_u64::<LittleEndian>()?;
+        Ok(Self {
+            source: AccountId32 {
+                bytes: source.to_vec(),
+            },
+            start_delay
+        })
     }
 }
 

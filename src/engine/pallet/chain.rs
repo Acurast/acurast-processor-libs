@@ -2,7 +2,7 @@ use crate::engine::engine::{rpc_engine_request, RpcEngine};
 use crate::types::header::Header;
 use num_bigint::BigUint;
 use num_traits::Num;
-use serde_json::{json, Value};
+use serde_json::json;
 use std::sync::Arc;
 
 pub struct Chain;

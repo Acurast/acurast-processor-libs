@@ -1,4 +1,3 @@
-use crate::codec::types::account_id;
 use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::{job_environment::JobEnvironment, job_identifier::JobIdentifier};
 use crate::codec::types::acurast::job_registration::JobRegistration;
