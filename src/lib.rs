@@ -13,6 +13,7 @@ pub mod u8a;
 pub mod vec_slice;
 pub mod xxhash;
 pub mod uint128;
+pub mod blake2b;
 
 pub use crate::codec::platform::Platform;
 pub use crate::codec::processor_update_info::ProcessorUpdateInfo;
