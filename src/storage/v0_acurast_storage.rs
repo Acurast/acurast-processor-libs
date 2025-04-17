@@ -6,15 +6,14 @@ use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::metrics::MetricPool;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
+use crate::cursor::read_byte_array;
 use crate::engine::pallet::state::State;
 use crate::hex::{hex_to_ba, read_u128, read_u64, ToHex};
 use crate::types::system::FrameSystemAccountInfo;
 use crate::u8a::biguint_to_u8a;
-use crate::xxhash::xxh128_unsigned;
 use crate::RpcEngine;
+use crate::storage::acurast_storage::StorageKey;
 use async_trait::async_trait;
-use blake2::digest::{Update, VariableOutput};
-use blake2::Blake2bVar;
 use num_bigint::BigUint;
 use num_traits::Zero;
 use std::io::Cursor;
@@ -101,6 +100,13 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Vec<MetricPool>;
+
+    async fn get_management_endpoint(
+        &self,
+        manager_id: i32,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Vec<u8>>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -123,10 +129,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<i32> {
-        let mut key = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("AcurastProcessorManager".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("ProcessorToManagerIdIndex".as_bytes()));
-        key.extend_from_slice(&blake2b_128(account_id, 16));
+        let key = acurast_processor_manager_processor_to_manager_id_index(account_id);
         if let Ok(storage_option) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -148,10 +151,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<u64> {
-        let mut key = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("AcurastProcessorManager".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("ManagerCounter".as_bytes()));
-        key.extend_from_slice(&blake2b_128(account_id, 16));
+        let key = acurast_processor_manager_manager_counter(account_id);
         if let Ok(storage_option) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -172,15 +172,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<PalletUniquesItemDetails> {
-        let manager = &biguint_to_u8a(&BigUint::from(manager_id as u32));
-        let collection_id = &biguint_to_u8a(&BigUint::zero());
-        let mut key: Vec<u8> = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("Uniques".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("Asset".as_bytes()));
-        key.extend_from_slice(&blake2b_128(collection_id, 16));
-        key.extend_from_slice(collection_id);
-        key.extend_from_slice(&blake2b_128(manager, 16));
-        key.extend_from_slice(manager);
+        let key = uniques_asset(manager_id);
         if let Ok(storage_option) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -201,11 +193,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> FrameSystemAccountInfo {
-        let mut key: Vec<u8> = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("System".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("Account".as_bytes()));
-        key.extend_from_slice(&blake2b_128(account_id, 16));
-        key.extend_from_slice(account_id);
+        let key = system_account(account_id);
         if let Ok(storage_option) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -225,11 +213,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Vec<JobAssignment> {
-        let mut key: Vec<u8> = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("AcurastMarketplace".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("StoredMatches".as_bytes()));
-        key.extend_from_slice(&blake2b_128(account_id, 16));
-        key.extend_from_slice(account_id);
+        let key = acurast_marketplace_stored_matches(account_id);
 
         let mut jobs: Vec<JobAssignment> = Vec::new();
         println!("get_assigned_jobs: {:?}", account_id);
@@ -266,16 +250,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<JobRegistration> {
-        let mut key: Vec<u8> = Vec::new();
-        let origin = job_identifier.origin.to_u8a();
-        let job_id = job_identifier.id.to_u8a();
-
-        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("StoredJobRegistration".as_bytes()));
-        key.extend_from_slice(&blake2b_128(&origin, 16));
-        key.extend_from_slice(&origin);
-        key.extend_from_slice(&blake2b_128(&job_id, 16));
-        key.extend_from_slice(&job_id);
+        let key = acurast_stored_job_registration(&job_identifier);
 
         if let Ok(Some(storage)) = self
             .state
@@ -296,18 +271,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<JobEnvironment> {
-        let mut key: Vec<u8> = Vec::new();
-        let mut origin = job_identifier.origin.to_u8a();
-        let job_id = job_identifier.id.to_u8a();
-        origin.extend(job_id);
-
-        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("ExecutionEnvironment".as_bytes()));
-        key.extend_from_slice(&blake2b_128(&origin, 16));
-        key.extend_from_slice(&origin);
-        key.extend_from_slice(&blake2b_128(&account_id, 16));
-        key.extend_from_slice(&account_id);
-
+        let key = acurast_execution_environment(&job_identifier, account_id);
         if let Ok(storage_option) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -328,12 +292,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> bool {
-        let mut key: Vec<u8> = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("StoredAttestation".as_bytes()));
-        key.extend_from_slice(&blake2b_128(account_id, 16));
-        key.extend_from_slice(account_id);
-
+        let key = acurast_stored_attestation(account_id);
         println!("is_attested: {:?}", account_id);
         let keys = self
             .state
@@ -357,12 +316,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Attestation> {
-        let mut key: Vec<u8> = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("Acurast".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("StoredAttestation".as_bytes()));
-        key.extend_from_slice(&blake2b_128(account_id, 16));
-        key.extend_from_slice(account_id);
-
+        let key = acurast_stored_attestation(account_id);
         if let Ok(storage_option) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -383,10 +337,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Vec<u8>{
-        let mut key: Vec<u8> = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("AcurastCompute".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("MetricPoolLookup".as_bytes()));
-
+        let key = acurast_compute_metric_pool_lookup();
         let keys: Vec<String> = names.into_iter()
         .map(|name| {
             let mut bytes = name.into_bytes();
@@ -429,10 +380,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Vec<MetricPool> {
-        let mut key: Vec<u8> = Vec::new();
-        key.extend_from_slice(&xxh128_unsigned("AcurastCompute".as_bytes()));
-        key.extend_from_slice(&xxh128_unsigned("MetricPools".as_bytes()));
-
+        let key = acurast_compute_metric_pools();
         let keys: Vec<String> = ids.into_iter()
         .map(|id| {
             let combined = [key.clone(), vec![id]].concat();
@@ -458,23 +406,269 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         }
         metrics
     }
+
+    async fn get_management_endpoint(
+        &self,
+        manager_id: i32,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Vec<u8>> {
+        let key = acurast_processor_manager_management_endpoint(manager_id);
+        let Some(Some(storage)) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+            .ok() 
+        else { 
+            return None; 
+        };
+
+        let bytes = hex_to_ba(&storage);
+        let mut cursor = Cursor::new(bytes);
+
+        return read_byte_array(&mut cursor).ok();
+    }
 }
 
-/// Hashes the input data using BLAKE2b and returns a 128-bit hash as u128.
-fn blake2b_128(input: &[u8], hash_size: usize) -> [u8; 16] {
-    let mut hasher = Blake2bVar::new(hash_size).expect("Invalid hash size");
-    hasher.update(input);
-    let mut hash = vec![0u8; hash_size];
-    hasher
-        .finalize_variable(&mut hash)
-        .expect("Failed to finalize hash");
+fn acurast_stored_job_registration(job_identifier: &JobIdentifier) -> Vec<u8> {
+    let origin = job_identifier.origin.to_u8a();
+    let id = job_identifier.id.to_u8a();
+    
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("Acurast", "StoredJobRegistration");
+    key.extend_with_blake2_128concat(&origin);
+    key.extend_with_blake2_128concat(&id);
 
-    // Convert to [i8; 16]
-    /*let mut signed_hash = [0i8; 16];
-    for (i, &byte) in hash.iter().enumerate() {
-        signed_hash[i] = byte as i8;
-    }*/
-    let mut array = [0u8; 16];
-    array.copy_from_slice(&hash);
-    array
+    key
+}
+
+fn acurast_execution_environment(job_identifier: &JobIdentifier, account_id: &[u8]) -> Vec<u8> {
+    let mut job = job_identifier.origin.to_u8a();
+    job.extend(job_identifier.id.to_u8a());
+    
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("Acurast", "ExecutionEnvironment");
+    key.extend_with_blake2_128concat(&job);
+    key.extend_with_blake2_128concat(account_id);
+
+    key
+}
+
+fn acurast_stored_attestation(account_id: &[u8]) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("Acurast", "StoredAttestation");
+    key.extend_with_blake2_128concat(account_id);
+
+    key
+}
+
+fn acurast_marketplace_stored_matches(account_id: &[u8]) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("AcurastMarketplace", "StoredMatches");
+    key.extend_with_blake2_128concat(account_id);
+
+    key
+}
+
+fn acurast_processor_manager_processor_to_manager_id_index(account_id: &[u8]) -> Vec<u8> {
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix("AcurastProcessorManager", "ProcessorToManagerIdIndex");
+    key.extend_with_blake2_128(account_id);
+
+    key
+}
+
+fn acurast_processor_manager_manager_counter(account_id: &[u8]) -> Vec<u8> {
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix("AcurastProcessorManager", "ManagerCounter");
+    key.extend_with_blake2_128(account_id);
+
+    key
+}
+
+fn acurast_processor_manager_management_endpoint(manager_id: i32) -> Vec<u8> {
+    let manager_id = &biguint_to_u8a(&BigUint::from(manager_id as u32));
+
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix("AcurastProcessorManager", "ManagementEndpoint");
+    key.extend_with_blake2_128concat(manager_id);
+
+    key
+}
+
+fn acurast_compute_metric_pool_lookup() -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("AcurastCompute", "MetricPoolLookup");
+
+    key
+}
+
+fn acurast_compute_metric_pools() -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("AcurastCompute", "MetricPools");
+
+    key
+}
+
+fn system_account(account_id: &[u8]) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("System", "Account");
+    key.extend_with_blake2_128concat(account_id);
+
+    key
+}
+
+fn uniques_asset(manager_id: i32) -> Vec<u8> {
+    let manager_id = &biguint_to_u8a(&BigUint::from(manager_id as u32));
+    let collection_id = &biguint_to_u8a(&BigUint::zero());
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix("Uniques", "Asset");
+    key.extend_with_blake2_128concat(collection_id);
+    key.extend_with_blake2_128concat(manager_id);
+
+    key
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::codec::types::acurast::job_identifier::{Kind, MultiOrigin};
+
+    use super::*;
+
+    #[test]
+    fn test_acurast_stored_job_registration() {
+        let key = acurast_stored_job_registration(
+            &JobIdentifier { 
+                origin: MultiOrigin {
+                    kind: Kind::Acurast,
+                    source: hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+                }, 
+                id: BigUint::from(0u32),
+            },
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xd8f45172ad1e7575680eaa8157102800f86e394d601279aa535d660453ff8e09ff699fe6ae26ef97168ddeaecbc34ce300d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d463be1d58a72e9618ea59884367c435800000000000000000000000000000000")
+        );
+    }
+
+    #[test]
+    fn test_acurast_execution_environment() {
+        let key = acurast_execution_environment(
+            &JobIdentifier { 
+                origin: MultiOrigin {
+                    kind: Kind::Acurast,
+                    source: hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+                }, 
+                id: BigUint::from(0u32),
+            },
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xd8f45172ad1e7575680eaa81571028003b13796cad693cd980d0f24b9ff4cbfaea6c62216b6983bf26def5438482d4ba00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00000000000000000000000000000000de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+    }
+
+    #[test]
+    fn test_acurast_stored_attestation() {
+        let key = acurast_stored_attestation(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xd8f45172ad1e7575680eaa8157102800f75db0c33624f81fd193acdc07620654de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+    }
+
+    #[test]
+    fn test_acurast_marketplace_stored_matches() {
+        let key = acurast_marketplace_stored_matches(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x1aee6710ac79060b1e13291ba85112af2b949d1a72012eeaa1f6b481830d0d73de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
+        )
+    }
+
+    #[test]
+    fn test_acurast_processor_manager_processor_to_manager_id_index() {
+        let key = acurast_processor_manager_processor_to_manager_id_index(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd66846f3a728ad8efdeffd18f039142abe31b2de1e86a9a8c739864cf3cc5ec2bea59f")
+        );
+    }
+
+    #[test]
+    fn test_acurast_processor_manager_manager_counter() {
+        let key = acurast_processor_manager_manager_counter(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd6684652af9a5a36f7ce16cc96808f97171a0bde1e86a9a8c739864cf3cc5ec2bea59f")
+        );
+    }
+
+    #[test]
+    fn test_acurast_processor_manager_management_endpoint() {
+        let key = acurast_processor_manager_management_endpoint(0);
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd66846baf48d86cb51dd4c22ca340c99164aaa463be1d58a72e9618ea59884367c435800000000000000000000000000000000")
+        );
+    }
+
+    #[test]
+    fn test_acurast_compute_metric_pool_lookup() {
+        let key = acurast_compute_metric_pool_lookup();
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x56c55973ec96db3a5ef84bbd48553aebe72eacd0a9cd6eeac082faf837bb0e1a")
+        );
+    }
+
+    #[test]
+    fn test_acurast_compute_metric_pools() {
+        let key = acurast_compute_metric_pools();
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x56c55973ec96db3a5ef84bbd48553aebf8721c64ae517455ab3aaead1f107f79")
+        );
+    }
+
+    #[test]
+    fn test_system_account() {
+        let key = system_account(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
+        );
+    }
+
+    #[test]
+    fn test_uniques_asset() {
+        let key = uniques_asset(0);
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x5e8a19e3cd1b7c148b33880c479c0281d34371a193a751eea5883e9553457b2e463be1d58a72e9618ea59884367c435800000000000000000000000000000000463be1d58a72e9618ea59884367c435800000000000000000000000000000000")
+        );
+    }
 }

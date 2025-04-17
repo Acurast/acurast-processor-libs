@@ -1026,6 +1026,8 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
     
+    func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> Data?
+    
     func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> UInt64?
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
@@ -1190,6 +1192,24 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobRegistration.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?)async  -> Data? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_management_endpoint(
+                    self.uniffiClonePointer(),
+                    FfiConverterInt32.lower(managerId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionData.lift,
             errorHandler: nil
             
         )
@@ -1841,6 +1861,8 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async  -> [MetricPool]
     
+    func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> Data?
+    
 }
 
 open class VxAcurastStorage:
@@ -2077,6 +2099,24 @@ open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async  ->
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeMetricPool.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?)async  -> Data? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_management_endpoint(
+                    self.uniffiClonePointer(),
+                    FfiConverterInt32.lower(managerId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionData.lift,
             errorHandler: nil
             
         )
@@ -5535,6 +5575,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_registration() != 27665) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_management_endpoint() != 56801) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_counter() != 4301) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5593,6 +5636,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 17992) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_endpoint() != 46661) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {

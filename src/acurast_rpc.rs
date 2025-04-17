@@ -5,6 +5,7 @@ use crate::engine::pallet::author::Author;
 use crate::engine::pallet::chain::Chain;
 use crate::engine::pallet::state::{RuntimeVersion, State};
 use crate::hex::hex_to_ba;
+use crate::storage::acurast_storage::StorageKey;
 use crate::storage::v0_acurast_storage::VXAcurastStorage;
 use crate::storage::v0_acurast_storage::V0AcurastStorageImpl;
 use crate::storage::v1_acurast_storage::V1AcurastStorageImpl;
@@ -17,7 +18,6 @@ use std::fmt;
 use std::io::Cursor;
 use std::sync::Arc;
 use xxhash_rust::xxh3::xxh3_64_with_seed;
-use crate::xxhash::xxh128_unsigned;
 
 #[derive(Debug, PartialEq, uniffi::Enum)]
 pub enum AcurastRpcError {
@@ -108,13 +108,6 @@ impl AcurastRpcImpl {
             storages,
         }
     }
-
-    fn generate_key(prefix: &str, key: &str) -> Vec<u8> {
-        let mut _key = Vec::new();
-        _key.extend_from_slice(&xxh128_unsigned(prefix.as_bytes()));
-        _key.extend_from_slice(&xxh128_unsigned(key.as_bytes()));
-        return _key;
-    }
 }
 
 #[async_trait]
@@ -142,7 +135,7 @@ impl AcurastRpc for AcurastRpcImpl {
     }
 
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32 {
-        let key = Self::generate_key("AcurastProcessorManager", "ApiVersion");
+        let key = acurast_processor_manager_api_version();
         match self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -179,13 +172,7 @@ impl AcurastRpc for AcurastRpcImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<ProcessorUpdateInfo> {
-        let key = [
-            Self::generate_key("AcurastProcessorManager", "ProcessorUpdateInfo"),
-            //Self::hash_blake2b(&account_id),
-            account_id.clone(),
-        ]
-        .concat();
-
+        let key = acurast_processor_manager_processor_update_info(&account_id);
         match self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -210,13 +197,7 @@ impl AcurastRpc for AcurastRpcImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>> {
-        let version_bytes = version.to_u8a();
-        let key = [
-            Self::generate_key("AcurastProcessorManager", "KnownBinaryHash"),
-            //Self::hash_blake2b(&version_bytes),
-            version_bytes.clone(),
-        ]
-        .concat();
+        let key = acurast_processor_manager_known_binary_hash(&version);
         match self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
@@ -271,4 +252,73 @@ pub fn xxh128(data: &[u8], seed: u64) -> u128 {
 
     ret.set_position(0);
     ret.read_u128::<LittleEndian>().unwrap()
+}
+
+fn acurast_processor_manager_api_version() -> Vec<u8> {
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix("AcurastProcessorManager", "ApiVersion");
+
+    key
+}
+
+fn acurast_processor_manager_processor_update_info(account_id: &[u8]) -> Vec<u8> {
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix("AcurastProcessorManager", "ProcessorUpdateInfo");
+    key.extend_with_blake2_128concat(account_id);
+
+    key
+}
+
+fn acurast_processor_manager_known_binary_hash(version: &ProcessorVersion) -> Vec<u8> {
+    let version = version.to_u8a();
+    
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix("AcurastProcessorManager", "KnownBinaryHash");
+    key.extend_with_blake2_128concat(&version);
+
+    key
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Platform;
+
+    use super::*;
+
+    #[test]
+    fn test_acurast_processor_manager_api_version() {
+        let key = acurast_processor_manager_api_version();
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd66846b0ec0523d482e30628c3691600bb72ae")
+        );
+    }
+
+    #[test]
+    fn test_acurast_processor_manager_processor_update_info() {
+        let key = acurast_processor_manager_processor_update_info(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd6684688192b208e46ab5e9fa0efa03baeffd9de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
+        );
+    }
+
+    #[test]
+    fn test_acurastp_pocessor_manager_known_binary_hash() {
+        let key = acurast_processor_manager_known_binary_hash(
+            &ProcessorVersion { 
+                platform: Platform::Android, 
+                build_number: 0,
+            },
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd66846e8e28ace40923c7aded0457baf4aba6ec804ce198ec337e3dc762bdd1a09aece0000000000000000"),
+        );
+    }
 }

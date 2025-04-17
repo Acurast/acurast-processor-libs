@@ -123,4 +123,13 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
     ) -> Vec<MetricPool> {
         self.base.get_metric_pools(ids, block_hash, timeout).await
     }
+
+    async fn get_management_endpoint(
+        &self,
+        manager_id: i32,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Vec<u8>> {
+        self.base.get_management_endpoint(manager_id, block_hash, timeout).await
+    }
 }

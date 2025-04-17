@@ -1,9 +1,8 @@
 use super::v0_acurast_storage::VXAcurastStorage;
 use crate::{
-    codec::types::{
+    blake2b::blake2b_128, codec::types::{
         acurast::{attestation::Attestation, job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration}, marketplace::job_assigment::JobAssignment, metrics::MetricPool, uniques::pallet_uniques_item_details::PalletUniquesItemDetails
-    },
-    types::system::FrameSystemAccountInfo,
+    }, types::system::FrameSystemAccountInfo, xxhash::xxh128_unsigned
 };
 use std::sync::Arc;
 
@@ -140,5 +139,36 @@ impl AcurastStorage {
         timeout: Option<u64>,
     ) -> Vec<MetricPool> {
         self.storage.get_metric_pools(ids, block_hash, timeout).await
+    }
+
+    async fn get_management_endpoint(
+        &self,
+        manager_id: i32,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<Vec<u8>> {
+        self.storage.get_management_endpoint(manager_id, block_hash, timeout).await
+    }
+}
+
+pub trait StorageKey {
+    fn extend_with_storage_prefix(&mut self, module: &str, method: &str);
+    fn extend_with_blake2_128(&mut self, bytes: &[u8]);
+    fn extend_with_blake2_128concat(&mut self, bytes: &[u8]);
+}
+
+impl StorageKey for Vec<u8> {
+    fn extend_with_storage_prefix(&mut self, module: &str, method: &str) {
+        self.extend_from_slice(&xxh128_unsigned(module.as_bytes()));
+        self.extend_from_slice(&xxh128_unsigned(method.as_bytes()));
+    }
+
+    fn extend_with_blake2_128(&mut self, bytes: &[u8]) {
+        self.extend_from_slice(&blake2b_128(bytes, 16));
+    }
+
+    fn extend_with_blake2_128concat(&mut self, bytes: &[u8]) {
+        self.extend_with_blake2_128(bytes);
+        self.extend_from_slice(bytes);
     }
 }
