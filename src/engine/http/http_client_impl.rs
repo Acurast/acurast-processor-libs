@@ -58,16 +58,14 @@ impl HttpClient for HttpClientImpl {
         _request_timeout: Option<u64>,
         _connection_timeout: Option<u64>,
     ) -> Result<String, Error> {
-        let response = self
-            .client
+        self.client
             .delete(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
             .send()
             .await?
             .text()
-            .await;
-        response
+            .await
     }
 
     async fn get(
@@ -78,16 +76,14 @@ impl HttpClient for HttpClientImpl {
         _request_timeout: Option<u64>,
         _connection_timeout: Option<u64>,
     ) -> Result<String, Error> {
-        let response = self
-            .client
+        self.client
             .get(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
             .send()
             .await?
             .text()
-            .await;
-        response
+            .await
     }
 
     async fn patch(
@@ -99,8 +95,7 @@ impl HttpClient for HttpClientImpl {
         _request_timeout: Option<u64>,
         _connection_timeout: Option<u64>,
     ) -> Result<String, Error> {
-        let response = self
-            .client
+        self.client
             .patch(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
@@ -108,8 +103,7 @@ impl HttpClient for HttpClientImpl {
             .send()
             .await?
             .text()
-            .await;
-        response
+            .await
     }
 
     async fn post(
@@ -121,9 +115,9 @@ impl HttpClient for HttpClientImpl {
         _request_timeout: Option<u64>,
         _connection_timeout: Option<u64>,
     ) -> Result<String, Error> {
-        println!("HttpClientImpl::post: {}", base_url);
-        let response = self
-            .client
+        log::debug!("HttpClientImpl::post: {}", base_url);
+
+        self.client
             .post(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
@@ -131,8 +125,7 @@ impl HttpClient for HttpClientImpl {
             .send()
             .await?
             .text()
-            .await;
-        response
+            .await
     }
 
     async fn put(
@@ -144,8 +137,7 @@ impl HttpClient for HttpClientImpl {
         _request_timeout: Option<u64>,
         _connection_timeout: Option<u64>,
     ) -> Result<String, Error> {
-        let response = self
-            .client
+        self.client
             .put(base_url)
             .headers(self.build_headers(headers))
             .query(&self.build_params(parameters))
@@ -153,7 +145,6 @@ impl HttpClient for HttpClientImpl {
             .send()
             .await?
             .text()
-            .await;
-        response
+            .await
     }
 }

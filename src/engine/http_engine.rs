@@ -42,7 +42,7 @@ impl RpcEngine for HttpRpcEngine {
                 None,
             )
             .await?;
-        println!("HttpEngine::response: {}", response);
+        log::debug!("HttpEngine::response: {}", response);
         let response_body = response;
         let json_response: serde_json::Value = serde_json::from_str(&response_body)?;
         Ok(json_response)

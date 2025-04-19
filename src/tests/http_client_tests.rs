@@ -26,11 +26,11 @@ async fn it_works() {
     {
         Ok(response) => {
             assert!(true);
-            println!("Response: {}", response)
+            log::debug!("Response: {}", response)
         }
         Err(e) => {
             assert!(true);
-            println!("Error: {}", e)
+            log::error!("Error: {}", e)
         }
     }
 }
