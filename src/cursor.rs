@@ -29,7 +29,7 @@ pub fn read_optional_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<Option<BigUint
     cursor.read_exact(&mut flag)?;
 
     match flag[0] {
-        0 => Ok(None), // 0 indicates `None`
+        0 => Ok(None),                     // 0 indicates `None`
         1 => Ok(Some(read_u128(cursor)?)), // 1 indicates `Some`, read the value
         _ => Err(format!("Invalid flag for optional BigUint: {:?}", flag[0]).into()), // Invalid flag
     }
@@ -75,7 +75,7 @@ where
     F: Fn(&mut Cursor<Vec<u8>>) -> Result<T, Box<dyn Error>>,
 {
     let size = read_compact_integer(cursor)?.to_u32();
-    println!("read_list:: {}", size);
+    log::debug!("read_list:: {}", size);
     let mut list = Vec::with_capacity(size as usize);
 
     for _ in 0..size {

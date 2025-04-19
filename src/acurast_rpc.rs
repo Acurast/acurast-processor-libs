@@ -6,8 +6,8 @@ use crate::engine::pallet::chain::Chain;
 use crate::engine::pallet::state::{RuntimeVersion, State};
 use crate::hex::hex_to_ba;
 use crate::storage::acurast_storage::StorageKey;
-use crate::storage::v0_acurast_storage::VXAcurastStorage;
 use crate::storage::v0_acurast_storage::V0AcurastStorageImpl;
+use crate::storage::v0_acurast_storage::VXAcurastStorage;
 use crate::storage::v1_acurast_storage::V1AcurastStorageImpl;
 use crate::types::header::Header;
 use async_trait::async_trait;
@@ -40,8 +40,11 @@ pub trait AcurastRpc: Send + Sync {
         block_number: Option<i64>,
         timeout: Option<u64>,
     ) -> Result<String, AcurastRpcError>;
-    async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>)
-        -> Result<Header, AcurastRpcError>;
+    async fn get_header(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Header, AcurastRpcError>;
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32;
     async fn get_runtime_version(
         &self,
@@ -60,7 +63,11 @@ pub trait AcurastRpc: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>>;
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String, AcurastRpcError>;
+    async fn submit_extrinsic(
+        &self,
+        extrinsic: Vec<u8>,
+        timeout: Option<u64>,
+    ) -> Result<String, AcurastRpcError>;
     async fn call(
         &self,
         method: String,
@@ -95,7 +102,7 @@ impl AcurastRpcImpl {
                 1,
                 Arc::new(V1AcurastStorageImpl::new(engine.clone(), state.clone()))
                     as Arc<dyn VXAcurastStorage>,
-            )
+            ),
         ]
         .into_iter()
         .collect();
@@ -142,7 +149,7 @@ impl AcurastRpc for AcurastRpcImpl {
             .await
         {
             Ok(storage_option) => {
-                println!("get_api_version {:?}", storage_option);
+                log::debug!("get_api_version {:?}", storage_option);
                 if let Some(storage) = storage_option {
                     let decoded_storage = hex_to_ba(&storage);
                     let mut cursor = std::io::Cursor::new(decoded_storage);
@@ -214,7 +221,11 @@ impl AcurastRpc for AcurastRpcImpl {
         }
     }
 
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String, AcurastRpcError> {
+    async fn submit_extrinsic(
+        &self,
+        extrinsic: Vec<u8>,
+        timeout: Option<u64>,
+    ) -> Result<String, AcurastRpcError> {
         self.author
             .submit_extrinsic(extrinsic, timeout, &self.engine)
             .await
@@ -271,7 +282,7 @@ fn acurast_processor_manager_processor_update_info(account_id: &[u8]) -> Vec<u8>
 
 fn acurast_processor_manager_known_binary_hash(version: &ProcessorVersion) -> Vec<u8> {
     let version = version.to_u8a();
-    
+
     let mut key = Vec::new();
     key.extend_with_storage_prefix("AcurastProcessorManager", "KnownBinaryHash");
     key.extend_with_blake2_128concat(&version);
@@ -297,9 +308,9 @@ mod tests {
 
     #[test]
     fn test_acurast_processor_manager_processor_update_info() {
-        let key = acurast_processor_manager_processor_update_info(
-            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-        );
+        let key = acurast_processor_manager_processor_update_info(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
 
         assert_eq!(
             key,
@@ -309,12 +320,10 @@ mod tests {
 
     #[test]
     fn test_acurastp_pocessor_manager_known_binary_hash() {
-        let key = acurast_processor_manager_known_binary_hash(
-            &ProcessorVersion { 
-                platform: Platform::Android, 
-                build_number: 0,
-            },
-        );
+        let key = acurast_processor_manager_known_binary_hash(&ProcessorVersion {
+            platform: Platform::Android,
+            build_number: 0,
+        });
 
         assert_eq!(
             key,

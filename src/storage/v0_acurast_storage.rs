@@ -9,16 +9,16 @@ use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItem
 use crate::cursor::read_byte_array;
 use crate::engine::pallet::state::State;
 use crate::hex::{hex_to_ba, read_u128, read_u64, ToHex};
+use crate::storage::acurast_storage::StorageKey;
 use crate::types::system::FrameSystemAccountInfo;
 use crate::u8a::biguint_to_u8a;
 use crate::RpcEngine;
-use crate::storage::acurast_storage::StorageKey;
 use async_trait::async_trait;
+use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
 use num_traits::Zero;
 use std::io::Cursor;
 use std::sync::Arc;
-use byteorder::ReadBytesExt;
 
 #[uniffi::export]
 #[async_trait]
@@ -117,7 +117,11 @@ pub struct V0AcurastStorageImpl {
 
 impl V0AcurastStorageImpl {
     pub fn new(engine: Arc<dyn RpcEngine>, state: Arc<State>, version: u32) -> Self {
-        Self { engine, state, version: version }
+        Self {
+            engine,
+            state,
+            version: version,
+        }
     }
 }
 
@@ -216,7 +220,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         let key = acurast_marketplace_stored_matches(account_id);
 
         let mut jobs: Vec<JobAssignment> = Vec::new();
-        println!("get_assigned_jobs: {:?}", account_id);
+        log::debug!("get_assigned_jobs: {:?}", account_id);
         let keys = self
             .state
             .get_keys(&key, block_hash, timeout, &self.engine)
@@ -227,12 +231,14 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             .get_storage_at(keys, None, None, &self.engine)
             .await
         {
-            println!("get_assigned_jobs {:?}", storage);
+            log::debug!("get_assigned_jobs {:?}", storage);
             if !storage.is_empty() {
                 for change in &storage[0].changes {
-                    let job_assignment =
-                        JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), self.version)
-                            .unwrap();
+                    let job_assignment = JobAssignment::read(
+                        change.iter().map(|s| s.as_str()).collect(),
+                        self.version,
+                    )
+                    .unwrap();
                     jobs.push(job_assignment);
                     /*if let Ok(job_assignment) = JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0) {
                         jobs.push(job_assignment);
@@ -293,7 +299,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> bool {
         let key = acurast_stored_attestation(account_id);
-        println!("is_attested: {:?}", account_id);
+        log::debug!("is_attested: {:?}", account_id);
         let keys = self
             .state
             .get_keys(&key, block_hash, timeout, &self.engine)
@@ -304,7 +310,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             .get_storage_at(keys, None, None, &self.engine)
             .await
         {
-            println!("is_attested {:?}", storage);
+            log::debug!("is_attested {:?}", storage);
             return !storage.is_empty();
         }
         false
@@ -336,19 +342,20 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         names: Vec<String>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<u8>{
+    ) -> Vec<u8> {
         let key = acurast_compute_metric_pool_lookup();
-        let keys: Vec<String> = names.into_iter()
-        .map(|name| {
-            let mut bytes = name.into_bytes();
-            bytes.resize(24, 0);
-            let combined = [key.clone(), bytes].concat();
-            combined.to_hex()
-        })
-        .collect();
+        let keys: Vec<String> = names
+            .into_iter()
+            .map(|name| {
+                let mut bytes = name.into_bytes();
+                bytes.resize(24, 0);
+                let combined = [key.clone(), bytes].concat();
+                combined.to_hex()
+            })
+            .collect();
 
         let mut pool_ids: Vec<u8> = Vec::new();
-        println!("get_metric_pool_ids keys: {:?}", keys);
+        log::debug!("get_metric_pool_ids keys: {:?}", keys);
 
         if let Ok(storage) = self
             .state
@@ -369,7 +376,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                 }
             }
         } else {
-            println!("get_metric_pool_ids failed");
+            log::debug!("get_metric_pool_ids failed");
         }
         pool_ids
     }
@@ -381,14 +388,19 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Vec<MetricPool> {
         let key = acurast_compute_metric_pools();
-        let keys: Vec<String> = ids.into_iter()
-        .map(|id| {
-            let combined = [key.clone(), vec![id]].concat();
-            combined.to_hex()
-        })
-        .collect();
+        let keys: Vec<String> = ids
+            .into_iter()
+            .map(|id| {
+                let combined = [key.clone(), vec![id]].concat();
+                combined.to_hex()
+            })
+            .collect();
         let mut metrics: Vec<MetricPool> = Vec::new();
-        if let Ok(storage) = self.state.get_storage_at(keys, block_hash, timeout, &self.engine).await {
+        if let Ok(storage) = self
+            .state
+            .get_storage_at(keys, block_hash, timeout, &self.engine)
+            .await
+        {
             if !storage.is_empty() {
                 for change in &storage[0].changes {
                     let change_strs: Vec<&str> = change.iter().map(|s| s.as_str()).collect();
@@ -396,13 +408,13 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                         if let Ok(bytes) = hex::decode(hex_str) {
                             let mut cursor = Cursor::new(bytes);
                             let metric = MetricPool::read(&mut cursor);
-                                metrics.push(metric.unwrap());
+                            metrics.push(metric.unwrap());
                         }
                     }
                 }
             }
         } else {
-            println!("get_metric_pools failed");
+            log::debug!("get_metric_pools failed");
         }
         metrics
     }
@@ -418,9 +430,9 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
-            .ok() 
-        else { 
-            return None; 
+            .ok()
+        else {
+            return None;
         };
 
         let bytes = hex_to_ba(&storage);
@@ -433,7 +445,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
 fn acurast_stored_job_registration(job_identifier: &JobIdentifier) -> Vec<u8> {
     let origin = job_identifier.origin.to_u8a();
     let id = job_identifier.id.to_u8a();
-    
+
     let mut key: Vec<u8> = Vec::new();
     key.extend_with_storage_prefix("Acurast", "StoredJobRegistration");
     key.extend_with_blake2_128concat(&origin);
@@ -445,7 +457,7 @@ fn acurast_stored_job_registration(job_identifier: &JobIdentifier) -> Vec<u8> {
 fn acurast_execution_environment(job_identifier: &JobIdentifier, account_id: &[u8]) -> Vec<u8> {
     let mut job = job_identifier.origin.to_u8a();
     job.extend(job_identifier.id.to_u8a());
-    
+
     let mut key: Vec<u8> = Vec::new();
     key.extend_with_storage_prefix("Acurast", "ExecutionEnvironment");
     key.extend_with_blake2_128concat(&job);
@@ -537,15 +549,15 @@ mod tests {
 
     #[test]
     fn test_acurast_stored_job_registration() {
-        let key = acurast_stored_job_registration(
-            &JobIdentifier { 
-                origin: MultiOrigin {
-                    kind: Kind::Acurast,
-                    source: hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-                }, 
-                id: BigUint::from(0u32),
+        let key = acurast_stored_job_registration(&JobIdentifier {
+            origin: MultiOrigin {
+                kind: Kind::Acurast,
+                source: hex_to_ba(
+                    "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+                ),
             },
-        );
+            id: BigUint::from(0u32),
+        });
 
         assert_eq!(
             key,
@@ -556,11 +568,13 @@ mod tests {
     #[test]
     fn test_acurast_execution_environment() {
         let key = acurast_execution_environment(
-            &JobIdentifier { 
+            &JobIdentifier {
                 origin: MultiOrigin {
                     kind: Kind::Acurast,
-                    source: hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-                }, 
+                    source: hex_to_ba(
+                        "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+                    ),
+                },
                 id: BigUint::from(0u32),
             },
             &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
@@ -574,9 +588,9 @@ mod tests {
 
     #[test]
     fn test_acurast_stored_attestation() {
-        let key = acurast_stored_attestation(
-            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-        );
+        let key = acurast_stored_attestation(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
 
         assert_eq!(
             key,
@@ -586,9 +600,9 @@ mod tests {
 
     #[test]
     fn test_acurast_marketplace_stored_matches() {
-        let key = acurast_marketplace_stored_matches(
-            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-        );
+        let key = acurast_marketplace_stored_matches(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
 
         assert_eq!(
             key,
@@ -598,9 +612,9 @@ mod tests {
 
     #[test]
     fn test_acurast_processor_manager_processor_to_manager_id_index() {
-        let key = acurast_processor_manager_processor_to_manager_id_index(
-            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-        );
+        let key = acurast_processor_manager_processor_to_manager_id_index(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
 
         assert_eq!(
             key,
@@ -610,9 +624,9 @@ mod tests {
 
     #[test]
     fn test_acurast_processor_manager_manager_counter() {
-        let key = acurast_processor_manager_manager_counter(
-            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-        );
+        let key = acurast_processor_manager_manager_counter(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
 
         assert_eq!(
             key,
@@ -652,9 +666,9 @@ mod tests {
 
     #[test]
     fn test_system_account() {
-        let key = system_account(
-            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
-        );
+        let key = system_account(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
 
         assert_eq!(
             key,
@@ -672,3 +686,4 @@ mod tests {
         );
     }
 }
+

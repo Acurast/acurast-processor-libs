@@ -2,6 +2,7 @@ uniffi::setup_scaffolding!();
 
 pub mod acurast_rpc;
 pub mod big_uint;
+pub mod blake2b;
 pub mod codec;
 pub mod cursor;
 pub mod engine;
@@ -10,10 +11,9 @@ pub mod storage;
 pub mod tests;
 pub mod types;
 pub mod u8a;
+pub mod uint128;
 pub mod vec_slice;
 pub mod xxhash;
-pub mod uint128;
-pub mod blake2b;
 
 pub use crate::codec::platform::Platform;
 pub use crate::codec::processor_update_info::ProcessorUpdateInfo;
@@ -31,6 +31,13 @@ use engine::http_engine::HttpRpcEngine;
 use num_bigint::BigUint;
 use std::str::FromStr;
 use std::sync::Arc;
+
+fn setup_logger() {
+    std::env::set_var("RUST_LOG", "info");
+    env_logger::Builder::from_default_env()
+        .target(env_logger::Target::Stdout)
+        .init();
+}
 
 uniffi::custom_type!(BigUint, String);
 impl UniffiCustomTypeConverter for BigUint {
@@ -62,6 +69,7 @@ pub struct AcurastRpcClient {
 impl AcurastRpcClient {
     #[uniffi::constructor]
     pub fn new(acurast_rpc: Arc<dyn AcurastRpc>) -> Arc<Self> {
+        setup_logger();
         Arc::new(Self {
             acurastrpc: acurast_rpc,
         })

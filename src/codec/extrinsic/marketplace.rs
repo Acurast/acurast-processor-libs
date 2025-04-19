@@ -30,7 +30,7 @@ impl TryFrom<u8> for Tag {
     type Error = ();
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
-        println!("Tag::try_from {}", value);
+        log::debug!("Tag::try_from {}", value);
         match value {
             0 => Ok(Tag::Secp256r1),
             1 => Ok(Tag::Secp256k1),

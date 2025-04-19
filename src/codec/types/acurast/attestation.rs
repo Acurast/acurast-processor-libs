@@ -1,6 +1,6 @@
+use byteorder::{LittleEndian, ReadBytesExt};
 use std::error::Error;
 use std::io::Cursor;
-use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::cursor::{read_byte_array, read_list, CursorExt};
 
@@ -12,14 +12,12 @@ pub struct Attestation {
 }
 
 impl Attestation {
-    pub fn read(
-        mut cursor: &mut Cursor<Vec<u8>>
-    ) -> Result<Self, Box<dyn Error>> {
-        let cert_ids = read_list(&mut cursor, CertId::read)?;
-        println!("Attestation:read: {:?}", cert_ids);
-        let content = AttestationContent::read(&mut cursor)?;
-        println!("Attestation:read content: {:?}", content);
-        let validity = AttestationValidity::read(&mut cursor)?;
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let cert_ids = read_list(cursor, CertId::read)?;
+        log::debug!("Attestation:read: {:?}", cert_ids);
+        let content = AttestationContent::read(cursor)?;
+        log::debug!("Attestation:read content: {:?}", content);
+        let validity = AttestationValidity::read(cursor)?;
 
         Ok(Attestation {
             cert_ids,
@@ -36,9 +34,7 @@ pub struct AttestationValidity {
 }
 
 impl AttestationValidity {
-    pub fn read(
-        cursor: &mut Cursor<Vec<u8>>,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let not_before = cursor.read_u64::<LittleEndian>()?;
         let not_after = cursor.read_u64::<LittleEndian>()?;
 
@@ -49,7 +45,6 @@ impl AttestationValidity {
     }
 }
 
-
 #[derive(uniffi::Record, Debug)]
 pub struct CertId {
     pub issuer_name: Vec<u8>,
@@ -57,9 +52,7 @@ pub struct CertId {
 }
 
 impl CertId {
-    pub fn read(
-        cursor: &mut Cursor<Vec<u8>>,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let issuer_name = read_byte_array(cursor)?;
         let serial_number = read_byte_array(cursor)?;
 
@@ -77,14 +70,16 @@ pub enum AttestationContent {
 }
 
 impl AttestationContent {
-    pub fn read(
-        cursor: &mut Cursor<Vec<u8>>,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let id = cursor.read_u8()?;
-        println!("AttestationContent:read: {:?}", id);
+        log::debug!("AttestationContent:read: {:?}", id);
         match id {
-            KeyDescription::ID => Ok(AttestationContent::KeyDescription(KeyDescription::read(cursor)?)),
-            DeviceAttestation::ID => Ok(AttestationContent::DeviceAttestation(DeviceAttestation::read(cursor)?)),
+            KeyDescription::ID => Ok(AttestationContent::KeyDescription(KeyDescription::read(
+                cursor,
+            )?)),
+            DeviceAttestation::ID => Ok(AttestationContent::DeviceAttestation(
+                DeviceAttestation::read(cursor)?,
+            )),
             _ => Err(format!("Unknown AttestationContent ID: {}", id).into()),
         }
     }
@@ -99,9 +94,7 @@ pub struct KeyDescription {
 impl KeyDescription {
     pub const ID: u8 = 0;
 
-    pub fn read(
-        cursor: &mut Cursor<Vec<u8>>,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let attestation_security_level = cursor.read_u8()?;
         let key_mint_security_level = cursor.read_u8()?;
 
@@ -197,10 +190,10 @@ impl DeviceOsInformation {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let t1400 = cursor.read_optional(read_byte_array)?;
         let t1104 = cursor.read_u64::<LittleEndian>().ok();
-        let t1403 = cursor.read_optional( read_byte_array)?;
-        let t1420 = cursor.read_optional( read_byte_array)?;
-        let t1026 = cursor.read_optional( read_byte_array)?;
-        let t1029 = cursor.read_optional( read_byte_array)?;
+        let t1403 = cursor.read_optional(read_byte_array)?;
+        let t1420 = cursor.read_optional(read_byte_array)?;
+        let t1026 = cursor.read_optional(read_byte_array)?;
+        let t1029 = cursor.read_optional(read_byte_array)?;
 
         Ok(DeviceOsInformation {
             t1400,
@@ -220,7 +213,7 @@ pub struct Nonce {
 
 impl Nonce {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        let nonce = cursor.read_optional( read_byte_array)?;
+        let nonce = cursor.read_optional(read_byte_array)?;
 
         Ok(Nonce { nonce })
     }
