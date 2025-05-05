@@ -6,6 +6,7 @@ use crate::codec::types::acurast::{
 };
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::metrics::MetricPool;
+use crate::codec::types::processor_overview::ProcessorOverview;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::engine::pallet::state::State;
 use crate::types::system::FrameSystemAccountInfo;
@@ -21,7 +22,7 @@ pub struct V1AcurastStorageImpl {
 impl V1AcurastStorageImpl {
     pub fn new(engine: Arc<dyn RpcEngine>, state: Arc<State>) -> Self {
         let v0 = V0AcurastStorageImpl::new(engine, state, 1);
-        return Self { base: v0 };
+        Self { base: v0 }
     }
 }
 
@@ -151,6 +152,17 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
     ) -> Option<Vec<u8>> {
         self.base
             .get_management_endpoint(manager_id, block_hash, timeout)
+            .await
+    }
+
+    async fn get_processor_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<ProcessorOverview> {
+        self.base
+            .get_processor_overview(account_id, block_hash, timeout)
             .await
     }
 }

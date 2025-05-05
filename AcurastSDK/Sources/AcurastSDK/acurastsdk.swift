@@ -1036,6 +1036,8 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [MetricPool?]
     
+    func getProcessorOverview(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> ProcessorOverview?
+    
     func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Bool
     
 }
@@ -1282,6 +1284,24 @@ open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async thr
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceOptionTypeMetricPool.lift,
             errorHandler: FfiConverterTypeAcurastError.lift
+        )
+}
+    
+open func getProcessorOverview(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> ProcessorOverview? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_processor_overview(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeProcessorOverview.lift,
+            errorHandler: nil
+            
         )
 }
     
@@ -1861,6 +1881,8 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> Data?
     
+    func getProcessorOverview(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> ProcessorOverview?
+    
 }
 
 open class VxAcurastStorage:
@@ -2113,6 +2135,24 @@ open func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UIn
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionData.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getProcessorOverview(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> ProcessorOverview? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_processor_overview(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeProcessorOverview.lift,
             errorHandler: nil
             
         )
@@ -3920,6 +3960,71 @@ public func FfiConverterTypePlannedExecution_lower(_ value: PlannedExecution) ->
 }
 
 
+public struct ProcessorOverview {
+    public var managerIdentifier: Int32?
+    public var isAttested: Bool
+    public var lastHeartbeatTimestamp: UInt64?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(managerIdentifier: Int32?, isAttested: Bool, lastHeartbeatTimestamp: UInt64?) {
+        self.managerIdentifier = managerIdentifier
+        self.isAttested = isAttested
+        self.lastHeartbeatTimestamp = lastHeartbeatTimestamp
+    }
+}
+
+
+
+extension ProcessorOverview: Equatable, Hashable {
+    public static func ==(lhs: ProcessorOverview, rhs: ProcessorOverview) -> Bool {
+        if lhs.managerIdentifier != rhs.managerIdentifier {
+            return false
+        }
+        if lhs.isAttested != rhs.isAttested {
+            return false
+        }
+        if lhs.lastHeartbeatTimestamp != rhs.lastHeartbeatTimestamp {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(managerIdentifier)
+        hasher.combine(isAttested)
+        hasher.combine(lastHeartbeatTimestamp)
+    }
+}
+
+
+public struct FfiConverterTypeProcessorOverview: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProcessorOverview {
+        return
+            try ProcessorOverview(
+                managerIdentifier: FfiConverterOptionInt32.read(from: &buf), 
+                isAttested: FfiConverterBool.read(from: &buf), 
+                lastHeartbeatTimestamp: FfiConverterOptionUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ProcessorOverview, into buf: inout [UInt8]) {
+        FfiConverterOptionInt32.write(value.managerIdentifier, into: &buf)
+        FfiConverterBool.write(value.isAttested, into: &buf)
+        FfiConverterOptionUInt64.write(value.lastHeartbeatTimestamp, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeProcessorOverview_lift(_ buf: RustBuffer) throws -> ProcessorOverview {
+    return try FfiConverterTypeProcessorOverview.lift(buf)
+}
+
+public func FfiConverterTypeProcessorOverview_lower(_ value: ProcessorOverview) -> RustBuffer {
+    return FfiConverterTypeProcessorOverview.lower(value)
+}
+
+
 public struct ProcessorUpdateInfo {
     public var version: ProcessorVersion
     public var binaryLocation: Data
@@ -5162,6 +5267,27 @@ fileprivate struct FfiConverterOptionTypePalletUniquesItemDetails: FfiConverterR
     }
 }
 
+fileprivate struct FfiConverterOptionTypeProcessorOverview: FfiConverterRustBuffer {
+    typealias SwiftType = ProcessorOverview?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeProcessorOverview.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeProcessorOverview.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionTypeProcessorUpdateInfo: FfiConverterRustBuffer {
     typealias SwiftType = ProcessorUpdateInfo?
 
@@ -5662,6 +5788,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pools() != 2600) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_processor_overview() != 10622) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_is_attested() != 2160) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5711,6 +5840,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_endpoint() != 46661) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_processor_overview() != 56185) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {

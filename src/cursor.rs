@@ -6,7 +6,38 @@ use std::{
     io::{Cursor, Read},
 };
 
-use crate::big_uint::BigIntToInt;
+use crate::{big_uint::BigIntToInt, hex::{hex_to_ba, is_hex}};
+
+pub fn read_changes_opt<T, F>(changes: &Vec<Vec<Option<String>>>, index: usize, read: F) -> Option<T>
+where
+    F: FnOnce(Vec<u8>) -> T 
+{
+    let Some(change) = changes.get(index) else {
+        return None;
+    };
+
+    let Some(Some(value)) = change.get(1) else {
+        return None;
+    };
+
+    if !is_hex(value) {
+        return None;
+    }
+
+    let bytes = hex_to_ba(value);
+
+    Some(read(bytes))
+}
+
+pub fn read_changes_opt_with_cursor<T, F>(changes: &Vec<Vec<Option<String>>>, index: usize, read: F) -> Option<T>
+where
+    F: FnOnce(&mut Cursor<Vec<u8>>) -> T 
+{
+    read_changes_opt(changes, index, |bytes| {
+        let mut cursor = Cursor::new(bytes);
+        read(&mut cursor)
+    })
+}
 
 pub fn read_bytes(cursor: &mut Cursor<Vec<u8>>, offset: usize) -> Result<Vec<i8>, Box<dyn Error>> {
     let mut ba = vec![0u8; offset];

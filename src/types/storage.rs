@@ -5,11 +5,11 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct StorageQueryResult {
     pub block: String,
-    pub changes: Vec<Vec<String>>,
+    pub changes: Vec<Vec<Option<String>>>,
 }
 
 impl StorageQueryResult {
-    pub fn new(block: String, changes: Vec<Vec<String>>) -> Self {
+    pub fn new(block: String, changes: Vec<Vec<Option<String>>>) -> Self {
         StorageQueryResult { block, changes }
     }
 }

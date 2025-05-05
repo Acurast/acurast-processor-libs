@@ -5,8 +5,9 @@ use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::metrics::MetricPool;
+use crate::codec::types::processor_overview::ProcessorOverview;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
-use crate::cursor::read_byte_array;
+use crate::cursor::{read_byte_array, read_changes_opt};
 use crate::engine::pallet::state::State;
 use crate::hex::{hex_to_ba, read_u128, read_u64, ToHex};
 use crate::storage::acurast_storage::StorageKey;
@@ -108,6 +109,13 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>>;
+
+    async fn get_processor_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<ProcessorOverview>;
 }
 
 pub struct V0AcurastStorageImpl {
@@ -228,7 +236,10 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             if !storage.is_empty() {
                 for change in &storage[0].changes {
                     let job_assignment = JobAssignment::read(
-                        change.iter().map(|s| s.as_str()).collect(),
+                        change
+                            .iter()
+                            .filter_map(|c| c.as_ref().map(|s| s.as_str()))
+                            .collect(),
                         self.version,
                     )
                     .unwrap();
@@ -271,16 +282,14 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<JobEnvironment> {
         let key = acurast_execution_environment(&job_identifier, account_id);
-        if let Ok(storage_option) = self
+        if let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         {
-            if let Some(storage) = storage_option {
-                let ba = hex_to_ba(&storage);
-                let mut cursor = Cursor::new(ba);
-                return Some(JobEnvironment::read(&mut cursor, self.version).unwrap());
-            }
+            let ba = hex_to_ba(&storage);
+            let mut cursor = Cursor::new(ba);
+            return Some(JobEnvironment::read(&mut cursor, self.version).unwrap());
         }
         None
     }
@@ -316,16 +325,14 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<Attestation> {
         let key = acurast_stored_attestation(account_id);
-        if let Ok(storage_option) = self
+        if let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         {
-            if let Some(storage) = storage_option {
-                let ba = hex_to_ba(&storage);
-                let mut cursor = Cursor::new(ba);
-                return Some(Attestation::read(&mut cursor).unwrap());
-            }
+            let ba = hex_to_ba(&storage);
+            let mut cursor = Cursor::new(ba);
+            return Some(Attestation::read(&mut cursor).unwrap());
         }
         None
     }
@@ -356,8 +363,13 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             .await
         {
             if !storage.is_empty() {
-                for change in &storage[0].changes {
-                    let hex_str = change.get(1).ok_or(AcurastError::ParsingError)?;
+                let changes = storage.into_iter().nth(0).unwrap().changes;
+                for change in changes {
+                    let hex_str = change
+                        .into_iter()
+                        .nth(1)
+                        .flatten()
+                        .ok_or(AcurastError::ParsingError)?;
                     if let Ok(bytes) = hex::decode(hex_str) {
                         let mut cursor = Cursor::new(bytes);
                         let byte = cursor.read_u8().map_err(|_| AcurastError::ParsingError)?;
@@ -394,8 +406,13 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             .await
         {
             if !storage.is_empty() {
-                for change in &storage[0].changes {
-                    let hex_str = change.get(1).ok_or(AcurastError::ParsingError)?;
+                let changes = storage.into_iter().nth(0).unwrap().changes;
+                for change in changes {
+                    let hex_str = change
+                        .into_iter()
+                        .nth(1)
+                        .flatten()
+                        .ok_or(AcurastError::ParsingError)?;
                     if let Ok(bytes) = hex::decode(hex_str) {
                         let mut cursor = Cursor::new(bytes);
                         let metric = MetricPool::read(&mut cursor)
@@ -419,11 +436,10 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<Vec<u8>> {
         let key = acurast_processor_manager_management_endpoint(manager_id);
-        let Some(Some(storage)) = self
+        let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
-            .ok()
         else {
             return None;
         };
@@ -432,6 +448,46 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         let mut cursor = Cursor::new(bytes);
 
         return read_byte_array(&mut cursor).ok();
+    }
+
+    async fn get_processor_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<ProcessorOverview> {
+        let manager_id_key = acurast_processor_manager_processor_to_manager_id_index(account_id);
+        let attestation_key = acurast_stored_attestation(account_id);
+        let heartbeat_key = acurast_processor_manager_processor_heartbeat(account_id);
+
+        let keys = vec![
+            hex::encode(manager_id_key),
+            hex::encode(attestation_key),
+            hex::encode(heartbeat_key),
+        ];
+
+        let Ok(storage) = self
+            .state
+            .get_storage_at(keys, block_hash, timeout, &self.engine)
+            .await
+        else {
+            return None;
+        };
+
+        let Some(changes) = storage.first().map(|r| &r.changes) else {
+            return Some(Default::default());
+        };
+
+        let manager_identifier = read_changes_opt(changes, 0, |bytes| read_u128(&bytes) as i32);
+        let is_attested = read_changes_opt(changes, 1, |_| {}).is_some();
+        let last_heartbeat_timestamp =
+            read_changes_opt(changes, 2, |bytes| read_u128(&bytes) as u64);
+
+        Some(ProcessorOverview {
+            manager_identifier,
+            is_attested,
+            last_heartbeat_timestamp,
+        })
     }
 }
 
@@ -497,6 +553,14 @@ fn acurast_processor_manager_management_endpoint(manager_id: i32) -> Vec<u8> {
     let mut key = Vec::new();
     key.extend_with_storage_prefix("AcurastProcessorManager", "ManagementEndpoint");
     key.extend_with_blake2_128concat(manager_id);
+
+    key
+}
+
+fn acurast_processor_manager_processor_heartbeat(account_id: &[u8]) -> Vec<u8> {
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix("AcurastProcessorManager", "ProcessorHeartbeat");
+    key.extend_with_blake2_128(account_id);
 
     key
 }
@@ -635,6 +699,18 @@ mod tests {
             key,
             hex_to_ba("0xc698b31ad72d251a494de23e0dd66846baf48d86cb51dd4c22ca340c99164aaa463be1d58a72e9618ea59884367c435800000000000000000000000000000000")
         );
+    }
+
+    #[test]
+    fn test_acurast_processor_manager_processor_heartbeat() {
+        let key = acurast_processor_manager_processor_heartbeat(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd6684690ede7a772410f47186f66100c0bf9ecde1e86a9a8c739864cf3cc5ec2bea59f")
+        )
     }
 
     #[test]
