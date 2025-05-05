@@ -1,5 +1,4 @@
 use super::v0_acurast_storage::VXAcurastStorage;
-use crate::Result;
 use crate::{
     blake2b::blake2b_128,
     codec::types::{
@@ -9,10 +8,12 @@ use crate::{
         },
         marketplace::job_assigment::JobAssignment,
         metrics::MetricPool,
+        processor_overview::ProcessorOverview,
         uniques::pallet_uniques_item_details::PalletUniquesItemDetails,
     },
     types::system::FrameSystemAccountInfo,
     xxhash::xxh128_unsigned,
+    Result,
 };
 use std::sync::Arc;
 
@@ -163,6 +164,17 @@ impl AcurastStorage {
             .get_management_endpoint(manager_id, block_hash, timeout)
             .await
     }
+
+    async fn get_processor_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<ProcessorOverview> {
+        self.storage
+            .get_processor_overview(account_id, block_hash, timeout)
+            .await
+    }
 }
 
 pub trait StorageKey {
@@ -186,4 +198,3 @@ impl StorageKey for Vec<u8> {
         self.extend_from_slice(bytes);
     }
 }
-

@@ -14,6 +14,11 @@ pub fn hex_to_ba(hex: &str) -> Vec<u8> {
     pure_hex_to_ba(hex_str)
 }
 
+pub fn is_hex(string: &str) -> bool {
+    let string = string.strip_prefix("0x").unwrap_or(string);
+    string.chars().all(|c| c.is_ascii_hexdigit())
+}
+
 pub fn read_u128(bytes: &[u8]) -> u128 {
     let mut arr = [0u8; 16];
     arr.copy_from_slice(bytes);

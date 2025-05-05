@@ -5,3 +5,4 @@ pub mod marketplace;
 pub mod submit_attestation;
 pub mod uniques;
 pub mod metrics;
+pub mod processor_overview;
