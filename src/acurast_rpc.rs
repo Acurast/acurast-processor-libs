@@ -10,27 +10,14 @@ use crate::storage::v0_acurast_storage::V0AcurastStorageImpl;
 use crate::storage::v0_acurast_storage::VXAcurastStorage;
 use crate::storage::v1_acurast_storage::V1AcurastStorageImpl;
 use crate::types::header::Header;
+use crate::{AcurastError, Result};
 use async_trait::async_trait;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use hex::decode;
 use std::collections::HashMap;
-use std::fmt;
 use std::io::Cursor;
 use std::sync::Arc;
 use xxhash_rust::xxh3::xxh3_64_with_seed;
-
-#[derive(Debug, PartialEq, uniffi::Enum)]
-pub enum AcurastRpcError {
-    RuntimeError(String),
-}
-
-impl fmt::Display for AcurastRpcError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AcurastRpcError::RuntimeError(msg) => write!(f, "Runtime Error: {}", msg),
-        }
-    }
-}
 
 #[uniffi::export]
 #[async_trait]
@@ -39,18 +26,15 @@ pub trait AcurastRpc: Send + Sync {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Result<String, AcurastRpcError>;
-    async fn get_header(
-        &self,
-        block_hash: Option<Vec<u8>>,
-        timeout: Option<u64>,
-    ) -> Result<Header, AcurastRpcError>;
+    ) -> Result<String>;
+    async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>)
+        -> Result<Header>;
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32;
     async fn get_runtime_version(
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Result<RuntimeVersion, AcurastRpcError>;
+    ) -> Result<RuntimeVersion>;
     async fn get_update_info(
         &self,
         account_id: Vec<u8>,
@@ -63,11 +47,7 @@ pub trait AcurastRpc: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>>;
-    async fn submit_extrinsic(
-        &self,
-        extrinsic: Vec<u8>,
-        timeout: Option<u64>,
-    ) -> Result<String, AcurastRpcError>;
+    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String>;
     async fn call(
         &self,
         method: String,
@@ -123,22 +103,22 @@ impl AcurastRpc for AcurastRpcImpl {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Result<String, AcurastRpcError> {
+    ) -> Result<String> {
         self.chain
             .get_block_hash(block_number, timeout, &self.engine)
             .await
-            .map_err(|e| AcurastRpcError::RuntimeError(format!("{}", e)))
+            .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
     }
 
     async fn get_header(
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Result<Header, AcurastRpcError> {
+    ) -> Result<Header> {
         self.chain
             .get_header(block_hash, timeout, &self.engine)
             .await
-            .map_err(|e| AcurastRpcError::RuntimeError(format!("{}", e)))
+            .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
     }
 
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32 {
@@ -166,11 +146,11 @@ impl AcurastRpc for AcurastRpcImpl {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Result<RuntimeVersion, AcurastRpcError> {
+    ) -> Result<RuntimeVersion> {
         self.state
             .get_runtime_version(block_hash, timeout, &self.engine)
             .await
-            .map_err(|e| AcurastRpcError::RuntimeError(format!("{}", e)))
+            .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
     }
 
     async fn get_update_info(
@@ -221,15 +201,11 @@ impl AcurastRpc for AcurastRpcImpl {
         }
     }
 
-    async fn submit_extrinsic(
-        &self,
-        extrinsic: Vec<u8>,
-        timeout: Option<u64>,
-    ) -> Result<String, AcurastRpcError> {
+    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String> {
         self.author
             .submit_extrinsic(extrinsic, timeout, &self.engine)
             .await
-            .map_err(|e| AcurastRpcError::RuntimeError(e))
+            .map_err(AcurastError::RuntimeError)
     }
 
     async fn call(

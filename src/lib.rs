@@ -6,6 +6,7 @@ pub mod blake2b;
 pub mod codec;
 pub mod cursor;
 pub mod engine;
+mod error;
 pub mod hex;
 pub mod storage;
 pub mod tests;
@@ -21,16 +22,18 @@ pub use crate::codec::processor_version::ProcessorVersion;
 use crate::engine::http::http_client::HttpClient;
 use crate::engine::http::http_client_impl::HttpClientImpl;
 pub use crate::engine::pallet::state::RuntimeVersion;
+pub use crate::error::AcurastError;
 use crate::storage::acurast_storage::AcurastStorage;
 pub use crate::types::header::Header;
 pub use acurast_rpc::AcurastRpc;
-use acurast_rpc::AcurastRpcError;
 pub use acurast_rpc::AcurastRpcImpl;
 use engine::engine::RpcEngine;
 use engine::http_engine::HttpRpcEngine;
 use num_bigint::BigUint;
 use std::str::FromStr;
 use std::sync::Arc;
+
+pub type Result<T> = core::result::Result<T, AcurastError>;
 
 fn setup_logger() {
     std::env::set_var("RUST_LOG", "info");
@@ -82,7 +85,7 @@ impl AcurastRpcClient {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Result<Header, AcurastRpcError> {
+    ) -> Result<Header> {
         self.acurastrpc.get_header(block_hash, timeout).await
     }
     pub async fn call(
@@ -100,7 +103,7 @@ impl AcurastRpcClient {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Result<RuntimeVersion, AcurastRpcError> {
+    ) -> Result<RuntimeVersion> {
         self.acurastrpc
             .get_runtime_version(block_hash, timeout)
             .await
@@ -109,14 +112,14 @@ impl AcurastRpcClient {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Result<String, AcurastRpcError> {
+    ) -> Result<String> {
         self.acurastrpc.get_block_hash(block_number, timeout).await
     }
     pub async fn submit_extrinsic(
         &self,
         extrinsic: Vec<u8>,
         timeout: Option<u64>,
-    ) -> Result<String, AcurastRpcError> {
+    ) -> Result<String> {
         self.acurastrpc.submit_extrinsic(extrinsic, timeout).await
     }
     pub fn storage(&self, version: u32) -> Arc<AcurastStorage> {

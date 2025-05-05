@@ -13,6 +13,7 @@ use crate::storage::acurast_storage::StorageKey;
 use crate::types::system::FrameSystemAccountInfo;
 use crate::u8a::biguint_to_u8a;
 use crate::RpcEngine;
+use crate::{AcurastError, Result};
 use async_trait::async_trait;
 use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
@@ -92,14 +93,14 @@ pub trait VXAcurastStorage: Send + Sync {
         names: Vec<String>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<u8>;
+    ) -> Result<Vec<Option<u8>>>;
 
     async fn get_metric_pools(
         &self,
         ids: Vec<u8>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<MetricPool>;
+    ) -> Result<Vec<Option<MetricPool>>>;
 
     async fn get_management_endpoint(
         &self,
@@ -120,7 +121,7 @@ impl V0AcurastStorageImpl {
         Self {
             engine,
             state,
-            version: version,
+            version,
         }
     }
 }
@@ -134,17 +135,15 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<i32> {
         let key = acurast_processor_manager_processor_to_manager_id_index(account_id);
-        if let Ok(storage_option) = self
+        if let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         {
-            if let Some(storage) = storage_option {
-                let ba = hex_to_ba(&storage);
-                let value_u128 = read_u128(&ba);
-                let value_i32 = value_u128 as i32;
-                return Some(value_i32);
-            }
+            let ba = hex_to_ba(&storage);
+            let value_u128 = read_u128(&ba);
+            let value_i32 = value_u128 as i32;
+            return Some(value_i32);
         }
         None
     }
@@ -156,16 +155,14 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<u64> {
         let key = acurast_processor_manager_manager_counter(account_id);
-        if let Ok(storage_option) = self
+        if let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         {
-            if let Some(storage) = storage_option {
-                let ba = hex_to_ba(&storage);
-                let value_u64 = read_u64(&ba);
-                return Some(value_u64);
-            }
+            let ba = hex_to_ba(&storage);
+            let value_u64 = read_u64(&ba);
+            return Some(value_u64);
         }
         None
     }
@@ -177,16 +174,14 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> Option<PalletUniquesItemDetails> {
         let key = uniques_asset(manager_id);
-        if let Ok(storage_option) = self
+        if let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         {
-            if let Some(storage) = storage_option {
-                let ba = hex_to_ba(&storage);
-                let mut cursor = Cursor::new(&ba[..]);
-                return Some(PalletUniquesItemDetails::read(&mut cursor));
-            }
+            let ba = hex_to_ba(&storage);
+            let mut cursor = Cursor::new(&ba[..]);
+            return Some(PalletUniquesItemDetails::read(&mut cursor));
         }
         None
     }
@@ -198,15 +193,13 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         timeout: Option<u64>,
     ) -> FrameSystemAccountInfo {
         let key = system_account(account_id);
-        if let Ok(storage_option) = self
+        if let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         {
-            if let Some(storage) = storage_option {
-                let ba = hex_to_ba(&storage);
-                return FrameSystemAccountInfo::read_account_info(ba.as_slice());
-            }
+            let ba = hex_to_ba(&storage);
+            return FrameSystemAccountInfo::read_account_info(ba.as_slice());
         }
         FrameSystemAccountInfo::empty()
     }
@@ -342,7 +335,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         names: Vec<String>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<u8> {
+    ) -> Result<Vec<Option<u8>>> {
         let key = acurast_compute_metric_pool_lookup();
         let keys: Vec<String> = names
             .into_iter()
@@ -354,7 +347,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             })
             .collect();
 
-        let mut pool_ids: Vec<u8> = Vec::new();
+        let mut pool_ids: Vec<Option<u8>> = Vec::new();
         log::debug!("get_metric_pool_ids keys: {:?}", keys);
 
         if let Ok(storage) = self
@@ -364,21 +357,20 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         {
             if !storage.is_empty() {
                 for change in &storage[0].changes {
-                    let change_strs: Vec<&str> = change.iter().map(|s| s.as_str()).collect();
-                    if let Some(hex_str) = change_strs.get(1) {
-                        if let Ok(bytes) = hex::decode(hex_str) {
-                            let mut cursor = Cursor::new(bytes);
-                            if let Ok(byte) = cursor.read_u8() {
-                                pool_ids.push(byte);
-                            }
-                        }
+                    let hex_str = change.get(1).ok_or(AcurastError::ParsingError)?;
+                    if let Ok(bytes) = hex::decode(hex_str) {
+                        let mut cursor = Cursor::new(bytes);
+                        let byte = cursor.read_u8().map_err(|_| AcurastError::ParsingError)?;
+                        pool_ids.push(Some(byte));
+                    } else {
+                        pool_ids.push(None);
                     }
                 }
             }
         } else {
             log::debug!("get_metric_pool_ids failed");
         }
-        pool_ids
+        Ok(pool_ids)
     }
 
     async fn get_metric_pools(
@@ -386,7 +378,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         ids: Vec<u8>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<MetricPool> {
+    ) -> Result<Vec<Option<MetricPool>>> {
         let key = acurast_compute_metric_pools();
         let keys: Vec<String> = ids
             .into_iter()
@@ -395,7 +387,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                 combined.to_hex()
             })
             .collect();
-        let mut metrics: Vec<MetricPool> = Vec::new();
+        let mut metrics: Vec<Option<MetricPool>> = Vec::new();
         if let Ok(storage) = self
             .state
             .get_storage_at(keys, block_hash, timeout, &self.engine)
@@ -403,20 +395,21 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         {
             if !storage.is_empty() {
                 for change in &storage[0].changes {
-                    let change_strs: Vec<&str> = change.iter().map(|s| s.as_str()).collect();
-                    if let Some(hex_str) = change_strs.get(1) {
-                        if let Ok(bytes) = hex::decode(hex_str) {
-                            let mut cursor = Cursor::new(bytes);
-                            let metric = MetricPool::read(&mut cursor);
-                            metrics.push(metric.unwrap());
-                        }
+                    let hex_str = change.get(1).ok_or(AcurastError::ParsingError)?;
+                    if let Ok(bytes) = hex::decode(hex_str) {
+                        let mut cursor = Cursor::new(bytes);
+                        let metric = MetricPool::read(&mut cursor)
+                            .map_err(|_| AcurastError::ParsingError)?;
+                        metrics.push(Some(metric));
+                    } else {
+                        metrics.push(None);
                     }
                 }
             }
         } else {
             log::debug!("get_metric_pools failed");
         }
-        metrics
+        Ok(metrics)
     }
 
     async fn get_management_endpoint(
@@ -686,4 +679,3 @@ mod tests {
         );
     }
 }
-

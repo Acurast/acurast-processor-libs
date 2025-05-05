@@ -602,7 +602,7 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> St
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -619,7 +619,7 @@ open func getHeader(blockHash: Data?, timeout: UInt64?)async throws  -> Header {
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeHeader.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -654,7 +654,7 @@ open func getRuntimeVersion(blockHash: Data?, timeout: UInt64?)async throws  -> 
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRuntimeVersion.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -707,7 +707,7 @@ open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> Str
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -883,7 +883,7 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> St
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -900,7 +900,7 @@ open func getHeader(blockHash: Data?, timeout: UInt64?)async throws  -> Header {
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeHeader.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -917,7 +917,7 @@ open func getRuntimeVersion(blockHash: Data?, timeout: UInt64?)async throws  -> 
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRuntimeVersion.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -960,7 +960,7 @@ open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> Str
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeAcurastRpcError.lift
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -1032,9 +1032,9 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
     
-    func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async  -> Data
+    func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async throws  -> [UInt8?]
     
-    func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async  -> [MetricPool]
+    func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [MetricPool?]
     
     func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Bool
     
@@ -1251,9 +1251,9 @@ open func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt6
         )
 }
     
-open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)async  -> Data {
+open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)async throws  -> [UInt8?] {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_metric_pool_ids(
                     self.uniffiClonePointer(),
@@ -1263,15 +1263,14 @@ open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)a
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterData.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterSequenceOptionUInt8.lift,
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
-open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async  -> [MetricPool] {
+open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async throws  -> [MetricPool?] {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_metric_pools(
                     self.uniffiClonePointer(),
@@ -1281,9 +1280,8 @@ open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async  ->
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterSequenceTypeMetricPool.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterSequenceOptionTypeMetricPool.lift,
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -1857,9 +1855,9 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
     
-    func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async  -> Data
+    func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async throws  -> [UInt8?]
     
-    func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async  -> [MetricPool]
+    func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [MetricPool?]
     
     func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> Data?
     
@@ -2068,9 +2066,9 @@ open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
         )
 }
     
-open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)async  -> Data {
+open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)async throws  -> [UInt8?] {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_metric_pool_ids(
                     self.uniffiClonePointer(),
@@ -2080,15 +2078,14 @@ open func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?)a
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterData.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterSequenceOptionUInt8.lift,
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
-open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async  -> [MetricPool] {
+open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async throws  -> [MetricPool?] {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_metric_pools(
                     self.uniffiClonePointer(),
@@ -2098,9 +2095,8 @@ open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async  ->
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterSequenceTypeMetricPool.lift,
-            errorHandler: nil
-            
+            liftFunc: FfiConverterSequenceOptionTypeMetricPool.lift,
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -4374,19 +4370,21 @@ extension AccountIdentifier: Equatable, Hashable {}
 
 
 
-public enum AcurastRpcError {
+public enum AcurastError {
 
     
     
     case RuntimeError(String
     )
+    case ParsingError
+    case Unknown
 }
 
 
-public struct FfiConverterTypeAcurastRpcError: FfiConverterRustBuffer {
-    typealias SwiftType = AcurastRpcError
+public struct FfiConverterTypeAcurastError: FfiConverterRustBuffer {
+    typealias SwiftType = AcurastError
 
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AcurastRpcError {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AcurastError {
         let variant: Int32 = try readInt(&buf)
         switch variant {
 
@@ -4396,12 +4394,14 @@ public struct FfiConverterTypeAcurastRpcError: FfiConverterRustBuffer {
         case 1: return .RuntimeError(
             try FfiConverterString.read(from: &buf)
             )
+        case 2: return .ParsingError
+        case 3: return .Unknown
 
          default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
 
-    public static func write(_ value: AcurastRpcError, into buf: inout [UInt8]) {
+    public static func write(_ value: AcurastError, into buf: inout [UInt8]) {
         switch value {
 
         
@@ -4412,14 +4412,22 @@ public struct FfiConverterTypeAcurastRpcError: FfiConverterRustBuffer {
             writeInt(&buf, Int32(1))
             FfiConverterString.write(v1, into: &buf)
             
+        
+        case .ParsingError:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .Unknown:
+            writeInt(&buf, Int32(3))
+        
         }
     }
 }
 
 
-extension AcurastRpcError: Equatable, Hashable {}
+extension AcurastError: Equatable, Hashable {}
 
-extension AcurastRpcError: Foundation.LocalizedError {
+extension AcurastError: Foundation.LocalizedError {
     public var errorDescription: String? {
         String(reflecting: self)
     }
@@ -4923,6 +4931,27 @@ extension Tag: Equatable, Hashable {}
 
 
 
+fileprivate struct FfiConverterOptionUInt8: FfiConverterRustBuffer {
+    typealias SwiftType = UInt8?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt8.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt8.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionInt32: FfiConverterRustBuffer {
     typealias SwiftType = Int32?
 
@@ -5086,6 +5115,27 @@ fileprivate struct FfiConverterOptionTypeJobRegistration: FfiConverterRustBuffer
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeJobRegistration.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+fileprivate struct FfiConverterOptionTypeMetricPool: FfiConverterRustBuffer {
+    typealias SwiftType = MetricPool?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeMetricPool.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeMetricPool.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -5328,28 +5378,6 @@ fileprivate struct FfiConverterSequenceTypeJobAssignment: FfiConverterRustBuffer
     }
 }
 
-fileprivate struct FfiConverterSequenceTypeMetricPool: FfiConverterRustBuffer {
-    typealias SwiftType = [MetricPool]
-
-    public static func write(_ value: [MetricPool], into buf: inout [UInt8]) {
-        let len = Int32(value.count)
-        writeInt(&buf, len)
-        for item in value {
-            FfiConverterTypeMetricPool.write(item, into: &buf)
-        }
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [MetricPool] {
-        let len: Int32 = try readInt(&buf)
-        var seq = [MetricPool]()
-        seq.reserveCapacity(Int(len))
-        for _ in 0 ..< len {
-            seq.append(try FfiConverterTypeMetricPool.read(from: &buf))
-        }
-        return seq
-    }
-}
-
 fileprivate struct FfiConverterSequenceTypeVariable: FfiConverterRustBuffer {
     typealias SwiftType = [Variable]
 
@@ -5389,6 +5417,50 @@ fileprivate struct FfiConverterSequenceTypeJobModule: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeJobModule.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceOptionUInt8: FfiConverterRustBuffer {
+    typealias SwiftType = [UInt8?]
+
+    public static func write(_ value: [UInt8?], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterOptionUInt8.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [UInt8?] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [UInt8?]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterOptionUInt8.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceOptionTypeMetricPool: FfiConverterRustBuffer {
+    typealias SwiftType = [MetricPool?]
+
+    public static func write(_ value: [MetricPool?], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterOptionTypeMetricPool.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [MetricPool?] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [MetricPool?]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterOptionTypeMetricPool.read(from: &buf))
         }
         return seq
     }
@@ -5509,16 +5581,16 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_func_hex_to_ba() != 53494) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 53879) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 29540) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 62959) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 3278) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 17701) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 26345) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 22921) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 47673) {
@@ -5527,7 +5599,7 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 18053) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 31755) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 45867) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 47860) {
@@ -5539,13 +5611,13 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_call() != 3780) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_block_hash() != 28279) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_block_hash() != 3312) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 46799) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 33956) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_runtime_version() != 14775) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_runtime_version() != 29312) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_storage_version() != 7929) {
@@ -5554,7 +5626,7 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_storage() != 52623) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_submit_extrinsic() != 11227) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_submit_extrinsic() != 58867) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_account_info() != 141) {
@@ -5584,10 +5656,10 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_identifier() != 46517) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pool_ids() != 4510) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pool_ids() != 16914) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pools() != 48404) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pools() != 2600) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_is_attested() != 2160) {
@@ -5632,10 +5704,10 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 53642) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 65514) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 2151) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 17992) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 10243) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_endpoint() != 46661) {
