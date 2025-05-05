@@ -1,8 +1,18 @@
 use super::v0_acurast_storage::VXAcurastStorage;
+use crate::Result;
 use crate::{
-    blake2b::blake2b_128, codec::types::{
-        acurast::{attestation::Attestation, job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration}, marketplace::job_assigment::JobAssignment, metrics::MetricPool, uniques::pallet_uniques_item_details::PalletUniquesItemDetails
-    }, types::system::FrameSystemAccountInfo, xxhash::xxh128_unsigned
+    blake2b::blake2b_128,
+    codec::types::{
+        acurast::{
+            attestation::Attestation, job_environment::JobEnvironment,
+            job_identifier::JobIdentifier, job_registration::JobRegistration,
+        },
+        marketplace::job_assigment::JobAssignment,
+        metrics::MetricPool,
+        uniques::pallet_uniques_item_details::PalletUniquesItemDetails,
+    },
+    types::system::FrameSystemAccountInfo,
+    xxhash::xxh128_unsigned,
 };
 use std::sync::Arc;
 
@@ -15,7 +25,7 @@ pub struct AcurastStorage {
 impl AcurastStorage {
     #[uniffi::constructor]
     pub fn new(storage: Arc<dyn VXAcurastStorage>) -> Arc<Self> {
-        Arc::new(Self { storage: storage })
+        Arc::new(Self { storage })
     }
 }
 
@@ -109,7 +119,7 @@ impl AcurastStorage {
             .is_attested(account_id, block_hash, timeout)
             .await
     }
-    
+
     async fn get_attestation(
         &self,
         account_id: &[u8],
@@ -126,7 +136,7 @@ impl AcurastStorage {
         names: Vec<String>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<u8> {
+    ) -> Result<Vec<Option<u8>>> {
         self.storage
             .get_metric_pool_ids(names, block_hash, timeout)
             .await
@@ -137,8 +147,10 @@ impl AcurastStorage {
         ids: Vec<u8>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<MetricPool> {
-        self.storage.get_metric_pools(ids, block_hash, timeout).await
+    ) -> Result<Vec<Option<MetricPool>>> {
+        self.storage
+            .get_metric_pools(ids, block_hash, timeout)
+            .await
     }
 
     async fn get_management_endpoint(
@@ -147,7 +159,9 @@ impl AcurastStorage {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>> {
-        self.storage.get_management_endpoint(manager_id, block_hash, timeout).await
+        self.storage
+            .get_management_endpoint(manager_id, block_hash, timeout)
+            .await
     }
 }
 
@@ -172,3 +186,4 @@ impl StorageKey for Vec<u8> {
         self.extend_from_slice(bytes);
     }
 }
+

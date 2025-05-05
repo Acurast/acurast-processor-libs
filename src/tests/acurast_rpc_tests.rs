@@ -67,10 +67,17 @@ async fn test_get_asset() {
 async fn test_get_job_environment() {
     let storage = AC_RPC.storage(0);
     let account_hex = "5a6ccbc98ee1293ea246e639b8b30a0454e3bf6bdb2318b8aec27b26e606db8d";
-    let job_source_hex= "e2a2afc119e466aafac48cf5da2a8995827b1c797c08ba27540288d53e36c914";
+    let job_source_hex = "e2a2afc119e466aafac48cf5da2a8995827b1c797c08ba27540288d53e36c914";
     let decoded_bytes = hex::decode(job_source_hex).expect("Decoding failed");
     let decoded_account = hex::decode(account_hex).expect("Decoding failed");
-    let environment = storage.get_job_environment(JobIdentifier::from_integer(5005, decoded_bytes), &decoded_account, None, None).await;
+    let environment = storage
+        .get_job_environment(
+            JobIdentifier::from_integer(5005, decoded_bytes),
+            &decoded_account,
+            None,
+            None,
+        )
+        .await;
     println!("test_get_job_environment {:?}", environment);
     assert!(environment.is_some())
 }
@@ -164,12 +171,12 @@ async fn test_pool_ids() {
     println!("test_pool_ids start");
     let storage = AC_RPC.storage(0);
     let names: Vec<String> = vec!["v1_cpus_crypto__________".to_string()];
-    let pool_ids = storage.get_metric_pool_ids(names, None, None).await;
-    println!(
-        "pool_ids: {:?}",
-        pool_ids
-    );
-    assert!(pool_ids.len() > 0);
+    let pool_ids = storage
+        .get_metric_pool_ids(names, None, None)
+        .await
+        .unwrap();
+    println!("pool_ids: {:?}", pool_ids);
+    assert!(!pool_ids.is_empty());
 }
 
 /*#[tokio::test]
