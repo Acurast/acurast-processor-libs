@@ -3,3 +3,4 @@ install-cargo-swift:
 
 build:
 	cargo swift package --platforms ios --name AcurastBenchmark --xcframework-name AcurastBenchmarkFFI --release --accept-all
+	./pack-ios
