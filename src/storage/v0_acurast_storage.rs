@@ -365,11 +365,9 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             if !storage.is_empty() {
                 let changes = storage.into_iter().nth(0).unwrap().changes;
                 for change in changes {
-                    let hex_str = change
-                        .into_iter()
-                        .nth(1)
-                        .flatten()
-                        .ok_or(AcurastError::ParsingError)?;
+                    let Some(hex_str) = change.into_iter().nth(1).flatten() else {
+                        continue;
+                    };
                     if let Ok(bytes) = hex::decode(hex_str) {
                         let mut cursor = Cursor::new(bytes);
                         let byte = cursor.read_u8().map_err(|_| AcurastError::ParsingError)?;
