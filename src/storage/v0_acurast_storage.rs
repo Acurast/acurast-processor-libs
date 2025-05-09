@@ -366,6 +366,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                 let changes = storage.into_iter().nth(0).unwrap().changes;
                 for change in changes {
                     let Some(hex_str) = change.into_iter().nth(1).flatten() else {
+                        pool_ids.push(None);
                         continue;
                     };
                     if let Ok(bytes) = hex::decode(hex_str) {
