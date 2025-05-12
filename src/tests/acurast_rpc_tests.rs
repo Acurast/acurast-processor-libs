@@ -162,6 +162,15 @@ async fn test_pool_ids() {
     assert!(!pool_ids.is_empty());
 }
 
+#[tokio::test]
+async fn test_pool() {
+    println!("test_pool_ids start");
+    let storage = AC_RPC.storage(0);
+    let pools = storage.get_metric_pools(vec![1], None, None).await.unwrap();
+    println!("pool_ids: {:?}", pools);
+    assert!(!pools.is_empty());
+}
+
 /*#[tokio::test]
 async fn test_get_job_registration() {
     let storage = AC_RPC.storage(0);
