@@ -7,38 +7,25 @@ use crate::engine::engine::RpcEngine;
 use crate::engine::http::http_client::HttpClient;
 use crate::engine::http::http_client_impl::HttpClientImpl;
 use crate::engine::http_engine::HttpRpcEngine;
+use crate::Result;
 use std::sync::Arc;
 
 lazy_static::lazy_static! {
     static ref CLIENT: Arc<dyn HttpClient + Send + Sync> = Arc::new(HttpClientImpl::new());
-    static ref ENGINE: Arc<dyn RpcEngine> = Arc::new(HttpRpcEngine::new("https://processor.canary.acurast.com".to_string(), CLIENT.clone()));
+    static ref ENGINE: Arc<dyn RpcEngine> = Arc::new(HttpRpcEngine::new("https://acurast-devnet-ws.prod.gke.papers.tech".to_string(), CLIENT.clone()));
     static ref AC_RPC: AcurastRpcImpl = AcurastRpcImpl::new(ENGINE.clone());
 }
 
 #[tokio::test]
-async fn test_get_block_hash() {
+async fn test_get_block_hash() -> Result<()> {
     let res = AC_RPC.get_block_hash(Some(1), None).await;
-    match res {
-        Ok(_r) => {
-            assert!(true);
-        }
-        Err(_) => {
-            assert!(false);
-        }
-    }
+    res.map(|_| ())
 }
 
 #[tokio::test]
-async fn test_get_header() {
+async fn test_get_header() -> Result<()> {
     let res = AC_RPC.get_header(None, None).await;
-    match res {
-        Ok(_r) => {
-            assert!(true);
-        }
-        Err(_) => {
-            assert!(false);
-        }
-    }
+    res.map(|_| ())
 }
 
 #[tokio::test]
@@ -94,25 +81,22 @@ async fn test_get_storage() {
     match identifier {
         Some(r) => {
             println!("identifier! {}", r);
-            assert!(true);
 
             match storage.get_asset(r, None, None).await {
                 Some(address) => {
                     println!("address owner: {:?}", address.owner);
-                    assert!(true);
                     let account_info = storage
                         .get_account_info(&address.owner.bytes, None, None)
                         .await;
                     println!("account_info: {:?}", account_info);
-                    assert!(true);
                 }
                 None => {
-                    assert!(false);
+                    panic!();
                 }
             }
         }
         None => {
-            assert!(false);
+            panic!();
         }
     }
 }
@@ -129,11 +113,10 @@ async fn test_get_attestation() {
     match attestation {
         Some(r) => {
             println!("attestation owner: {:?}", r.content);
-            assert!(true);
         }
         None => {
             println!("No Attested");
-            assert!(false);
+            panic!();
         }
     }
 }
@@ -170,7 +153,7 @@ async fn test_get_assigned_jobs() {
 async fn test_pool_ids() {
     println!("test_pool_ids start");
     let storage = AC_RPC.storage(0);
-    let names: Vec<String> = vec!["v1_cpus_crypto__________".to_string()];
+    let names: Vec<String> = vec!["v1_cpu_single_core______".to_string()];
     let pool_ids = storage
         .get_metric_pool_ids(names, None, None)
         .await

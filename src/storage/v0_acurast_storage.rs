@@ -369,6 +369,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                         pool_ids.push(None);
                         continue;
                     };
+                    let hex_str = hex_str.strip_prefix("0x").unwrap_or(&hex_str);
                     if let Ok(bytes) = hex::decode(hex_str) {
                         let mut cursor = Cursor::new(bytes);
                         let byte = cursor.read_u8().map_err(|_| AcurastError::ParsingError)?;
@@ -412,6 +413,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                         .nth(1)
                         .flatten()
                         .ok_or(AcurastError::ParsingError)?;
+                    let hex_str = hex_str.strip_prefix("0x").unwrap_or(&hex_str);
                     if let Ok(bytes) = hex::decode(hex_str) {
                         let mut cursor = Cursor::new(bytes);
                         let metric = MetricPool::read(&mut cursor)
