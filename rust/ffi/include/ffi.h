@@ -1,7 +1,7 @@
 #ifndef ACUBENCH_FFI_H
 #define ACUBENCH_FFI_H
 
-#include <cstdint>
+#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -21,8 +21,8 @@ extern "C" {
         uint64_t avail_storage,
         uint64_t hwcap,
         uint64_t hwcap2,
-        TypedU64 sve_mask,
-        TypedU64 i8mm_mask
+        struct TypedU64 sve_mask,
+        struct TypedU64 i8mm_mask
     );
 
     void drop_bench(void *bench);
@@ -48,8 +48,8 @@ extern "C" {
         char *err;
     };
 
-    CpuReport* bench_cpu(void *bench, CpuConfig config);
-    CpuReport* bench_cpu_multithread(void *bench, CpuConfig config);
+    struct CpuReport* bench_cpu(void *bench, struct CpuConfig config);
+    struct CpuReport* bench_cpu_multithread(void *bench, struct CpuConfig config);
     void drop_cpu_report(void *report);
 
     struct RamConfig {
@@ -77,7 +77,7 @@ extern "C" {
         char *err;
     };
 
-    RamReport* bench_ram(void *bench, RamConfig config);
+    struct RamReport* bench_ram(void *bench, struct RamConfig config);
     void drop_ram_report(void *report);
 
     struct StorageConfig {
@@ -100,7 +100,7 @@ extern "C" {
         char *err;
     };
 
-    StorageReport* bench_storage(void *bench, StorageConfig config);
+    struct StorageReport* bench_storage(void *bench, struct StorageConfig config);
     void drop_storage_report(void *report);
 
     /******** C++ -> Rust ********/
@@ -110,7 +110,7 @@ extern "C" {
         uint64_t err;
     };
 
-    Ops matrix_mul_sve_i8mm(
+    struct Ops matrix_mul_sve_i8mm(
         const int8_t *matrix_a,
         const int8_t *matrix_b /* transposed */,
         int32_t *matrix_r,
@@ -118,7 +118,7 @@ extern "C" {
         size_t timeout_timestamp
     );
 
-    Ops matrix_mul_naive(
+    struct Ops matrix_mul_naive(
         const int8_t *matrix_a,
         const int8_t *matrix_b,
         int32_t *matrix_r,
