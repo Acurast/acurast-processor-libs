@@ -4764,6 +4764,8 @@ public enum Kind {
     
     case acurast
     case tezos
+    case alephZero
+    case vara
 }
 
 
@@ -4777,6 +4779,10 @@ public struct FfiConverterTypeKind: FfiConverterRustBuffer {
         case 1: return .acurast
         
         case 2: return .tezos
+        
+        case 3: return .alephZero
+        
+        case 4: return .vara
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -4792,6 +4798,14 @@ public struct FfiConverterTypeKind: FfiConverterRustBuffer {
         
         case .tezos:
             writeInt(&buf, Int32(2))
+        
+        
+        case .alephZero:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .vara:
+            writeInt(&buf, Int32(4))
         
         }
     }

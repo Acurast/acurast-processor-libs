@@ -12,6 +12,8 @@ use crate::{codec::types::account_id::AccountId32, cursor::read_u128, u8a::ToSig
 pub enum Kind {
     Acurast,
     Tezos,
+    AlephZero,
+    Vara,
 }
 
 impl Kind {
@@ -19,6 +21,8 @@ impl Kind {
         match byte {
             0 => Ok(Kind::Acurast),
             1 => Ok(Kind::Tezos),
+            3 => Ok(Kind::AlephZero),
+            4 => Ok(Kind::Vara),
             _ => Err(format!("Unknown multi origin kind {}", byte).into()),
         }
     }
@@ -27,6 +31,8 @@ impl Kind {
         match self {
             Kind::Acurast => 0,
             Kind::Tezos => 1,
+            Kind::AlephZero => 3,
+            Kind::Vara => 4,
         }
     }
 }
@@ -60,12 +66,28 @@ impl MultiOrigin {
         }
     }
 
+    #[allow(dead_code)]
+    fn aleph_zero(address: AccountId32) -> Self {
+        MultiOrigin {
+            kind: Kind::AlephZero,
+            source: address.to_u8a(),
+        }
+    }
+
+    #[allow(dead_code)]
+    fn vara(address: AccountId32) -> Self {
+        MultiOrigin {
+            kind: Kind::Vara,
+            source: address.to_u8a(),
+        }
+    }
+
     fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let kind_byte = cursor.read_u8()?;
         let kind = Kind::from_byte(kind_byte)?;
 
         let source = match kind {
-            Kind::Acurast => {
+            Kind::Acurast | Kind::AlephZero | Kind::Vara => {
                 let address = AccountId32::read(cursor)?;
                 address.to_u8a()
             }
