@@ -3,6 +3,7 @@ use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::job_environment::JobEnvironment;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
+use crate::codec::types::job_data::JobData;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::metrics::MetricPool;
 use crate::codec::types::processor_overview::ProcessorOverview;
@@ -21,6 +22,7 @@ use num_bigint::BigUint;
 use num_traits::Zero;
 use std::io::Cursor;
 use std::sync::Arc;
+use std::vec;
 
 #[uniffi::export]
 #[async_trait]
@@ -66,6 +68,13 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<JobRegistration>;
+
+    async fn get_job_data(
+        &self,
+        job_identifier: JobIdentifier,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<JobData>;
 
     async fn get_job_environment(
         &self,
@@ -272,6 +281,43 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             return Some(JobRegistration::read(&mut cursor, self.version).unwrap());
         }
         None
+    }
+
+    async fn get_job_data(
+        &self,
+        job_identifier: JobIdentifier,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<JobData> {
+        let registration_key = acurast_stored_job_registration(&job_identifier);
+        let key_id_key = acurast_marketplace_job_key_ids(&job_identifier);
+
+        let keys = vec![
+            hex::encode(registration_key),
+            hex::encode(key_id_key),
+        ];
+
+        let Ok(storage) = self
+            .state
+            .get_storage_at(keys, block_hash, timeout, &self.engine)
+            .await
+        else {
+            return None;
+        };
+
+        let changes = storage.first().map(|r| &r.changes)?;
+
+        let registration = read_changes_opt(changes, 0, |bytes| {
+            JobRegistration::read(&mut Cursor::new(bytes), self.version).unwrap()
+        })?;
+        let key_id = read_changes_opt(changes, 1, |bytes| {
+            bytes
+        });
+
+        Some(JobData {
+            registration,
+            key_id,
+        })
     }
 
     async fn get_job_environment(
@@ -492,12 +538,19 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
     }
 }
 
+const PALLET_ACURAST: &str = "Acurast";
+const PALLET_ACURAST_MARKETPLACE: &str = "AcurastMarketplace";
+const PALLET_ACURAST_PROCESSOR_MANAGER: &str = "AcurastProcessorManager";
+const PALLET_ACURAST_COMPUTE: &str = "AcurastCompute";
+const PALLET_SYSTEM: &str = "System";
+const PALLET_UNIQUES: &str = "Uniques";
+
 fn acurast_stored_job_registration(job_identifier: &JobIdentifier) -> Vec<u8> {
     let origin = job_identifier.origin.to_u8a();
     let id = job_identifier.id.to_u8a();
 
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("Acurast", "StoredJobRegistration");
+    key.extend_with_storage_prefix(PALLET_ACURAST, "StoredJobRegistration");
     key.extend_with_blake2_128concat(&origin);
     key.extend_with_blake2_128concat(&id);
 
@@ -509,7 +562,7 @@ fn acurast_execution_environment(job_identifier: &JobIdentifier, account_id: &[u
     job.extend(job_identifier.id.to_u8a());
 
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("Acurast", "ExecutionEnvironment");
+    key.extend_with_storage_prefix(PALLET_ACURAST, "ExecutionEnvironment");
     key.extend_with_blake2_128concat(&job);
     key.extend_with_blake2_128concat(account_id);
 
@@ -518,7 +571,7 @@ fn acurast_execution_environment(job_identifier: &JobIdentifier, account_id: &[u
 
 fn acurast_stored_attestation(account_id: &[u8]) -> Vec<u8> {
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("Acurast", "StoredAttestation");
+    key.extend_with_storage_prefix(PALLET_ACURAST, "StoredAttestation");
     key.extend_with_blake2_128concat(account_id);
 
     key
@@ -526,15 +579,26 @@ fn acurast_stored_attestation(account_id: &[u8]) -> Vec<u8> {
 
 fn acurast_marketplace_stored_matches(account_id: &[u8]) -> Vec<u8> {
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("AcurastMarketplace", "StoredMatches");
+    key.extend_with_storage_prefix(PALLET_ACURAST_MARKETPLACE, "StoredMatches");
     key.extend_with_blake2_128concat(account_id);
+
+    key
+}
+
+fn acurast_marketplace_job_key_ids(job_identifier: &JobIdentifier) -> Vec<u8> {
+    let mut job = job_identifier.origin.to_u8a();
+    job.extend(job_identifier.id.to_u8a());
+
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix(PALLET_ACURAST_MARKETPLACE, "JobKeyIds");
+    key.extend_with_blake2_128concat(&job);
 
     key
 }
 
 fn acurast_processor_manager_processor_to_manager_id_index(account_id: &[u8]) -> Vec<u8> {
     let mut key = Vec::new();
-    key.extend_with_storage_prefix("AcurastProcessorManager", "ProcessorToManagerIdIndex");
+    key.extend_with_storage_prefix(PALLET_ACURAST_PROCESSOR_MANAGER, "ProcessorToManagerIdIndex");
     key.extend_with_blake2_128(account_id);
 
     key
@@ -542,7 +606,7 @@ fn acurast_processor_manager_processor_to_manager_id_index(account_id: &[u8]) ->
 
 fn acurast_processor_manager_manager_counter(account_id: &[u8]) -> Vec<u8> {
     let mut key = Vec::new();
-    key.extend_with_storage_prefix("AcurastProcessorManager", "ManagerCounter");
+    key.extend_with_storage_prefix(PALLET_ACURAST_PROCESSOR_MANAGER, "ManagerCounter");
     key.extend_with_blake2_128(account_id);
 
     key
@@ -552,7 +616,7 @@ fn acurast_processor_manager_management_endpoint(manager_id: i32) -> Vec<u8> {
     let manager_id = &biguint_to_u8a(&BigUint::from(manager_id as u32));
 
     let mut key = Vec::new();
-    key.extend_with_storage_prefix("AcurastProcessorManager", "ManagementEndpoint");
+    key.extend_with_storage_prefix(PALLET_ACURAST_PROCESSOR_MANAGER, "ManagementEndpoint");
     key.extend_with_blake2_128concat(manager_id);
 
     key
@@ -560,7 +624,7 @@ fn acurast_processor_manager_management_endpoint(manager_id: i32) -> Vec<u8> {
 
 fn acurast_processor_manager_processor_heartbeat(account_id: &[u8]) -> Vec<u8> {
     let mut key = Vec::new();
-    key.extend_with_storage_prefix("AcurastProcessorManager", "ProcessorHeartbeat");
+    key.extend_with_storage_prefix(PALLET_ACURAST_PROCESSOR_MANAGER, "ProcessorHeartbeat");
     key.extend_with_blake2_128(account_id);
 
     key
@@ -568,21 +632,21 @@ fn acurast_processor_manager_processor_heartbeat(account_id: &[u8]) -> Vec<u8> {
 
 fn acurast_compute_metric_pool_lookup() -> Vec<u8> {
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("AcurastCompute", "MetricPoolLookup");
+    key.extend_with_storage_prefix(PALLET_ACURAST_COMPUTE, "MetricPoolLookup");
 
     key
 }
 
 fn acurast_compute_metric_pools() -> Vec<u8> {
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("AcurastCompute", "MetricPools");
+    key.extend_with_storage_prefix(PALLET_ACURAST_COMPUTE, "MetricPools");
 
     key
 }
 
 fn system_account(account_id: &[u8]) -> Vec<u8> {
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("System", "Account");
+    key.extend_with_storage_prefix(PALLET_SYSTEM, "Account");
     key.extend_with_blake2_128concat(account_id);
 
     key
@@ -592,7 +656,7 @@ fn uniques_asset(manager_id: i32) -> Vec<u8> {
     let manager_id = &biguint_to_u8a(&BigUint::from(manager_id as u32));
     let collection_id = &biguint_to_u8a(&BigUint::zero());
     let mut key: Vec<u8> = Vec::new();
-    key.extend_with_storage_prefix("Uniques", "Asset");
+    key.extend_with_storage_prefix(PALLET_UNIQUES, "Asset");
     key.extend_with_blake2_128concat(collection_id);
     key.extend_with_blake2_128concat(manager_id);
 
@@ -666,6 +730,24 @@ mod tests {
             key,
             hex_to_ba("0x1aee6710ac79060b1e13291ba85112af2b949d1a72012eeaa1f6b481830d0d73de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
         )
+    }
+
+    #[test]
+    fn test_acurast_marketplace_job_key_ids() {
+        let key = acurast_marketplace_job_key_ids(&JobIdentifier {
+            origin: MultiOrigin {
+                kind: Kind::Acurast,
+                source: hex_to_ba(
+                    "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+                ),
+            },
+            id: BigUint::from(0u32),
+        });
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x1aee6710ac79060b1e13291ba85112afaf69a8f6416d983b30440e56737bd8f5ea6c62216b6983bf26def5438482d4ba00d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00000000000000000000000000000000"),
+        );
     }
 
     #[test]

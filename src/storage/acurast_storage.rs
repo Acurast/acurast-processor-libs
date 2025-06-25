@@ -5,11 +5,7 @@ use crate::{
         acurast::{
             attestation::Attestation, job_environment::JobEnvironment,
             job_identifier::JobIdentifier, job_registration::JobRegistration,
-        },
-        marketplace::job_assigment::JobAssignment,
-        metrics::MetricPool,
-        processor_overview::ProcessorOverview,
-        uniques::pallet_uniques_item_details::PalletUniquesItemDetails,
+        }, job_data::JobData, marketplace::job_assigment::JobAssignment, metrics::MetricPool, processor_overview::ProcessorOverview, uniques::pallet_uniques_item_details::PalletUniquesItemDetails
     },
     types::system::FrameSystemAccountInfo,
     xxhash::xxh128_unsigned,
@@ -95,6 +91,17 @@ impl AcurastStorage {
     ) -> Option<JobRegistration> {
         self.storage
             .get_job_registration(job_identifier, block_hash, timeout)
+            .await
+    }
+
+    async fn get_job_data(
+        &self,
+        job_identifier: JobIdentifier,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<JobData> {
+        self.storage
+            .get_job_data(job_identifier, block_hash, timeout)
             .await
     }
 
