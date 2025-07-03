@@ -231,6 +231,7 @@ impl AssignmentStrategy {
 #[derive(uniffi::Enum, Debug)]
 pub enum JobModule {
     DataEncryption,
+    LLM,
 }
 
 impl JobModule {
@@ -238,6 +239,7 @@ impl JobModule {
         let id = cursor.read_u8()?;
         match id {
             0 => Ok(JobModule::DataEncryption),
+            1 => Ok(JobModule::LLM),
             _ => Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 format!("Unknown JobModule {}", id),

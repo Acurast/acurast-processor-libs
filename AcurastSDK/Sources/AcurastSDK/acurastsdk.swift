@@ -4812,6 +4812,7 @@ extension ExecutionSpecifierKind: Equatable, Hashable {}
 public enum JobModule {
     
     case dataEncryption
+    case llm
 }
 
 
@@ -4824,6 +4825,8 @@ public struct FfiConverterTypeJobModule: FfiConverterRustBuffer {
         
         case 1: return .dataEncryption
         
+        case 2: return .llm
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -4834,6 +4837,10 @@ public struct FfiConverterTypeJobModule: FfiConverterRustBuffer {
         
         case .dataEncryption:
             writeInt(&buf, Int32(1))
+        
+        
+        case .llm:
+            writeInt(&buf, Int32(2))
         
         }
     }
