@@ -1,4 +1,5 @@
 use super::v0_acurast_storage::{V0AcurastStorageImpl, VXAcurastStorage};
+use crate::codec::types::acurast::advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing};
 use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::acurast::{
@@ -133,6 +134,28 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
     ) -> Option<Attestation> {
         self.base
             .get_attestation(account_id, block_hash, timeout)
+            .await
+    }
+
+    async fn get_marketplace_pricing(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplacePricing> {
+        self.base
+            .get_marketplace_pricing(account_id, block_hash, timeout)
+            .await
+    }
+
+    async fn get_marketplace_advertisement_restriction(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplaceAdvertisementRestriction> {
+        self.base
+            .get_marketplace_advertisement_restriction(account_id, block_hash, timeout)
             .await
     }
 

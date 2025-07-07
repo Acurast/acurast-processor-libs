@@ -3,8 +3,7 @@ use crate::{
     blake2b::blake2b_128,
     codec::types::{
         acurast::{
-            attestation::Attestation, job_environment::JobEnvironment,
-            job_identifier::JobIdentifier, job_registration::JobRegistration,
+            advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing}, attestation::Attestation, job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration
         }, job_data::JobData, marketplace::job_assigment::JobAssignment, metrics::MetricPool, processor_overview::ProcessorOverview, uniques::pallet_uniques_item_details::PalletUniquesItemDetails
     },
     types::system::FrameSystemAccountInfo,
@@ -136,6 +135,28 @@ impl AcurastStorage {
     ) -> Option<Attestation> {
         self.storage
             .get_attestation(account_id, block_hash, timeout)
+            .await
+    }
+
+    async fn get_marketplace_pricing(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplacePricing> {
+        self.storage
+            .get_marketplace_pricing(account_id, block_hash, timeout)
+            .await
+    }
+
+    async fn get_marketplace_advertisement_restriction(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplaceAdvertisementRestriction> {
+        self.storage
+            .get_marketplace_advertisement_restriction(account_id, block_hash, timeout)
             .await
     }
 

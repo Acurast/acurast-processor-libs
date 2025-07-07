@@ -1034,6 +1034,10 @@ public protocol AcurastStorageProtocol : AnyObject {
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Int32?
     
+    func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplaceAdvertisementRestriction?
+    
+    func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplacePricing?
+    
     func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async throws  -> [UInt8?]
     
     func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [MetricPool?]
@@ -1268,6 +1272,42 @@ open func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt6
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionInt32.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplaceAdvertisementRestriction? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_marketplace_advertisement_restriction(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeMarketplaceAdvertisementRestriction.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplacePricing? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_marketplace_pricing(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeMarketplacePricing.lift,
             errorHandler: nil
             
         )
@@ -1897,6 +1937,10 @@ public protocol VxAcurastStorageProtocol : AnyObject {
     
     func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
     
+    func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplacePricing?
+    
+    func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplaceAdvertisementRestriction?
+    
     func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async throws  -> [UInt8?]
     
     func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [MetricPool?]
@@ -2123,6 +2167,42 @@ open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeAttestation.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplacePricing? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_marketplace_pricing(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeMarketplacePricing.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplaceAdvertisementRestriction? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_marketplace_advertisement_restriction(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeMarketplaceAdvertisementRestriction.lift,
             errorHandler: nil
             
         )
@@ -3739,6 +3819,160 @@ public func FfiConverterTypeKeyUsageProperties_lower(_ value: KeyUsageProperties
 }
 
 
+public struct MarketplaceAdvertisementRestriction {
+    public var maxMemory: UInt32
+    public var networkRequestQuota: UInt8
+    public var storageCapacity: UInt32
+    public var allowedConsumers: [MultiOrigin]?
+    public var availableModules: [JobModule]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(maxMemory: UInt32, networkRequestQuota: UInt8, storageCapacity: UInt32, allowedConsumers: [MultiOrigin]?, availableModules: [JobModule]) {
+        self.maxMemory = maxMemory
+        self.networkRequestQuota = networkRequestQuota
+        self.storageCapacity = storageCapacity
+        self.allowedConsumers = allowedConsumers
+        self.availableModules = availableModules
+    }
+}
+
+
+
+extension MarketplaceAdvertisementRestriction: Equatable, Hashable {
+    public static func ==(lhs: MarketplaceAdvertisementRestriction, rhs: MarketplaceAdvertisementRestriction) -> Bool {
+        if lhs.maxMemory != rhs.maxMemory {
+            return false
+        }
+        if lhs.networkRequestQuota != rhs.networkRequestQuota {
+            return false
+        }
+        if lhs.storageCapacity != rhs.storageCapacity {
+            return false
+        }
+        if lhs.allowedConsumers != rhs.allowedConsumers {
+            return false
+        }
+        if lhs.availableModules != rhs.availableModules {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(maxMemory)
+        hasher.combine(networkRequestQuota)
+        hasher.combine(storageCapacity)
+        hasher.combine(allowedConsumers)
+        hasher.combine(availableModules)
+    }
+}
+
+
+public struct FfiConverterTypeMarketplaceAdvertisementRestriction: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MarketplaceAdvertisementRestriction {
+        return
+            try MarketplaceAdvertisementRestriction(
+                maxMemory: FfiConverterUInt32.read(from: &buf), 
+                networkRequestQuota: FfiConverterUInt8.read(from: &buf), 
+                storageCapacity: FfiConverterUInt32.read(from: &buf), 
+                allowedConsumers: FfiConverterOptionSequenceTypeMultiOrigin.read(from: &buf), 
+                availableModules: FfiConverterSequenceTypeJobModule.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: MarketplaceAdvertisementRestriction, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.maxMemory, into: &buf)
+        FfiConverterUInt8.write(value.networkRequestQuota, into: &buf)
+        FfiConverterUInt32.write(value.storageCapacity, into: &buf)
+        FfiConverterOptionSequenceTypeMultiOrigin.write(value.allowedConsumers, into: &buf)
+        FfiConverterSequenceTypeJobModule.write(value.availableModules, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeMarketplaceAdvertisementRestriction_lift(_ buf: RustBuffer) throws -> MarketplaceAdvertisementRestriction {
+    return try FfiConverterTypeMarketplaceAdvertisementRestriction.lift(buf)
+}
+
+public func FfiConverterTypeMarketplaceAdvertisementRestriction_lower(_ value: MarketplaceAdvertisementRestriction) -> RustBuffer {
+    return FfiConverterTypeMarketplaceAdvertisementRestriction.lower(value)
+}
+
+
+public struct MarketplacePricing {
+    public var feePerMillisecond: BigUint
+    public var feePerStorageByte: BigUint
+    public var baseFeePerExecution: BigUint
+    public var schedulingWindow: SchedulingWindow
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(feePerMillisecond: BigUint, feePerStorageByte: BigUint, baseFeePerExecution: BigUint, schedulingWindow: SchedulingWindow) {
+        self.feePerMillisecond = feePerMillisecond
+        self.feePerStorageByte = feePerStorageByte
+        self.baseFeePerExecution = baseFeePerExecution
+        self.schedulingWindow = schedulingWindow
+    }
+}
+
+
+
+extension MarketplacePricing: Equatable, Hashable {
+    public static func ==(lhs: MarketplacePricing, rhs: MarketplacePricing) -> Bool {
+        if lhs.feePerMillisecond != rhs.feePerMillisecond {
+            return false
+        }
+        if lhs.feePerStorageByte != rhs.feePerStorageByte {
+            return false
+        }
+        if lhs.baseFeePerExecution != rhs.baseFeePerExecution {
+            return false
+        }
+        if lhs.schedulingWindow != rhs.schedulingWindow {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(feePerMillisecond)
+        hasher.combine(feePerStorageByte)
+        hasher.combine(baseFeePerExecution)
+        hasher.combine(schedulingWindow)
+    }
+}
+
+
+public struct FfiConverterTypeMarketplacePricing: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MarketplacePricing {
+        return
+            try MarketplacePricing(
+                feePerMillisecond: FfiConverterTypeBigUint.read(from: &buf), 
+                feePerStorageByte: FfiConverterTypeBigUint.read(from: &buf), 
+                baseFeePerExecution: FfiConverterTypeBigUint.read(from: &buf), 
+                schedulingWindow: FfiConverterTypeSchedulingWindow.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: MarketplacePricing, into buf: inout [UInt8]) {
+        FfiConverterTypeBigUint.write(value.feePerMillisecond, into: &buf)
+        FfiConverterTypeBigUint.write(value.feePerStorageByte, into: &buf)
+        FfiConverterTypeBigUint.write(value.baseFeePerExecution, into: &buf)
+        FfiConverterTypeSchedulingWindow.write(value.schedulingWindow, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeMarketplacePricing_lift(_ buf: RustBuffer) throws -> MarketplacePricing {
+    return try FfiConverterTypeMarketplacePricing.lift(buf)
+}
+
+public func FfiConverterTypeMarketplacePricing_lower(_ value: MarketplacePricing) -> RustBuffer {
+    return FfiConverterTypeMarketplacePricing.lower(value)
+}
+
+
 public struct MetricPool {
     public var config: [Config]
 
@@ -5095,6 +5329,61 @@ extension Runtime: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
+public enum SchedulingWindow {
+    
+    case end
+    case delta
+}
+
+
+public struct FfiConverterTypeSchedulingWindow: FfiConverterRustBuffer {
+    typealias SwiftType = SchedulingWindow
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SchedulingWindow {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .end
+        
+        case 2: return .delta
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: SchedulingWindow, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .end:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .delta:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+public func FfiConverterTypeSchedulingWindow_lift(_ buf: RustBuffer) throws -> SchedulingWindow {
+    return try FfiConverterTypeSchedulingWindow.lift(buf)
+}
+
+public func FfiConverterTypeSchedulingWindow_lower(_ value: SchedulingWindow) -> RustBuffer {
+    return FfiConverterTypeSchedulingWindow.lower(value)
+}
+
+
+
+extension SchedulingWindow: Equatable, Hashable {}
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
 public enum Tag {
     
     case secp256r1
@@ -5364,6 +5653,48 @@ fileprivate struct FfiConverterOptionTypeJobRegistration: FfiConverterRustBuffer
     }
 }
 
+fileprivate struct FfiConverterOptionTypeMarketplaceAdvertisementRestriction: FfiConverterRustBuffer {
+    typealias SwiftType = MarketplaceAdvertisementRestriction?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeMarketplaceAdvertisementRestriction.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeMarketplaceAdvertisementRestriction.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+fileprivate struct FfiConverterOptionTypeMarketplacePricing: FfiConverterRustBuffer {
+    typealias SwiftType = MarketplacePricing?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeMarketplacePricing.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeMarketplacePricing.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionTypeMetricPool: FfiConverterRustBuffer {
     typealias SwiftType = MetricPool?
 
@@ -5485,6 +5816,27 @@ fileprivate struct FfiConverterOptionSequenceTypeAccountId32: FfiConverterRustBu
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterSequenceTypeAccountId32.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+fileprivate struct FfiConverterOptionSequenceTypeMultiOrigin: FfiConverterRustBuffer {
+    typealias SwiftType = [MultiOrigin]?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterSequenceTypeMultiOrigin.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterSequenceTypeMultiOrigin.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -5638,6 +5990,28 @@ fileprivate struct FfiConverterSequenceTypeJobAssignment: FfiConverterRustBuffer
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeJobAssignment.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceTypeMultiOrigin: FfiConverterRustBuffer {
+    typealias SwiftType = [MultiOrigin]
+
+    public static func write(_ value: [MultiOrigin], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeMultiOrigin.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [MultiOrigin] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [MultiOrigin]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeMultiOrigin.read(from: &buf))
         }
         return seq
     }
@@ -5924,6 +6298,12 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_identifier() != 46517) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_marketplace_advertisement_restriction() != 18749) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_marketplace_pricing() != 22806) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pool_ids() != 16914) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5978,16 +6358,22 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 52076) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 51718) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_pricing() != 27639) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 15171) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_advertisement_restriction() != 57099) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_endpoint() != 3381) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 4448) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_processor_overview() != 21556) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 26030) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_endpoint() != 14529) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_processor_overview() != 18208) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {

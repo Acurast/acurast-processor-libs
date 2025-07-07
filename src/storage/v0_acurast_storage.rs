@@ -1,4 +1,5 @@
 use crate::big_uint::BigIntToInt;
+use crate::codec::types::acurast::advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing};
 use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::job_environment::JobEnvironment;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
@@ -97,6 +98,20 @@ pub trait VXAcurastStorage: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Attestation>;
+
+    async fn get_marketplace_pricing(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplacePricing>;
+
+    async fn get_marketplace_advertisement_restriction(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplaceAdvertisementRestriction>;
 
     async fn get_metric_pool_ids(
         &self,
@@ -383,6 +398,46 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         None
     }
 
+    async fn get_marketplace_pricing(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplacePricing> {
+        let key = acurast_marketplace_stored_advertisement_pricing(account_id);
+        let Ok(Some(storage)) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        else {
+            return None;
+        };
+
+        let ba = hex_to_ba(&storage);
+        let mut cursor = Cursor::new(ba);
+        return Some(MarketplacePricing::read(&mut cursor).unwrap());
+    }   
+
+    async fn get_marketplace_advertisement_restriction(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Option<MarketplaceAdvertisementRestriction> {
+        let key = acurast_marketplace_stored_advertisement_restriction(account_id);
+        let Ok(Some(storage)) = self
+            .state
+            .get_storage(&key, block_hash, timeout, &self.engine)
+            .await
+        else {
+            return None;
+        };
+
+        let ba = hex_to_ba(&storage);
+        let mut cursor = Cursor::new(ba);
+        return Some(MarketplaceAdvertisementRestriction::read(&mut cursor).unwrap());
+    } 
+
     async fn get_metric_pool_ids(
         &self,
         names: Vec<String>,
@@ -596,6 +651,22 @@ fn acurast_marketplace_job_key_ids(job_identifier: &JobIdentifier) -> Vec<u8> {
     key
 }
 
+fn acurast_marketplace_stored_advertisement_pricing(account_id: &[u8]) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix(PALLET_ACURAST_MARKETPLACE, "StoredAdvertisementPricing");
+    key.extend_with_blake2_128(account_id);
+
+    key
+}
+
+fn acurast_marketplace_stored_advertisement_restriction(account_id: &[u8]) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix(PALLET_ACURAST_MARKETPLACE, "StoredAdvertisementRestriction");
+    key.extend_with_blake2_128(account_id);
+
+    key
+}
+
 fn acurast_processor_manager_processor_to_manager_id_index(account_id: &[u8]) -> Vec<u8> {
     let mut key = Vec::new();
     key.extend_with_storage_prefix(PALLET_ACURAST_PROCESSOR_MANAGER, "ProcessorToManagerIdIndex");
@@ -730,6 +801,31 @@ mod tests {
             key,
             hex_to_ba("0x1aee6710ac79060b1e13291ba85112af2b949d1a72012eeaa1f6b481830d0d73de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
         )
+    }
+
+
+    #[test]
+    fn test_acurast_marketplace_stored_advertisement_pricing() {
+        let key = acurast_marketplace_stored_advertisement_pricing(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x1aee6710ac79060b1e13291ba85112af7343c819ecdbbce7ea9c22c60dd68245de1e86a9a8c739864cf3cc5ec2bea59f")
+        );
+    }
+
+    #[test]
+    fn test_acurast_marketplace_stored_advertisement_restriction() {
+        let key = acurast_marketplace_stored_advertisement_restriction(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x1aee6710ac79060b1e13291ba85112af1d44a43f698cab34946cf754d09c275ade1e86a9a8c739864cf3cc5ec2bea59f")
+        );
     }
 
     #[test]
