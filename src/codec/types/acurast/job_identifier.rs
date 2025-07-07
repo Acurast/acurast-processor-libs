@@ -82,7 +82,7 @@ impl MultiOrigin {
         }
     }
 
-    fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let kind_byte = cursor.read_u8()?;
         let kind = Kind::from_byte(kind_byte)?;
 
