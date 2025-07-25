@@ -449,6 +449,19 @@ fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
     }
 }
 
+fileprivate struct FfiConverterDouble: FfiConverterPrimitive {
+    typealias FfiType = Double
+    typealias SwiftType = Double
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Double {
+        return try lift(readDouble(&buf))
+    }
+
+    public static func write(_ value: Double, into buf: inout [UInt8]) {
+        writeDouble(&buf, lower(value))
+    }
+}
+
 fileprivate struct FfiConverterBool : FfiConverter {
     typealias FfiType = Int8
     typealias SwiftType = Bool
@@ -3975,11 +3988,15 @@ public func FfiConverterTypeMarketplacePricing_lower(_ value: MarketplacePricing
 
 public struct MetricPool {
     public var config: [Config]
+    public var name: String
+    public var reward: Reward
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(config: [Config]) {
+    public init(config: [Config], name: String, reward: Reward) {
         self.config = config
+        self.name = name
+        self.reward = reward
     }
 }
 
@@ -3990,11 +4007,19 @@ extension MetricPool: Equatable, Hashable {
         if lhs.config != rhs.config {
             return false
         }
+        if lhs.name != rhs.name {
+            return false
+        }
+        if lhs.reward != rhs.reward {
+            return false
+        }
         return true
     }
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(config)
+        hasher.combine(name)
+        hasher.combine(reward)
     }
 }
 
@@ -4003,12 +4028,16 @@ public struct FfiConverterTypeMetricPool: FfiConverterRustBuffer {
     public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MetricPool {
         return
             try MetricPool(
-                config: FfiConverterSequenceTypeConfig.read(from: &buf)
+                config: FfiConverterSequenceTypeConfig.read(from: &buf), 
+                name: FfiConverterString.read(from: &buf), 
+                reward: FfiConverterTypeReward.read(from: &buf)
         )
     }
 
     public static func write(_ value: MetricPool, into buf: inout [UInt8]) {
         FfiConverterSequenceTypeConfig.write(value.config, into: &buf)
+        FfiConverterString.write(value.name, into: &buf)
+        FfiConverterTypeReward.write(value.reward, into: &buf)
     }
 }
 
@@ -4467,6 +4496,55 @@ public func FfiConverterTypeProcessorVersion_lift(_ buf: RustBuffer) throws -> P
 
 public func FfiConverterTypeProcessorVersion_lower(_ value: ProcessorVersion) -> RustBuffer {
     return FfiConverterTypeProcessorVersion.lower(value)
+}
+
+
+public struct Reward {
+    public var current: Double
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(current: Double) {
+        self.current = current
+    }
+}
+
+
+
+extension Reward: Equatable, Hashable {
+    public static func ==(lhs: Reward, rhs: Reward) -> Bool {
+        if lhs.current != rhs.current {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(current)
+    }
+}
+
+
+public struct FfiConverterTypeReward: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Reward {
+        return
+            try Reward(
+                current: FfiConverterDouble.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Reward, into buf: inout [UInt8]) {
+        FfiConverterDouble.write(value.current, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeReward_lift(_ buf: RustBuffer) throws -> Reward {
+    return try FfiConverterTypeReward.lift(buf)
+}
+
+public func FfiConverterTypeReward_lower(_ value: Reward) -> RustBuffer {
+    return FfiConverterTypeReward.lower(value)
 }
 
 

@@ -39,14 +39,17 @@ where
     })
 }
 
-pub fn read_bytes(cursor: &mut Cursor<Vec<u8>>, offset: usize) -> Result<Vec<i8>, Box<dyn Error>> {
+pub fn read_bytes(cursor: &mut Cursor<Vec<u8>>, offset: usize) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut ba = vec![0u8; offset];
     cursor.read_exact(&mut ba)?;
 
-    // Convert Vec<u8> to Vec<i8>
-    let ba_signed: Vec<i8> = ba.into_iter().map(|x| x as i8).collect();
+    Ok(ba)
+}
 
-    Ok(ba_signed)
+pub fn read_u64(cursor: &mut Cursor<Vec<u8>>) -> Result<u64, Box<dyn Error>> {
+    let mut bytes = [0u8; 8];
+    cursor.read_exact(&mut bytes)?;
+    Ok(u64::from_le_bytes(bytes))
 }
 
 pub fn read_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<BigUint, Box<dyn Error>> {
