@@ -259,11 +259,17 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             log::debug!("get_assigned_jobs {:?}", storage);
             if !storage.is_empty() {
                 for change in &storage[0].changes {
+                    let change: Vec<&str> = change
+                        .iter()
+                        .filter_map(|c| c.as_ref().map(|s| s.as_str()))
+                        .collect();
+
+                    if change.len() < 2 {
+                        continue;
+                    }
+
                     let job_assignment = JobAssignment::read(
-                        change
-                            .iter()
-                            .filter_map(|c| c.as_ref().map(|s| s.as_str()))
-                            .collect(),
+                        change,
                         self.version,
                     )
                     .unwrap();
