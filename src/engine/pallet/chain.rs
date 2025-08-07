@@ -1,4 +1,5 @@
 use crate::engine::engine::{rpc_engine_request, RpcEngine};
+use crate::engine::pallet::pallet_rpc::PalletRpc;
 use crate::types::header::Header;
 use num_bigint::BigUint;
 use num_traits::Num;
@@ -6,6 +7,8 @@ use serde_json::json;
 use std::sync::Arc;
 
 pub struct Chain;
+
+impl PalletRpc for Chain {}
 
 impl Chain {
     pub fn new() -> Self {
@@ -19,18 +22,11 @@ impl Chain {
         block_number: Option<i64>,
         timeout: Option<u64>,
         engine: &Arc<dyn RpcEngine>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<Option<String>, String> {
         let params = json!([block_number]);
-        let response: serde_json::Value = rpc_engine_request(engine, "chain_getBlockHash", params, timeout).await?;
-        if let Some(result) = response.get("result") {
-            if let Some(result_str) = result.as_str() {
-                return Ok(result_str.to_string());
-            }
-        }
-        Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "Block hash not found",
-        )))
+        let response = rpc_engine_request(engine, "chain_getBlockHash", params, timeout).await;
+
+        self.read_string_result(response)
     }
 
     pub async fn get_header(

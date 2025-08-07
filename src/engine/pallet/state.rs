@@ -1,3 +1,4 @@
+use crate::engine::pallet::pallet_rpc::PalletRpc;
 use crate::hex::ToHex;
 use crate::{
     engine::engine::{rpc_engine_request, RpcEngine},
@@ -23,6 +24,8 @@ impl RuntimeVersion {
 }
 
 pub struct State;
+
+impl PalletRpc for State {}
 
 impl State {
     pub fn new() -> Self {
@@ -65,15 +68,15 @@ impl State {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
         engine: &Arc<dyn RpcEngine>,
-    ) -> Result<Option<String>, Box<dyn Error>> {
+    ) -> Result<Option<String>, String> {
         let mut params = json!([hex::encode(storage_key)]);
 
         if let Some(block_hash) = block_hash {
             params.as_array_mut().unwrap().push(Value::from(block_hash));
         }
-        let response = rpc_engine_request(engine, "state_getStorage", params, timeout).await?;
-        let result = response.get("result").and_then(Value::as_str);
-        Ok(result.map(String::from))
+        let response = rpc_engine_request(engine, "state_getStorage", params, timeout).await;
+
+        self.read_string_result(response)
     }
 
     pub async fn get_storage_at(
@@ -82,30 +85,31 @@ impl State {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
         engine: &Arc<dyn RpcEngine>,
-    ) -> Result<Vec<StorageQueryResult>, Box<dyn Error>> {
+    ) -> Result<Vec<StorageQueryResult>, String> {
         let mut params = json!([storage_keys]);
         if let Some(block_hash) = block_hash {
             params.as_array_mut().unwrap().push(Value::from(block_hash));
         }
-        let response = rpc_engine_request(engine, "state_queryStorageAt", params, timeout).await?;
-        match response.get("result") {
-            Some(result) => {
-                // Convert the JSON result to a vector of StorageQueryResult
+        let response = rpc_engine_request(engine, "state_queryStorageAt", params, timeout).await;
+
+        self.read_result(response, |json| {
+            self.get_opt_result(json, |result| {
                 let results: Vec<StorageQueryResult> = serde_json::from_value(result.clone())
                     .map_err(|e| format!("Failed to parse result: {}", e))?;
+
                 Ok(results)
-            }
-            None => Err("Response does not contain result key".into()),
-        }
+            })
+        }).map(|ok| ok.unwrap_or(vec![]))
     }
 
     pub async fn call_state(
+        &self,
         method: String,
         data: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-        engine: Arc<dyn RpcEngine>,
-    ) -> Result<String, String> {
+        engine: &Arc<dyn RpcEngine>,
+    ) -> Result<Option<String>, String> {
         let mut params = json!([method]);
         if let Some(data) = data {
             params.as_array_mut().unwrap().push(json!(data.to_hex()));
@@ -116,19 +120,9 @@ impl State {
                 .unwrap()
                 .push(json!(block_hash.to_hex()));
         }
-        match rpc_engine_request(&engine, "state_call", params, timeout).await {
-            Ok(response) => {
-                if let Some(result) = response.get("result").and_then(Value::as_str) {
-                    Ok(result.to_string())
-                } else {
-                    Err("Result is not a string".to_string())
-                }
-            }
-            Err(err) => {
-                let err_msg = format!("Error: {}", err);
-                Err(err_msg)
-            }
-        }
+        let response = rpc_engine_request(&engine, "state_call", params, timeout).await;
+
+        self.read_string_result(response)
     }
 
     pub async fn get_keys(
@@ -137,26 +131,26 @@ impl State {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
         engine: &Arc<dyn RpcEngine>,
-    ) -> Result<Vec<String>, Box<dyn Error>> {
+    ) -> Result<Vec<String>, String> {
         let mut params = json!([hex::encode(key)]);
         if let Some(block_hash) = block_hash {
             params.as_array_mut().unwrap().push(Value::from(block_hash));
         }
-        match rpc_engine_request(&engine, "state_getKeys", params, timeout).await {
-            Ok(response) => match response["result"].as_array() {
-                Some(array) => Ok(array
-                    .iter()
-                    .filter_map(|v| v.as_str().map(String::from))
-                    .collect()),
-                None => Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Failed to retrieve keys",
-                ))),
-            },
-            Err(_err) => Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to retrieve keys",
-            ))),
-        }
+        let response = rpc_engine_request(&engine, "state_getKeys", params, timeout).await;
+
+        self.read_result(response, |json| {
+            self.get_opt_result(json, |result| {
+                if let Some(array) = result.as_array() {
+                    let keys: Vec<String> = array
+                        .iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect();
+
+                    Ok(keys)
+                } else {
+                    Err("Unexpected result type (!= Vec<String>)".to_string())
+                }
+            })
+        }).map(|ok| ok.unwrap_or(vec![]))
     }
 }
