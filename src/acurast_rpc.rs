@@ -26,7 +26,7 @@ pub trait AcurastRpc: Send + Sync {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Result<String>;
+    ) -> Result<Option<String>>;
     async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>)
         -> Result<Header>;
     async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32;
@@ -47,14 +47,14 @@ pub trait AcurastRpc: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>>;
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String>;
+    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<Option<String>>;
     async fn call(
         &self,
         method: String,
         data: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<String>;
+    ) -> Result<Option<String>>;
     fn storage(&self, version: u32) -> Arc<dyn VXAcurastStorage>;
 }
 
@@ -103,7 +103,7 @@ impl AcurastRpc for AcurastRpcImpl {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Result<String> {
+    ) -> Result<Option<String>> {
         self.chain
             .get_block_hash(block_number, timeout, &self.engine)
             .await
@@ -201,7 +201,7 @@ impl AcurastRpc for AcurastRpcImpl {
         }
     }
 
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<String> {
+    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<Option<String>> {
         self.author
             .submit_extrinsic(extrinsic, timeout, &self.engine)
             .await
@@ -214,8 +214,11 @@ impl AcurastRpc for AcurastRpcImpl {
         data: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<String> {
-        self.call(method, data, block_hash, timeout).await
+    ) -> Result<Option<String>> {
+        self.state
+            .call_state(method, data, block_hash, timeout, &self.engine)
+            .await
+            .map_err(AcurastError::RuntimeError)
     }
 
     fn storage(&self, version: u32) -> Arc<dyn VXAcurastStorage> {

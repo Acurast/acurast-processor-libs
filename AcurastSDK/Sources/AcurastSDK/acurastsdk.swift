@@ -541,7 +541,7 @@ fileprivate struct FfiConverterData: FfiConverterRustBuffer {
 
 public protocol AcurastRpcProtocol : AnyObject {
     
-    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String
+    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String?
     
     func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
@@ -553,9 +553,9 @@ public protocol AcurastRpcProtocol : AnyObject {
     
     func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeout: UInt64?) async  -> Data?
     
-    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async throws  -> String
+    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async throws  -> String?
     
-    func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async  -> String?
+    func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async throws  -> String?
     
     func storage(version: UInt32)  -> VxAcurastStorage
     
@@ -602,7 +602,7 @@ open class AcurastRpc:
     
 
     
-open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> String {
+open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> String? {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -614,7 +614,7 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> St
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterString.lift,
+            liftFunc: FfiConverterOptionString.lift,
             errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
@@ -707,7 +707,7 @@ open func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeou
         )
 }
     
-open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> String {
+open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> String? {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -719,14 +719,14 @@ open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> Str
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterString.lift,
+            liftFunc: FfiConverterOptionString.lift,
             errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
-open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)async  -> String? {
+open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)async throws  -> String? {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpc_call(
                     self.uniffiClonePointer(),
@@ -737,8 +737,7 @@ open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)a
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
@@ -800,9 +799,9 @@ public func FfiConverterTypeAcurastRpc_lower(_ value: AcurastRpc) -> UnsafeMutab
 
 public protocol AcurastRpcClientProtocol : AnyObject {
     
-    func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async  -> String?
+    func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?) async throws  -> String?
     
-    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String
+    func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String?
     
     func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
@@ -812,7 +811,7 @@ public protocol AcurastRpcClientProtocol : AnyObject {
     
     func storage(version: UInt32)  -> AcurastStorage
     
-    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async throws  -> String
+    func submitExtrinsic(extrinsic: Data, timeout: UInt64?) async throws  -> String?
     
 }
 
@@ -865,9 +864,9 @@ public convenience init(acurastRpc: AcurastRpc) {
     
 
     
-open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)async  -> String? {
+open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)async throws  -> String? {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpcclient_call(
                     self.uniffiClonePointer(),
@@ -878,12 +877,11 @@ open func call(method: String, data: Data?, blockHash: Data?, timeout: UInt64?)a
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
     
-open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> String {
+open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> String? {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -895,7 +893,7 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> St
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterString.lift,
+            liftFunc: FfiConverterOptionString.lift,
             errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
@@ -960,7 +958,7 @@ open func storage(version: UInt32) -> AcurastStorage {
 })
 }
     
-open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> String {
+open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> String? {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -972,7 +970,7 @@ open func submitExtrinsic(extrinsic: Data, timeout: UInt64?)async throws  -> Str
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterString.lift,
+            liftFunc: FfiConverterOptionString.lift,
             errorHandler: FfiConverterTypeAcurastError.lift
         )
 }
@@ -6298,7 +6296,7 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_func_hex_to_ba() != 53494) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 29540) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 18315) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 3278) {
@@ -6316,19 +6314,19 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 18053) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 45867) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 10984) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 47860) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 52034) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 52316) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_call() != 3780) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_call() != 61606) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_block_hash() != 3312) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_block_hash() != 48322) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 33956) {
@@ -6343,7 +6341,7 @@ private var initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_storage() != 52623) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_submit_extrinsic() != 58867) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_submit_extrinsic() != 57315) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_account_info() != 141) {

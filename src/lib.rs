@@ -94,7 +94,7 @@ impl AcurastRpcClient {
         data: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<String> {
+    ) -> Result<Option<String>> {
         self.acurastrpc
             .call(method, data, block_hash, timeout)
             .await
@@ -112,14 +112,14 @@ impl AcurastRpcClient {
         &self,
         block_number: Option<i64>,
         timeout: Option<u64>,
-    ) -> Result<String> {
+    ) -> Result<Option<String>> {
         self.acurastrpc.get_block_hash(block_number, timeout).await
     }
     pub async fn submit_extrinsic(
         &self,
         extrinsic: Vec<u8>,
         timeout: Option<u64>,
-    ) -> Result<String> {
+    ) -> Result<Option<String>> {
         self.acurastrpc.submit_extrinsic(extrinsic, timeout).await
     }
     pub fn storage(&self, version: u32) -> Arc<AcurastStorage> {
