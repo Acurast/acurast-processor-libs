@@ -1,7 +1,9 @@
+use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
+use num_rational::BigRational;
 use num_traits::Pow;
 
-use crate::cursor::{read_bytes, read_list, read_u128, read_u64};
+use crate::cursor::{read_bytes, read_fixed_u128, read_list, read_perquintill, read_u128, read_u32, read_u64, CursorExt};
 use std::error::Error;
 use std::io::{Cursor, Read};
 
@@ -10,6 +12,7 @@ pub struct MetricPool {
     pub config: Vec<Config>,
     pub name: String,
     pub reward: Reward,
+    pub total: Total,
 }
 
 impl MetricPool {
@@ -18,8 +21,9 @@ impl MetricPool {
         let name = read_bytes(cursor, 24)?;
         let name = String::from_utf8(name).map_err(|e| Box::new(e) as Box<dyn Error>)?;
         let reward = Reward::read(cursor)?;
-        let metric = MetricPool { config: configs, name, reward };
-        Ok(metric)
+        let total = Total::read(cursor)?;
+
+        Ok(MetricPool { config: configs, name, reward, total })
     }
 }
 
@@ -50,12 +54,48 @@ impl Config {
 
 #[derive(uniffi::Record, Debug)]
 pub struct Reward {
-    pub current: f64,
+    pub current: BigRational,
+    pub next: Option<Next>,
 }
 
 impl Reward {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
-        let current = read_u64(cursor).map(|x| x as f64 / 10f64.pow(18))?;
-        Ok(Reward { current })
+        let current = read_perquintill(cursor)?;
+        let next = cursor.read_optional(Next::read)?;
+
+        Ok(Reward { current, next })
+    }
+}
+
+#[derive(uniffi::Record, Debug)]
+pub struct Next {
+    epoch: u32,
+    value: BigRational,
+}
+
+impl Next {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let epoch = read_u32(cursor)?;
+        let value = read_perquintill(cursor)?;
+
+        Ok(Next { epoch, value })
+    }
+}
+
+
+#[derive(uniffi::Record, Debug)]
+pub struct Total {
+    pub epoch: u32,
+    pub prev: BigRational,
+    pub cur: BigRational,
+}
+
+impl Total {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let epoch = read_u32(cursor)?;
+        let prev = read_fixed_u128(cursor)?;
+        let cur = read_fixed_u128(cursor)?;
+
+        Ok(Total { epoch, prev, cur })
     }
 }
