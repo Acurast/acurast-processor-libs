@@ -1,6 +1,7 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::{BigInt, BigUint};
-use num_traits::FromPrimitive;
+use num_rational::{BigRational, Rational64};
+use num_traits::{FromPrimitive, Pow};
 use std::{
     error::Error,
     io::{Cursor, Read},
@@ -10,7 +11,7 @@ use crate::{big_uint::BigIntToInt, hex::{hex_to_ba, is_hex}};
 
 pub fn read_changes_opt<T, F>(changes: &Vec<Vec<Option<String>>>, index: usize, read: F) -> Option<T>
 where
-    F: FnOnce(Vec<u8>) -> T 
+    F: FnOnce(Vec<u8>) -> T
 {
     let Some(change) = changes.get(index) else {
         return None;
@@ -31,7 +32,7 @@ where
 
 pub fn read_changes_opt_with_cursor<T, F>(changes: &Vec<Vec<Option<String>>>, index: usize, read: F) -> Option<T>
 where
-    F: FnOnce(&mut Cursor<Vec<u8>>) -> T 
+    F: FnOnce(&mut Cursor<Vec<u8>>) -> T
 {
     read_changes_opt(changes, index, |bytes| {
         let mut cursor = Cursor::new(bytes);
@@ -44,6 +45,12 @@ pub fn read_bytes(cursor: &mut Cursor<Vec<u8>>, offset: usize) -> Result<Vec<u8>
     cursor.read_exact(&mut ba)?;
 
     Ok(ba)
+}
+
+pub fn read_u32(cursor: &mut Cursor<Vec<u8>>) -> Result<u32, Box<dyn Error>> {
+    let mut bytes = [0u8; 4];
+    cursor.read_exact(&mut bytes)?;
+    Ok(u32::from_le_bytes(bytes))
 }
 
 pub fn read_u64(cursor: &mut Cursor<Vec<u8>>) -> Result<u64, Box<dyn Error>> {
@@ -67,6 +74,20 @@ pub fn read_optional_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<Option<BigUint
         1 => Ok(Some(read_u128(cursor)?)), // 1 indicates `Some`, read the value
         _ => Err(format!("Invalid flag for optional BigUint: {:?}", flag[0]).into()), // Invalid flag
     }
+}
+
+pub fn read_fixed_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<BigRational, Box<dyn Error>> {
+    let value = read_u128(cursor)?;
+    let value = BigRational::new(BigInt::from(value), BigInt::from(10).pow(18u32));
+
+    Ok(value)
+}
+
+pub fn read_perquintill(cursor: &mut Cursor<Vec<u8>>) -> Result<BigRational, Box<dyn Error>> {
+    let value = read_u64(cursor)?;
+    let value = BigRational::new(BigInt::from(value), BigInt::from(10).pow(18u32));
+
+    Ok(value)
 }
 
 pub fn read_compact_integer(cursor: &mut Cursor<Vec<u8>>) -> Result<BigInt, Box<dyn Error>> {

@@ -29,7 +29,9 @@ pub use acurast_rpc::AcurastRpc;
 pub use acurast_rpc::AcurastRpcImpl;
 use engine::engine::RpcEngine;
 use engine::http_engine::HttpRpcEngine;
+use num_bigint::BigInt;
 use num_bigint::BigUint;
+use num_rational::BigRational;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -52,6 +54,31 @@ impl UniffiCustomTypeConverter for BigUint {
 
     fn from_custom(obj: Self) -> Self::Builtin {
         obj.to_string()
+    }
+}
+
+#[derive(uniffi::Record, Debug)]
+pub struct SerBigRational {
+    pub numer: String,
+    pub denom: String,
+}
+
+uniffi::custom_type!(BigRational, SerBigRational);
+impl UniffiCustomTypeConverter for BigRational {
+    type Builtin = SerBigRational;
+
+    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
+        let numer = BigInt::from_str(&val.numer)?;
+        let denom = BigInt::from_str(&val.denom)?;
+
+        Ok(Self::new(numer, denom))
+    }
+
+    fn from_custom(obj: Self) -> Self::Builtin {
+        Self::Builtin {
+            numer: obj.numer().to_string(),
+            denom: obj.denom().to_string(),
+        }
     }
 }
 

@@ -449,19 +449,6 @@ fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
     }
 }
 
-fileprivate struct FfiConverterDouble: FfiConverterPrimitive {
-    typealias FfiType = Double
-    typealias SwiftType = Double
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Double {
-        return try lift(readDouble(&buf))
-    }
-
-    public static func write(_ value: Double, into buf: inout [UInt8]) {
-        writeDouble(&buf, lower(value))
-    }
-}
-
 fileprivate struct FfiConverterBool : FfiConverter {
     typealias FfiType = Int8
     typealias SwiftType = Bool
@@ -3988,13 +3975,15 @@ public struct MetricPool {
     public var config: [Config]
     public var name: String
     public var reward: Reward
+    public var total: Total
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(config: [Config], name: String, reward: Reward) {
+    public init(config: [Config], name: String, reward: Reward, total: Total) {
         self.config = config
         self.name = name
         self.reward = reward
+        self.total = total
     }
 }
 
@@ -4011,6 +4000,9 @@ extension MetricPool: Equatable, Hashable {
         if lhs.reward != rhs.reward {
             return false
         }
+        if lhs.total != rhs.total {
+            return false
+        }
         return true
     }
 
@@ -4018,6 +4010,7 @@ extension MetricPool: Equatable, Hashable {
         hasher.combine(config)
         hasher.combine(name)
         hasher.combine(reward)
+        hasher.combine(total)
     }
 }
 
@@ -4028,7 +4021,8 @@ public struct FfiConverterTypeMetricPool: FfiConverterRustBuffer {
             try MetricPool(
                 config: FfiConverterSequenceTypeConfig.read(from: &buf), 
                 name: FfiConverterString.read(from: &buf), 
-                reward: FfiConverterTypeReward.read(from: &buf)
+                reward: FfiConverterTypeReward.read(from: &buf), 
+                total: FfiConverterTypeTotal.read(from: &buf)
         )
     }
 
@@ -4036,6 +4030,7 @@ public struct FfiConverterTypeMetricPool: FfiConverterRustBuffer {
         FfiConverterSequenceTypeConfig.write(value.config, into: &buf)
         FfiConverterString.write(value.name, into: &buf)
         FfiConverterTypeReward.write(value.reward, into: &buf)
+        FfiConverterTypeTotal.write(value.total, into: &buf)
     }
 }
 
@@ -4160,6 +4155,63 @@ public func FfiConverterTypeMultiOrigin_lift(_ buf: RustBuffer) throws -> MultiO
 
 public func FfiConverterTypeMultiOrigin_lower(_ value: MultiOrigin) -> RustBuffer {
     return FfiConverterTypeMultiOrigin.lower(value)
+}
+
+
+public struct Next {
+    public var epoch: UInt32
+    public var value: BigRational
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(epoch: UInt32, value: BigRational) {
+        self.epoch = epoch
+        self.value = value
+    }
+}
+
+
+
+extension Next: Equatable, Hashable {
+    public static func ==(lhs: Next, rhs: Next) -> Bool {
+        if lhs.epoch != rhs.epoch {
+            return false
+        }
+        if lhs.value != rhs.value {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(epoch)
+        hasher.combine(value)
+    }
+}
+
+
+public struct FfiConverterTypeNext: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Next {
+        return
+            try Next(
+                epoch: FfiConverterUInt32.read(from: &buf), 
+                value: FfiConverterTypeBigRational.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Next, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.epoch, into: &buf)
+        FfiConverterTypeBigRational.write(value.value, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeNext_lift(_ buf: RustBuffer) throws -> Next {
+    return try FfiConverterTypeNext.lift(buf)
+}
+
+public func FfiConverterTypeNext_lower(_ value: Next) -> RustBuffer {
+    return FfiConverterTypeNext.lower(value)
 }
 
 
@@ -4498,12 +4550,14 @@ public func FfiConverterTypeProcessorVersion_lower(_ value: ProcessorVersion) ->
 
 
 public struct Reward {
-    public var current: Double
+    public var current: BigRational
+    public var next: Next?
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(current: Double) {
+    public init(current: BigRational, next: Next?) {
         self.current = current
+        self.next = next
     }
 }
 
@@ -4514,11 +4568,15 @@ extension Reward: Equatable, Hashable {
         if lhs.current != rhs.current {
             return false
         }
+        if lhs.next != rhs.next {
+            return false
+        }
         return true
     }
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(current)
+        hasher.combine(next)
     }
 }
 
@@ -4527,12 +4585,14 @@ public struct FfiConverterTypeReward: FfiConverterRustBuffer {
     public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Reward {
         return
             try Reward(
-                current: FfiConverterDouble.read(from: &buf)
+                current: FfiConverterTypeBigRational.read(from: &buf), 
+                next: FfiConverterOptionTypeNext.read(from: &buf)
         )
     }
 
     public static func write(_ value: Reward, into buf: inout [UInt8]) {
-        FfiConverterDouble.write(value.current, into: &buf)
+        FfiConverterTypeBigRational.write(value.current, into: &buf)
+        FfiConverterOptionTypeNext.write(value.next, into: &buf)
     }
 }
 
@@ -4660,6 +4720,63 @@ public func FfiConverterTypeSLA_lower(_ value: Sla) -> RustBuffer {
 }
 
 
+public struct SerBigRational {
+    public var numer: String
+    public var denom: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(numer: String, denom: String) {
+        self.numer = numer
+        self.denom = denom
+    }
+}
+
+
+
+extension SerBigRational: Equatable, Hashable {
+    public static func ==(lhs: SerBigRational, rhs: SerBigRational) -> Bool {
+        if lhs.numer != rhs.numer {
+            return false
+        }
+        if lhs.denom != rhs.denom {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(numer)
+        hasher.combine(denom)
+    }
+}
+
+
+public struct FfiConverterTypeSerBigRational: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SerBigRational {
+        return
+            try SerBigRational(
+                numer: FfiConverterString.read(from: &buf), 
+                denom: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SerBigRational, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.numer, into: &buf)
+        FfiConverterString.write(value.denom, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeSerBigRational_lift(_ buf: RustBuffer) throws -> SerBigRational {
+    return try FfiConverterTypeSerBigRational.lift(buf)
+}
+
+public func FfiConverterTypeSerBigRational_lower(_ value: SerBigRational) -> RustBuffer {
+    return FfiConverterTypeSerBigRational.lower(value)
+}
+
+
 public struct SubmitAttestationExtrinsic {
 
     // Default memberwise initializers are never public by default, so we
@@ -4697,6 +4814,71 @@ public func FfiConverterTypeSubmitAttestationExtrinsic_lift(_ buf: RustBuffer) t
 
 public func FfiConverterTypeSubmitAttestationExtrinsic_lower(_ value: SubmitAttestationExtrinsic) -> RustBuffer {
     return FfiConverterTypeSubmitAttestationExtrinsic.lower(value)
+}
+
+
+public struct Total {
+    public var epoch: UInt32
+    public var prev: BigRational
+    public var cur: BigRational
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(epoch: UInt32, prev: BigRational, cur: BigRational) {
+        self.epoch = epoch
+        self.prev = prev
+        self.cur = cur
+    }
+}
+
+
+
+extension Total: Equatable, Hashable {
+    public static func ==(lhs: Total, rhs: Total) -> Bool {
+        if lhs.epoch != rhs.epoch {
+            return false
+        }
+        if lhs.prev != rhs.prev {
+            return false
+        }
+        if lhs.cur != rhs.cur {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(epoch)
+        hasher.combine(prev)
+        hasher.combine(cur)
+    }
+}
+
+
+public struct FfiConverterTypeTotal: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Total {
+        return
+            try Total(
+                epoch: FfiConverterUInt32.read(from: &buf), 
+                prev: FfiConverterTypeBigRational.read(from: &buf), 
+                cur: FfiConverterTypeBigRational.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Total, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.epoch, into: &buf)
+        FfiConverterTypeBigRational.write(value.prev, into: &buf)
+        FfiConverterTypeBigRational.write(value.cur, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeTotal_lift(_ buf: RustBuffer) throws -> Total {
+    return try FfiConverterTypeTotal.lift(buf)
+}
+
+public func FfiConverterTypeTotal_lower(_ value: Total) -> RustBuffer {
+    return FfiConverterTypeTotal.lower(value)
 }
 
 
@@ -5792,6 +5974,27 @@ fileprivate struct FfiConverterOptionTypeMetricPool: FfiConverterRustBuffer {
     }
 }
 
+fileprivate struct FfiConverterOptionTypeNext: FfiConverterRustBuffer {
+    typealias SwiftType = Next?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeNext.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeNext.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionTypePalletUniquesItemDetails: FfiConverterRustBuffer {
     typealias SwiftType = PalletUniquesItemDetails?
 
@@ -6180,6 +6383,40 @@ fileprivate struct FfiConverterSequenceOptionTypeMetricPool: FfiConverterRustBuf
         return seq
     }
 }
+
+
+/**
+ * Typealias from the type name used in the UDL file to the builtin type.  This
+ * is needed because the UDL type name is used in function/method signatures.
+ */
+public typealias BigRational = SerBigRational
+public struct FfiConverterTypeBigRational: FfiConverter {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> BigRational {
+        return try FfiConverterTypeSerBigRational.read(from: &buf)
+    }
+
+    public static func write(_ value: BigRational, into buf: inout [UInt8]) {
+        return FfiConverterTypeSerBigRational.write(value, into: &buf)
+    }
+
+    public static func lift(_ value: RustBuffer) throws -> BigRational {
+        return try FfiConverterTypeSerBigRational.lift(value)
+    }
+
+    public static func lower(_ value: BigRational) -> RustBuffer {
+        return FfiConverterTypeSerBigRational.lower(value)
+    }
+}
+
+
+public func FfiConverterTypeBigRational_lift(_ value: RustBuffer) throws -> BigRational {
+    return try FfiConverterTypeBigRational.lift(value)
+}
+
+public func FfiConverterTypeBigRational_lower(_ value: BigRational) -> RustBuffer {
+    return FfiConverterTypeBigRational.lower(value)
+}
+
 
 
 /**
