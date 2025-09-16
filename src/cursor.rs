@@ -1,6 +1,6 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use num_bigint::{BigInt, BigUint};
-use num_rational::{BigRational, Rational64};
+use num_rational::BigRational;
 use num_traits::{FromPrimitive, Pow};
 use std::{
     error::Error,

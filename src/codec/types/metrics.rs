@@ -1,9 +1,7 @@
-use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
 use num_rational::BigRational;
-use num_traits::Pow;
 
-use crate::cursor::{read_bytes, read_fixed_u128, read_list, read_perquintill, read_u128, read_u32, read_u64, CursorExt};
+use crate::cursor::{read_bytes, read_fixed_u128, read_list, read_perquintill, read_u128, read_u32, CursorExt};
 use std::error::Error;
 use std::io::{Cursor, Read};
 

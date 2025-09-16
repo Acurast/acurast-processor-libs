@@ -44,43 +44,31 @@ fn setup_logger() {
         .init();
 }
 
-uniffi::custom_type!(BigUint, String);
-impl UniffiCustomTypeConverter for BigUint {
-    type Builtin = String;
-
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        Ok(BigUint::from_str(&val).unwrap())
-    }
-
-    fn from_custom(obj: Self) -> Self::Builtin {
-        obj.to_string()
-    }
-}
+uniffi::custom_type!(BigUint, String, {
+    remote,
+    lower: |i| i.to_string(),
+    try_lift: |s| Ok(BigUint::from_str(&s)?),
+});
 
 #[derive(uniffi::Record, Debug)]
-pub struct SerBigRational {
+pub struct StringBigRational {
     pub numer: String,
     pub denom: String,
 }
 
-uniffi::custom_type!(BigRational, SerBigRational);
-impl UniffiCustomTypeConverter for BigRational {
-    type Builtin = SerBigRational;
+uniffi::custom_type!(BigRational, StringBigRational, {
+    remote,
+    lower: |r| StringBigRational {
+        numer: r.numer().to_string(),
+        denom: r.denom().to_string(),
+    },
+    try_lift: |s| {
+        let numer = BigInt::from_str(&s.numer)?;
+        let denom = BigInt::from_str(&s.denom)?;
 
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        let numer = BigInt::from_str(&val.numer)?;
-        let denom = BigInt::from_str(&val.denom)?;
-
-        Ok(Self::new(numer, denom))
+        Ok(BigRational::new(numer, denom))
     }
-
-    fn from_custom(obj: Self) -> Self::Builtin {
-        Self::Builtin {
-            numer: obj.numer().to_string(),
-            denom: obj.denom().to_string(),
-        }
-    }
-}
+});
 
 #[uniffi::export]
 pub fn acurast_rpc(url: String) -> Arc<dyn AcurastRpc> {
