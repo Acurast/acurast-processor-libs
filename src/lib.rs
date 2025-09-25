@@ -39,9 +39,9 @@ pub type Result<T> = core::result::Result<T, AcurastError>;
 
 fn setup_logger() {
     std::env::set_var("RUST_LOG", "info");
-    env_logger::Builder::from_default_env()
+    let _ = env_logger::Builder::from_default_env()
         .target(env_logger::Target::Stdout)
-        .init();
+        .try_init();
 }
 
 uniffi::custom_type!(BigUint, String, {

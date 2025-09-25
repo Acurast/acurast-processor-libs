@@ -4,7 +4,7 @@ use crate::{
     codec::types::{
         acurast::{
             advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing}, attestation::Attestation, job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration
-        }, job_data::JobData, marketplace::job_assigment::JobAssignment, metrics::MetricPool, processor_overview::ProcessorOverview, uniques::pallet_uniques_item_details::PalletUniquesItemDetails
+        }, job_data::JobData, management_data::ManagementData, marketplace::job_assigment::JobAssignment, metrics::MetricPool, processor_overview::ProcessorOverview, uniques::pallet_uniques_item_details::PalletUniquesItemDetails
     },
     types::system::FrameSystemAccountInfo,
     xxhash::xxh128_unsigned,
@@ -182,14 +182,15 @@ impl AcurastStorage {
             .await
     }
 
-    async fn get_management_endpoint(
+    async fn get_management_data(
         &self,
         manager_id: i32,
+        manager_account_id: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Vec<u8>> {
+    ) -> Option<ManagementData> {
         self.storage
-            .get_management_endpoint(manager_id, block_hash, timeout)
+            .get_management_data(manager_id, manager_account_id, block_hash, timeout)
             .await
     }
 
