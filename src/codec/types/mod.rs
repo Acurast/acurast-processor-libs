@@ -7,3 +7,4 @@ pub mod uniques;
 pub mod metrics;
 pub mod processor_overview;
 pub mod job_data;
+pub mod management_data;

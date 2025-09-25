@@ -1103,7 +1103,7 @@ public protocol AcurastStorageProtocol: AnyObject, Sendable {
     
     func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
     
-    func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> Data?
+    func getManagementData(managerId: Int32, managerAccountId: Data?, blockHash: Data?, timeout: UInt64?) async  -> ManagementData?
     
     func getManagerCounter(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> UInt64?
     
@@ -1308,19 +1308,19 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
         )
 }
     
-open func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?)async  -> Data?  {
+open func getManagementData(managerId: Int32, managerAccountId: Data?, blockHash: Data?, timeout: UInt64?)async  -> ManagementData?  {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_acuraststorage_get_management_endpoint(
+                uniffi_acurastsdk_fn_method_acuraststorage_get_management_data(
                     self.uniffiClonePointer(),
-                    FfiConverterInt32.lower(managerId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                    FfiConverterInt32.lower(managerId),FfiConverterOptionData.lower(managerAccountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
             },
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionData.lift,
+            liftFunc: FfiConverterOptionTypeManagementData.lift,
             errorHandler: nil
             
         )
@@ -2129,7 +2129,7 @@ public protocol VxAcurastStorageProtocol: AnyObject, Sendable {
     
     func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [MetricPool?]
     
-    func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> Data?
+    func getManagementData(managerId: Int32, managerAccountId: Data?, blockHash: Data?, timeout: UInt64?) async  -> ManagementData?
     
     func getProcessorOverview(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> ProcessorOverview?
     
@@ -2436,19 +2436,19 @@ open func getMetricPools(ids: Data, blockHash: Data?, timeout: UInt64?)async thr
         )
 }
     
-open func getManagementEndpoint(managerId: Int32, blockHash: Data?, timeout: UInt64?)async  -> Data?  {
+open func getManagementData(managerId: Int32, managerAccountId: Data?, blockHash: Data?, timeout: UInt64?)async  -> ManagementData?  {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_acurastsdk_fn_method_vxacuraststorage_get_management_endpoint(
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_management_data(
                     self.uniffiClonePointer(),
-                    FfiConverterInt32.lower(managerId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                    FfiConverterInt32.lower(managerId),FfiConverterOptionData.lower(managerAccountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
                 )
             },
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionData.lift,
+            liftFunc: FfiConverterOptionTypeManagementData.lift,
             errorHandler: nil
             
         )
@@ -4293,6 +4293,76 @@ public func FfiConverterTypeKeyUsageProperties_lift(_ buf: RustBuffer) throws ->
 #endif
 public func FfiConverterTypeKeyUsageProperties_lower(_ value: KeyUsageProperties) -> RustBuffer {
     return FfiConverterTypeKeyUsageProperties.lower(value)
+}
+
+
+public struct ManagementData {
+    public var managementEndpoint: Data?
+    public var migrationProof: Data?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(managementEndpoint: Data?, migrationProof: Data?) {
+        self.managementEndpoint = managementEndpoint
+        self.migrationProof = migrationProof
+    }
+}
+
+#if compiler(>=6)
+extension ManagementData: Sendable {}
+#endif
+
+
+extension ManagementData: Equatable, Hashable {
+    public static func ==(lhs: ManagementData, rhs: ManagementData) -> Bool {
+        if lhs.managementEndpoint != rhs.managementEndpoint {
+            return false
+        }
+        if lhs.migrationProof != rhs.migrationProof {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(managementEndpoint)
+        hasher.combine(migrationProof)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeManagementData: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ManagementData {
+        return
+            try ManagementData(
+                managementEndpoint: FfiConverterOptionData.read(from: &buf), 
+                migrationProof: FfiConverterOptionData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ManagementData, into buf: inout [UInt8]) {
+        FfiConverterOptionData.write(value.managementEndpoint, into: &buf)
+        FfiConverterOptionData.write(value.migrationProof, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeManagementData_lift(_ buf: RustBuffer) throws -> ManagementData {
+    return try FfiConverterTypeManagementData.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeManagementData_lower(_ value: ManagementData) -> RustBuffer {
+    return FfiConverterTypeManagementData.lower(value)
 }
 
 
@@ -6836,6 +6906,30 @@ fileprivate struct FfiConverterOptionTypeJobRegistration: FfiConverterRustBuffer
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeManagementData: FfiConverterRustBuffer {
+    typealias SwiftType = ManagementData?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeManagementData.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeManagementData.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeMarketplaceAdvertisementRestriction: FfiConverterRustBuffer {
     typealias SwiftType = MarketplaceAdvertisementRestriction?
 
@@ -7610,7 +7704,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_registration() != 27665) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_management_endpoint() != 56801) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_management_data() != 12885) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_counter() != 4301) {
@@ -7691,7 +7785,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 26030) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_endpoint() != 14529) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_data() != 24490) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_processor_overview() != 18208) {

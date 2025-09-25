@@ -5,6 +5,7 @@ use crate::codec::types::acurast::job_environment::JobEnvironment;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::job_data::JobData;
+use crate::codec::types::management_data::ManagementData;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
 use crate::codec::types::metrics::MetricPool;
 use crate::codec::types::processor_overview::ProcessorOverview;
@@ -127,12 +128,13 @@ pub trait VXAcurastStorage: Send + Sync {
         timeout: Option<u64>,
     ) -> Result<Vec<Option<MetricPool>>>;
 
-    async fn get_management_endpoint(
+    async fn get_management_data(
         &self,
         manager_id: i32,
+        manager_account_id: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Vec<u8>>;
+    ) -> Option<ManagementData>;
 
     async fn get_processor_overview(
         &self,
@@ -422,7 +424,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         let ba = hex_to_ba(&storage);
         let mut cursor = Cursor::new(ba);
         return Some(MarketplacePricing::read(&mut cursor).unwrap());
-    }   
+    }
 
     async fn get_marketplace_advertisement_restriction(
         &self,
@@ -442,7 +444,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         let ba = hex_to_ba(&storage);
         let mut cursor = Cursor::new(ba);
         return Some(MarketplaceAdvertisementRestriction::read(&mut cursor).unwrap());
-    } 
+    }
 
     async fn get_metric_pool_ids(
         &self,
@@ -537,25 +539,44 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         Ok(metrics)
     }
 
-    async fn get_management_endpoint(
+    async fn get_management_data(
         &self,
         manager_id: i32,
+        manager_account_id: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Vec<u8>> {
-        let key = acurast_processor_manager_management_endpoint(manager_id);
-        let Ok(Some(storage)) = self
+    ) -> Option<ManagementData> {
+        let management_endpoint_key = acurast_processor_manager_management_endpoint(manager_id);
+        let migration_data_key = manager_account_id.map(|account_id| acurast_processor_manager_processor_migration_data(&account_id));
+
+        let mut keys = vec![
+            hex::encode(management_endpoint_key),
+        ];
+        if let Some(migration_data_key) = migration_data_key {
+            keys.push(hex::encode(migration_data_key));
+        }
+
+        let Ok(storage) = self
             .state
-            .get_storage(&key, block_hash, timeout, &self.engine)
+            .get_storage_at(keys, block_hash, timeout, &self.engine)
             .await
         else {
             return None;
         };
 
-        let bytes = hex_to_ba(&storage);
-        let mut cursor = Cursor::new(bytes);
+        let changes = storage.first().map(|r| &r.changes)?;
 
-        return read_byte_array(&mut cursor).ok();
+        let management_endpoint = read_changes_opt(changes, 0, |bytes| {
+            read_byte_array(&mut Cursor::new(bytes)).ok()
+        });
+        let migration_data = read_changes_opt(changes, 1, |bytes| {
+            bytes
+        });
+
+        return Some(ManagementData {
+            management_endpoint: management_endpoint.unwrap_or(None),
+            migration_proof: migration_data,
+        })
     }
 
     async fn get_processor_overview(
@@ -703,6 +724,14 @@ fn acurast_processor_manager_processor_heartbeat(account_id: &[u8]) -> Vec<u8> {
     let mut key = Vec::new();
     key.extend_with_storage_prefix(PALLET_ACURAST_PROCESSOR_MANAGER, "ProcessorHeartbeat");
     key.extend_with_blake2_128(account_id);
+
+    key
+}
+
+fn acurast_processor_manager_processor_migration_data(account_id: &[u8]) -> Vec<u8> {
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix(PALLET_ACURAST_PROCESSOR_MANAGER, "ProcessorMigrationData");
+    key.extend_with_blake2_128concat(account_id);
 
     key
 }
@@ -895,6 +924,18 @@ mod tests {
         assert_eq!(
             key,
             hex_to_ba("0xc698b31ad72d251a494de23e0dd6684690ede7a772410f47186f66100c0bf9ecde1e86a9a8c739864cf3cc5ec2bea59f")
+        )
+    }
+
+    #[test]
+    fn test_acurast_processor_manager_processor_migration_data() {
+        let key = acurast_processor_manager_processor_migration_data(&hex_to_ba(
+            "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        ));
+
+        assert_eq!(
+            key,
+            hex_to_ba("0xc698b31ad72d251a494de23e0dd66846c47b168bf86f71f46d2cc03079ff1ae4de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
         )
     }
 
