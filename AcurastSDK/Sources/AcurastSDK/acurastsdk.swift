@@ -569,7 +569,7 @@ public protocol AcurastRpcProtocol: AnyObject, Sendable {
     
     func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
-    func getApiVersion(blockHash: Data?, timeout: UInt64?) async  -> UInt32
+    func getApiVersion(blockHash: Data?, timeout: UInt64?) async throws  -> UInt32
     
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async throws  -> RuntimeVersion
     
@@ -670,9 +670,9 @@ open func getHeader(blockHash: Data?, timeout: UInt64?)async throws  -> Header  
         )
 }
     
-open func getApiVersion(blockHash: Data?, timeout: UInt64?)async  -> UInt32  {
+open func getApiVersion(blockHash: Data?, timeout: UInt64?)async throws  -> UInt32  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpc_get_api_version(
                     self.uniffiClonePointer(),
@@ -683,8 +683,7 @@ open func getApiVersion(blockHash: Data?, timeout: UInt64?)async  -> UInt32  {
             completeFunc: ffi_acurastsdk_rust_future_complete_u32,
             freeFunc: ffi_acurastsdk_rust_future_free_u32,
             liftFunc: FfiConverterUInt32.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -851,7 +850,7 @@ public protocol AcurastRpcClientProtocol: AnyObject, Sendable {
     
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async throws  -> RuntimeVersion
     
-    func getStorageVersion(blockHash: Data?, timeout: UInt64?) async  -> UInt32
+    func getStorageVersion(blockHash: Data?, timeout: UInt64?) async throws  -> UInt32
     
     func storage(version: UInt32)  -> AcurastStorage
     
@@ -986,9 +985,9 @@ open func getRuntimeVersion(blockHash: Data?, timeout: UInt64?)async throws  -> 
         )
 }
     
-open func getStorageVersion(blockHash: Data?, timeout: UInt64?)async  -> UInt32  {
+open func getStorageVersion(blockHash: Data?, timeout: UInt64?)async throws  -> UInt32  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acurastrpcclient_get_storage_version(
                     self.uniffiClonePointer(),
@@ -999,8 +998,7 @@ open func getStorageVersion(blockHash: Data?, timeout: UInt64?)async  -> UInt32 
             completeFunc: ffi_acurastsdk_rust_future_complete_u32,
             freeFunc: ffi_acurastsdk_rust_future_free_u32,
             liftFunc: FfiConverterUInt32.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -7641,7 +7639,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 3278) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 17701) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 19281) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 22921) {
@@ -7674,7 +7672,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_runtime_version() != 29312) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_storage_version() != 7929) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_storage_version() != 36116) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_storage() != 52623) {
