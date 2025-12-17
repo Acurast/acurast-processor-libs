@@ -145,7 +145,7 @@ impl AcurastRpcClient {
         &self,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> u32 {
+    ) -> Result<u32> {
         self.acurastrpc.get_api_version(block_hash, timeout).await
     }
 }

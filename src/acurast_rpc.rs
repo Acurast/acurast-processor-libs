@@ -29,7 +29,7 @@ pub trait AcurastRpc: Send + Sync {
     ) -> Result<Option<String>>;
     async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>)
         -> Result<Header>;
-    async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32;
+    async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Result<u32>;
     async fn get_runtime_version(
         &self,
         block_hash: Option<Vec<u8>>,
@@ -121,25 +121,23 @@ impl AcurastRpc for AcurastRpcImpl {
             .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
     }
 
-    async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> u32 {
+    async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Result<u32> {
         let key = acurast_processor_manager_api_version();
-        match self
+        self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
-        {
-            Ok(storage_option) => {
+            .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
+            .and_then(|storage_option| {
                 log::debug!("get_api_version {:?}", storage_option);
-                if let Some(storage) = storage_option {
-                    let decoded_storage = hex_to_ba(&storage);
-                    let mut cursor = std::io::Cursor::new(decoded_storage);
-                    cursor.read_u32::<LittleEndian>().unwrap_or(0)
-                } else {
-                    0
-                }
-            }
-            Err(_) => 0,
-        }
+                let Some(storage) = storage_option else {
+                    return Ok(0);
+                };
+
+                let storage = hex_to_ba(&storage);
+                let mut cursor = std::io::Cursor::new(storage);
+                cursor.read_u32::<LittleEndian>().map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
+            })
     }
 
     async fn get_runtime_version(
