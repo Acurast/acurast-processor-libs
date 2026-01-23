@@ -34,7 +34,7 @@ pub trait VXAcurastStorage: Send + Sync {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<i32>;
+    ) -> Result<Option<i32>>;
 
     async fn get_manager_counter(
         &self,
@@ -134,7 +134,7 @@ pub trait VXAcurastStorage: Send + Sync {
         manager_account_id: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<ManagementData>;
+    ) -> Result<Option<ManagementData>>;
 
     async fn get_processor_overview(
         &self,
@@ -167,19 +167,20 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<i32> {
+    ) -> Result<Option<i32>> {
         let key = acurast_processor_manager_processor_to_manager_id_index(account_id);
-        if let Ok(Some(storage)) = self
+        if let Some(storage) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
+            .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))?
         {
             let ba = hex_to_ba(&storage);
             let value_u128 = read_u128(&ba);
             let value_i32 = value_u128 as i32;
-            return Some(value_i32);
+            return Ok(Some(value_i32));
         }
-        None
+        Ok(None)
     }
 
     async fn get_manager_counter(
@@ -545,7 +546,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         manager_account_id: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<ManagementData> {
+    ) -> Result<Option<ManagementData>> {
         let management_endpoint_key = acurast_processor_manager_management_endpoint(manager_id);
         let migration_data_key = manager_account_id.map(|account_id| acurast_processor_manager_processor_migration_data(&account_id));
 
@@ -556,15 +557,15 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             keys.push(hex::encode(migration_data_key));
         }
 
-        let Ok(storage) = self
+        let storage = self
             .state
             .get_storage_at(keys, block_hash, timeout, &self.engine)
             .await
-        else {
-            return None;
-        };
+            .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))?;
 
-        let changes = storage.first().map(|r| &r.changes)?;
+        let Some(changes) = storage.first().map(|r| &r.changes) else {
+            return Ok(None);
+        };
 
         let management_endpoint = read_changes_opt(changes, 0, |bytes| {
             read_byte_array(&mut Cursor::new(bytes)).ok()
@@ -573,10 +574,10 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             bytes
         });
 
-        return Some(ManagementData {
+        return Ok(Some(ManagementData {
             management_endpoint: management_endpoint.unwrap_or(None),
             migration_proof: migration_data,
-        })
+        }))
     }
 
     async fn get_processor_overview(

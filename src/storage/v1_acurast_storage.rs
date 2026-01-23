@@ -36,7 +36,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<i32> {
+    ) -> Result<Option<i32>> {
         self.base
             .get_manager_identifier(account_id, block_hash, timeout)
             .await
@@ -186,7 +186,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         manager_account_id: Option<Vec<u8>>,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<ManagementData> {
+    ) -> Result<Option<ManagementData>> {
         self.base
             .get_management_data(manager_id, manager_account_id, block_hash, timeout)
             .await
