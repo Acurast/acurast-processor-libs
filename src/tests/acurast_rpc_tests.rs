@@ -37,7 +37,7 @@ async fn test_get_runtime_version() {
 
 #[tokio::test]
 async fn test_get_api_version() {
-    let res = AC_RPC.get_api_version(None, None).await;
+    let res = AC_RPC.get_api_version(None, None).await.unwrap();
     println!("test_get_api_version {}", res);
     assert!(res != 0)
 }
@@ -79,7 +79,7 @@ async fn test_get_storage() {
     let byte_slice: &[u8] = &decoded_bytes;
     let identifier = storage.get_manager_identifier(byte_slice, None, None).await;
     match identifier {
-        Some(r) => {
+        Ok(Some(r)) => {
             println!("identifier! {}", r);
 
             match storage.get_asset(r, None, None).await {
@@ -95,7 +95,7 @@ async fn test_get_storage() {
                 }
             }
         }
-        None => {
+        _ => {
             panic!();
         }
     }
