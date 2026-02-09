@@ -27,6 +27,8 @@ use async_trait::async_trait;
 use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
 use num_traits::{ConstZero, One, Zero};
+use serde_json::de;
+use uniffi::deps::bytes::Buf;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::Cursor;
@@ -259,120 +261,11 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Result<Option<AccountOverview>> {
-        // TODO: refactor
-        let committer_id_partial_key = uniques_account(account_id, BigUint::one());
-        let committer_id_keys = self
-            .state
-            .get_keys(&committer_id_partial_key, block_hash.clone(), timeout, &self.engine)
-            .await
-            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-        let committer_id = committer_id_keys
-            .first()
-            .map(|key| {
-                let mut cursor = Cursor::new(hex_to_ba(key));
-                cursor.set_position((committer_id_partial_key.len() + 16).try_into()?);
-                crate::cursor::read_u128(&mut cursor)
-            })
-            .transpose()
-            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-
-        let delegation_partial_key = acurast_compute_delegations(account_id, None);
-        let delegation_keys = self
-            .state
-            .get_keys(&delegation_partial_key, block_hash.clone(), timeout, &self.engine)
-            .await
-            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-        let system_account_key = system_account(account_id);
-        let vesting_key = vesting_vesting(account_id);
-        let token_conversion_key = acurast_token_conversion_locked_conversion(account_id);
-        let keys = vec![
-            vec![
-                hex::encode(system_account_key),
-                hex::encode(vesting_key),
-                hex::encode(token_conversion_key),
-            ],
-            delegation_keys,
-        ].concat();
-
-        let storage = self
-            .state
-            .get_storage_at(keys, block_hash.clone(), timeout, &self.engine)
-            .await
-            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-        let Some(changes) = storage.first().map(|r| &r.changes) else {
+        let committer_id = self.get_committer_id(account_id, block_hash.clone(), timeout).await?;
+        let Some((account_info, vesting, token_conversion, delegations)) = self.get_partial_account_overview(account_id, block_hash.clone(), timeout).await? else {
             return Ok(None);
         };
-        let Some(account_info) = read_changes_opt(changes, 0, |bytes| {
-            AccountInfo::read_account_info(&bytes)
-        }) else {
-            return Ok(None);
-        };
-        let vesting = read_changes_opt(changes, 1, |bytes| {
-            let mut cursor = Cursor::new(bytes);
-            read_list(&mut cursor, |c| Vesting::read(c))
-        }).transpose().map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-        let token_conversion = read_changes_opt(changes, 2, |bytes| {
-            TokenConversion::read(&mut Cursor::new(bytes))
-        }).transpose().map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-        let mut delegations: Vec<(BigUint, Delegation)> = vec![];
-        for change in changes[3..].iter() {
-            let committer_id = if let Some(Some(key)) = change.get(0) {
-                let mut cursor = Cursor::new(hex_to_ba(key));
-                cursor.set_position(cursor.position() - 16);
-                let committer_id = crate::cursor::read_u128(&mut cursor).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-                Some(committer_id)
-            } else {
-                None
-            };
-            let delegation = if let Some(Some(value)) = change.get(1) {
-                let delegation = Delegation::read(&mut Cursor::new(hex_to_ba(value))).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-                Some(delegation)
-            } else {
-                None
-            };
-
-            if let (Some(committer_id), Some(delegation)) = (committer_id, delegation) {
-                delegations.push((committer_id, delegation));
-            }
-        }
-
-        let mut keys = vec![];
-        if let Some(committer_id) = &committer_id {
-            keys.push(hex::encode(acurast_compute_commitments(committer_id)));
-        }
-        for delegation in delegations.iter() {
-            keys.push(hex::encode(acurast_compute_commitments(&delegation.0)));
-        }
-
-        let storage = self
-            .state
-            .get_storage_at(keys, block_hash.clone(), timeout, &self.engine)
-            .await
-            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-
-        let mut commitments: HashMap<BigUint, Commitment> = HashMap::new();
-        if let Some(changes) = storage.first().map(|r| &r.changes) {
-            for change in changes {
-                let committer_id = if let Some(Some(key)) = change.get(0) {
-                    let mut cursor = Cursor::new(hex_to_ba(key));
-                    cursor.set_position(cursor.position() - 16);
-                    let committer_id = crate::cursor::read_u128(&mut cursor).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-                    Some(committer_id)
-                } else {
-                    None
-                };
-                let commitment = if let Some(Some(value)) = change.get(1) {
-                    let commitment = Commitment::read(&mut Cursor::new(hex_to_ba(value))).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
-                    Some(commitment)
-                } else {
-                    None
-                };
-
-                if let (Some(committer_id), Some(commitment)) = (committer_id, commitment) {
-                    commitments.insert(committer_id, commitment);
-                }
-            }
-        }
+        let mut commitments: HashMap<BigUint, Commitment> = self.get_commitments(&committer_id, &delegations, block_hash, timeout).await?;
         let commitment = committer_id.map(|id| commitments.remove(&id)).flatten();
         let delegations: Vec<DelegationWithCommitment> = delegations
             .into_iter()
@@ -392,7 +285,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             account_info,
             commitment,
             delegations,
-            vesting: vesting.unwrap_or_default(),
+            vesting,
             conversion: token_conversion,
         }))
     }
@@ -777,6 +670,157 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             last_heartbeat_timestamp,
         })
     }
+}
+
+type PartialAccountOverview = (AccountInfo, Vec<Vesting>, Option<TokenConversion>, Vec<(BigUint, Delegation)>);
+
+impl V0AcurastStorageImpl {
+    async fn get_committer_id(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Option<BigUint>> {
+        let committer_id_partial_key = uniques_account(account_id, BigUint::one());
+        let committer_id_keys = self
+            .state
+            .get_keys(&committer_id_partial_key, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let committer_id = committer_id_keys
+            .first()
+            .map(|key| {
+                let mut cursor = Cursor::new(hex_to_ba(key));
+                cursor.set_position((committer_id_partial_key.len() + 16 /* blake2_128(u128).size */).try_into()?);
+                crate::cursor::read_u128(&mut cursor)
+            })
+            .transpose()
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+
+        Ok(committer_id)
+    }
+
+    async fn get_partial_account_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Option<PartialAccountOverview>> {
+        let delegation_partial_key = acurast_compute_delegations(account_id, None);
+        let delegation_keys = self
+            .state
+            .get_keys(&delegation_partial_key, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let system_account_key = system_account(account_id);
+        let vesting_key = vesting_vesting(account_id);
+        let token_conversion_key = acurast_token_conversion_locked_conversion(account_id);
+        let keys = vec![
+            vec![
+                hex::encode(system_account_key),
+                hex::encode(vesting_key),
+                hex::encode(token_conversion_key),
+            ],
+            delegation_keys,
+        ].concat();
+
+        let storage = self
+            .state
+            .get_storage_at(keys, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let Some(changes) = storage.first().map(|r| &r.changes) else {
+            return Ok(None);
+        };
+        let Some(account_info) = read_changes_opt(changes, 0, |bytes| {
+            AccountInfo::read_account_info(&bytes)
+        }) else {
+            return Ok(None);
+        };
+        let vesting = read_changes_opt(changes, 1, |bytes| {
+            let mut cursor = Cursor::new(bytes);
+            read_list(&mut cursor, |c| Vesting::read(c))
+        }).transpose().map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let token_conversion = read_changes_opt(changes, 2, |bytes| {
+            TokenConversion::read(&mut Cursor::new(bytes))
+        }).transpose().map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let mut delegations: Vec<(BigUint, Delegation)> = vec![];
+        for change in changes[3..].iter() {
+            let committer_id = if let Some(Some(key)) = change.get(0) {
+                let committer_id = read_committer_id_from_key(key)?;
+                Some(committer_id)
+            } else {
+                None
+            };
+            let delegation = if let Some(Some(value)) = change.get(1) {
+                let delegation = Delegation::read(&mut Cursor::new(hex_to_ba(value))).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+                Some(delegation)
+            } else {
+                None
+            };
+
+            if let (Some(committer_id), Some(delegation)) = (committer_id, delegation) {
+                delegations.push((committer_id, delegation));
+            }
+        }
+
+        Ok(Some((account_info, vesting.unwrap_or_default(), token_conversion, delegations)))
+    }
+
+    async fn get_commitments(
+        &self,
+        committer_id: &Option<BigUint>,
+        delegations: &Vec<(BigUint, Delegation)>,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<HashMap<BigUint, Commitment>> {
+        let mut keys = vec![];
+        if let Some(committer_id) = committer_id {
+            keys.push(hex::encode(acurast_compute_commitments(committer_id)));
+        }
+        for delegation in delegations.iter() {
+            keys.push(hex::encode(acurast_compute_commitments(&delegation.0)));
+        }
+
+        let storage = self
+            .state
+            .get_storage_at(keys, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+
+        let mut commitments: HashMap<BigUint, Commitment> = HashMap::new();
+        if let Some(changes) = storage.first().map(|r| &r.changes) {
+            for change in changes {
+                let committer_id = if let Some(Some(key)) = change.get(0) {
+                    let committer_id = read_committer_id_from_key(key)?;
+                    Some(committer_id)
+                } else {
+                    None
+                };
+                let commitment = if let Some(Some(value)) = change.get(1) {
+                    let commitment = Commitment::read(&mut Cursor::new(hex_to_ba(value))).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+                    Some(commitment)
+                } else {
+                    None
+                };
+
+                if let (Some(committer_id), Some(commitment)) = (committer_id, commitment) {
+                    commitments.insert(committer_id, commitment);
+                }
+            }
+        }
+
+        Ok(commitments)
+    }
+}
+
+fn read_committer_id_from_key(key: &str) -> Result<BigUint> {
+    let mut cursor = Cursor::new(hex_to_ba(key));
+    let new_position: u64 = (cursor.remaining() - 16).try_into().map_err(|_| AcurastError::RuntimeError(String::from("Failed to convert remaining bytes to u64")))?;
+    cursor.set_position(new_position);
+    let committer_id = crate::cursor::read_u128(&mut cursor).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+
+    Ok(committer_id)
 }
 
 const PALLET_ACURAST: &str = "Acurast";

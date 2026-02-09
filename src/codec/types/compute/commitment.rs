@@ -68,12 +68,12 @@ impl CommitmentWeights {
 }
 
 #[derive(uniffi::Record, Debug, PartialEq)]
-pub struct PoolRewards {
+pub struct PoolReward {
     pub reward_per_weight: BigUint,
     pub slash_per_weight: BigUint,
 }
 
-impl PoolRewards {
+impl PoolReward {
     pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
         let reward_per_weight = read_u256(cursor)?;
         let slash_per_weight = read_u256(cursor)?;
@@ -160,25 +160,25 @@ impl MemoryBuffer for WeightsMemoryBuffer {
 #[derive(uniffi::Record, Debug, PartialEq)]
 pub struct PoolRewardsMemoryBufferItem {
     pub timestamp: u32,
-    pub pool_rewards: PoolRewards,
+    pub pool_reward: PoolReward,
 }
 
 impl MemoryBufferItem for PoolRewardsMemoryBufferItem {
     type K = u32;
-    type V = PoolRewards;
+    type V = PoolReward;
 
     fn read_key(cursor: &mut Cursor<Vec<u8>>) -> Result<Self::K, Box<dyn Error>> {
         read_u32(cursor)
     }
 
     fn read_value(cursor: &mut Cursor<Vec<u8>>) -> Result<Self::V, Box<dyn Error>> {
-        PoolRewards::read(cursor)
+        PoolReward::read(cursor)
     }
 
-    fn new(key: u32, value: PoolRewards) -> Self {
+    fn new(key: u32, value: PoolReward) -> Self {
         Self {
             timestamp: key,
-            pool_rewards: value,
+            pool_reward: value,
         }
     }
 }
@@ -258,14 +258,14 @@ mod test {
                 pool_rewards: PoolRewardsMemoryBuffer {
                     past: Some(PoolRewardsMemoryBufferItem {
                         timestamp: 8_007_020,
-                        pool_rewards: PoolRewards {
+                        pool_reward: PoolReward {
                             reward_per_weight: BigUint::from_str("44225546750470760874800753107").unwrap(),
                             slash_per_weight: BigUint::from_str("48363182510477381092016763796").unwrap(),
                         }
                     }),
                     current: PoolRewardsMemoryBufferItem {
                         timestamp: 8_825_257,
-                        pool_rewards: PoolRewards {
+                        pool_reward: PoolReward {
                             reward_per_weight: BigUint::from_str("4710507173966174342242570459").unwrap(),
                             slash_per_weight: BigUint::from_str("0").unwrap(),
                         }
@@ -322,14 +322,14 @@ mod test {
                 pool_rewards: PoolRewardsMemoryBuffer {
                     past: Some(PoolRewardsMemoryBufferItem {
                         timestamp: 7_913_498,
-                        pool_rewards: PoolRewards {
+                        pool_reward: PoolReward {
                             reward_per_weight: BigUint::from_str("337295120307119722458126745900").unwrap(),
                             slash_per_weight: BigUint::from_str("721463726967900162020561135").unwrap(),
                         }
                     }),
                     current: PoolRewardsMemoryBufferItem {
                         timestamp: 8_552_761,
-                        pool_rewards: PoolRewards {
+                        pool_reward: PoolReward {
                             reward_per_weight: BigUint::from_str("58595555713057311284724036556").unwrap(),
                             slash_per_weight: BigUint::from_str("0").unwrap(),
                         }
