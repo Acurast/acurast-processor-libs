@@ -1,10 +1,14 @@
 pub mod account_id;
+pub mod account_info;
+pub mod account_overview;
 pub mod acurast;
+pub mod compute;
 pub mod extrinsic;
 pub mod marketplace;
 pub mod submit_attestation;
-pub mod uniques;
-pub mod metrics;
 pub mod processor_overview;
 pub mod job_data;
 pub mod management_data;
+pub mod token_conversion;
+pub mod uniques;
+pub mod vesting;

@@ -1,27 +1,34 @@
 use crate::big_uint::BigIntToInt;
+use crate::codec::types::account_overview::{AccountOverview, DelegationWithCommitment};
 use crate::codec::types::acurast::advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing};
 use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::job_environment::JobEnvironment;
 use crate::codec::types::acurast::job_identifier::JobIdentifier;
 use crate::codec::types::acurast::job_registration::JobRegistration;
+use crate::codec::types::compute::commitment::Commitment;
+use crate::codec::types::compute::delegation::Delegation;
+use crate::codec::types::compute::metrics::MetricPool;
+use crate::codec::types::account_info::AccountInfo;
 use crate::codec::types::job_data::JobData;
 use crate::codec::types::management_data::ManagementData;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
-use crate::codec::types::metrics::MetricPool;
 use crate::codec::types::processor_overview::ProcessorOverview;
+use crate::codec::types::token_conversion::token_conversion::{self, TokenConversion};
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
-use crate::cursor::{read_byte_array, read_changes_opt};
+use crate::codec::types::vesting::vesting::Vesting;
+use crate::cursor::{read_byte_array, read_changes_opt, read_list};
 use crate::engine::pallet::state::State;
 use crate::hex::{hex_to_ba, read_u128, read_u64, ToHex};
 use crate::storage::acurast_storage::StorageKey;
-use crate::types::system::FrameSystemAccountInfo;
 use crate::u8a::biguint_to_u8a;
 use crate::RpcEngine;
 use crate::{AcurastError, Result};
 use async_trait::async_trait;
 use byteorder::ReadBytesExt;
 use num_bigint::BigUint;
-use num_traits::Zero;
+use num_traits::{ConstZero, One, Zero};
+use std::collections::HashMap;
+use std::error::Error;
 use std::io::Cursor;
 use std::sync::Arc;
 use std::vec;
@@ -55,7 +62,14 @@ pub trait VXAcurastStorage: Send + Sync {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> FrameSystemAccountInfo;
+    ) -> AccountInfo;
+
+    async fn get_account_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Option<AccountOverview>>;
 
     async fn get_assigned_jobs(
         &self,
@@ -226,7 +240,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> FrameSystemAccountInfo {
+    ) -> AccountInfo {
         let key = system_account(account_id);
         if let Ok(Some(storage)) = self
             .state
@@ -234,9 +248,153 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             .await
         {
             let ba = hex_to_ba(&storage);
-            return FrameSystemAccountInfo::read_account_info(ba.as_slice());
+            return AccountInfo::read_account_info(ba.as_slice());
         }
-        FrameSystemAccountInfo::empty()
+        AccountInfo::empty()
+    }
+
+    async fn get_account_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Option<AccountOverview>> {
+        // TODO: refactor
+        let committer_id_partial_key = uniques_account(account_id, BigUint::one());
+        let committer_id_keys = self
+            .state
+            .get_keys(&committer_id_partial_key, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let committer_id = committer_id_keys
+            .first()
+            .map(|key| {
+                let mut cursor = Cursor::new(hex_to_ba(key));
+                cursor.set_position((committer_id_partial_key.len() + 16).try_into()?);
+                crate::cursor::read_u128(&mut cursor)
+            })
+            .transpose()
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+
+        let delegation_partial_key = acurast_compute_delegations(account_id, None);
+        let delegation_keys = self
+            .state
+            .get_keys(&delegation_partial_key, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let system_account_key = system_account(account_id);
+        let vesting_key = vesting_vesting(account_id);
+        let token_conversion_key = acurast_token_conversion_locked_conversion(account_id);
+        let keys = vec![
+            vec![
+                hex::encode(system_account_key),
+                hex::encode(vesting_key),
+                hex::encode(token_conversion_key),
+            ],
+            delegation_keys,
+        ].concat();
+
+        let storage = self
+            .state
+            .get_storage_at(keys, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let Some(changes) = storage.first().map(|r| &r.changes) else {
+            return Ok(None);
+        };
+        let Some(account_info) = read_changes_opt(changes, 0, |bytes| {
+            AccountInfo::read_account_info(&bytes)
+        }) else {
+            return Ok(None);
+        };
+        let vesting = read_changes_opt(changes, 1, |bytes| {
+            let mut cursor = Cursor::new(bytes);
+            read_list(&mut cursor, |c| Vesting::read(c))
+        }).transpose().map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let token_conversion = read_changes_opt(changes, 2, |bytes| {
+            TokenConversion::read(&mut Cursor::new(bytes))
+        }).transpose().map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+        let mut delegations: Vec<(BigUint, Delegation)> = vec![];
+        for change in changes[3..].iter() {
+            let committer_id = if let Some(Some(key)) = change.get(0) {
+                let mut cursor = Cursor::new(hex_to_ba(key));
+                cursor.set_position(cursor.position() - 16);
+                let committer_id = crate::cursor::read_u128(&mut cursor).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+                Some(committer_id)
+            } else {
+                None
+            };
+            let delegation = if let Some(Some(value)) = change.get(1) {
+                let delegation = Delegation::read(&mut Cursor::new(hex_to_ba(value))).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+                Some(delegation)
+            } else {
+                None
+            };
+
+            if let (Some(committer_id), Some(delegation)) = (committer_id, delegation) {
+                delegations.push((committer_id, delegation));
+            }
+        }
+
+        let mut keys = vec![];
+        if let Some(committer_id) = &committer_id {
+            keys.push(hex::encode(acurast_compute_commitments(committer_id)));
+        }
+        for delegation in delegations.iter() {
+            keys.push(hex::encode(acurast_compute_commitments(&delegation.0)));
+        }
+
+        let storage = self
+            .state
+            .get_storage_at(keys, block_hash.clone(), timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+
+        let mut commitments: HashMap<BigUint, Commitment> = HashMap::new();
+        if let Some(changes) = storage.first().map(|r| &r.changes) {
+            for change in changes {
+                let committer_id = if let Some(Some(key)) = change.get(0) {
+                    let mut cursor = Cursor::new(hex_to_ba(key));
+                    cursor.set_position(cursor.position() - 16);
+                    let committer_id = crate::cursor::read_u128(&mut cursor).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+                    Some(committer_id)
+                } else {
+                    None
+                };
+                let commitment = if let Some(Some(value)) = change.get(1) {
+                    let commitment = Commitment::read(&mut Cursor::new(hex_to_ba(value))).map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
+                    Some(commitment)
+                } else {
+                    None
+                };
+
+                if let (Some(committer_id), Some(commitment)) = (committer_id, commitment) {
+                    commitments.insert(committer_id, commitment);
+                }
+            }
+        }
+        let commitment = committer_id.map(|id| commitments.remove(&id)).flatten();
+        let delegations: Vec<DelegationWithCommitment> = delegations
+            .into_iter()
+            .filter_map(|(committer_id, delegation)| {
+                let Some(commitment) = commitments.remove(&committer_id) else {
+                    return None;
+                };
+
+                Some(DelegationWithCommitment {
+                    delegation,
+                    commitment
+                })
+            })
+            .collect();
+
+        Ok(Some(AccountOverview {
+            account_info,
+            commitment,
+            delegations,
+            vesting: vesting.unwrap_or_default(),
+            conversion: token_conversion,
+        }))
     }
 
     async fn get_assigned_jobs(
@@ -625,8 +783,10 @@ const PALLET_ACURAST: &str = "Acurast";
 const PALLET_ACURAST_MARKETPLACE: &str = "AcurastMarketplace";
 const PALLET_ACURAST_PROCESSOR_MANAGER: &str = "AcurastProcessorManager";
 const PALLET_ACURAST_COMPUTE: &str = "AcurastCompute";
+const PALLET_ACURAST_TOKEN_CONVERSION: &str = "AcurastTokenConversion";
 const PALLET_SYSTEM: &str = "System";
 const PALLET_UNIQUES: &str = "Uniques";
+const PALLET_VESTING: &str = "Vesting";
 
 fn acurast_stored_job_registration(job_identifier: &JobIdentifier) -> Vec<u8> {
     let origin = job_identifier.origin.to_u8a();
@@ -737,6 +897,28 @@ fn acurast_processor_manager_processor_migration_data(account_id: &[u8]) -> Vec<
     key
 }
 
+fn acurast_compute_commitments(committer_id: &BigUint) -> Vec<u8> {
+    let committer_id = &biguint_to_u8a(committer_id);
+
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix(PALLET_ACURAST_COMPUTE, "Commitments");
+    key.extend_from_slice(committer_id);
+
+    key
+}
+
+fn acurast_compute_delegations(account_id: &[u8], committer_id: Option<&BigUint>) -> Vec<u8> {
+    let mut key = Vec::new();
+    key.extend_with_storage_prefix(PALLET_ACURAST_COMPUTE, "Delegations");
+    key.extend_with_xxh64concat(account_id);
+    if let Some(committer_id) = committer_id {
+        let committer_id = &biguint_to_u8a(committer_id);
+        key.extend_from_slice(committer_id);
+    }
+
+    key
+}
+
 fn acurast_compute_metric_pool_lookup() -> Vec<u8> {
     let mut key: Vec<u8> = Vec::new();
     key.extend_with_storage_prefix(PALLET_ACURAST_COMPUTE, "MetricPoolLookup");
@@ -759,13 +941,38 @@ fn system_account(account_id: &[u8]) -> Vec<u8> {
     key
 }
 
-fn uniques_asset(manager_id: i32) -> Vec<u8> {
-    let manager_id = &biguint_to_u8a(&BigUint::from(manager_id as u32));
+fn uniques_asset(account_id: i32) -> Vec<u8> {
+    let manager_id = &biguint_to_u8a(&BigUint::from(account_id as u32));
     let collection_id = &biguint_to_u8a(&BigUint::zero());
     let mut key: Vec<u8> = Vec::new();
     key.extend_with_storage_prefix(PALLET_UNIQUES, "Asset");
     key.extend_with_blake2_128concat(collection_id);
     key.extend_with_blake2_128concat(manager_id);
+
+    key
+}
+
+fn uniques_account(account_id: &[u8], collection_id: BigUint) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix(PALLET_UNIQUES, "Account");
+    key.extend_with_blake2_128concat(account_id);
+    key.extend_with_blake2_128concat(&biguint_to_u8a(&collection_id));
+
+    key
+}
+
+fn acurast_token_conversion_locked_conversion(account_id: &[u8]) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix(PALLET_ACURAST_TOKEN_CONVERSION, "LockedConversion");
+    key.extend_with_blake2_128concat(account_id);
+
+    key
+}
+
+fn vesting_vesting(account_id: &[u8]) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::new();
+    key.extend_with_storage_prefix(PALLET_VESTING, "Vesting");
+    key.extend_with_blake2_128concat(account_id);
 
     key
 }
@@ -941,6 +1148,39 @@ mod tests {
     }
 
     #[test]
+    fn test_acurast_compute_commitments() {
+        let key = acurast_compute_commitments(&BigUint::zero());
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x56c55973ec96db3a5ef84bbd48553aebca407206ec1ab726b2636c4b145ac28700000000000000000000000000000000")
+        );
+    }
+
+    #[test]
+    fn test_acurast_compute_delegations() {
+        let key = acurast_compute_delegations(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+            Some(&BigUint::zero()),
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x56c55973ec96db3a5ef84bbd48553aebf6eed5c65f50198f0f53f8f499f77091518366b5b1bc7c99d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00000000000000000000000000000000")
+        );
+
+        let key = acurast_compute_delegations(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+            None,
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x56c55973ec96db3a5ef84bbd48553aebf6eed5c65f50198f0f53f8f499f77091518366b5b1bc7c99d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
+        );
+    }
+
+    #[test]
     fn test_acurast_compute_metric_pool_lookup() {
         let key = acurast_compute_metric_pool_lookup();
 
@@ -979,6 +1219,39 @@ mod tests {
         assert_eq!(
             key,
             hex_to_ba("0x5e8a19e3cd1b7c148b33880c479c0281d34371a193a751eea5883e9553457b2e463be1d58a72e9618ea59884367c435800000000000000000000000000000000463be1d58a72e9618ea59884367c435800000000000000000000000000000000")
+        );
+    }
+
+    #[test]
+    fn test_uniques_account() {
+        let key = uniques_account(
+            &hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+            BigUint::zero()
+        );
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x5e8a19e3cd1b7c148b33880c479c0281b99d880ec681799c0cf30e8886371da9de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d463be1d58a72e9618ea59884367c435800000000000000000000000000000000")
+        );
+    }
+
+    #[test]
+    fn test_acurast_token_conversion_locked_conversion() {
+        let key = acurast_token_conversion_locked_conversion(&hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"));
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x668e0c9d8f6a62868eb8af40bb5b05b755c0f3d7e41584c39a4afabe7b681593de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
+        );
+    }
+
+    #[test]
+    fn test_vesting_vesting() {
+        let key = vesting_vesting(&hex_to_ba("0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"));
+
+        assert_eq!(
+            key,
+            hex_to_ba("0x5f27b51b5ec208ee9cb25b55d87282435f27b51b5ec208ee9cb25b55d8728243de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
         );
     }
 }
