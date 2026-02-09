@@ -1087,7 +1087,9 @@ public func FfiConverterTypeAcurastRpcClient_lower(_ value: AcurastRpcClient) ->
 
 public protocol AcurastStorageProtocol: AnyObject, Sendable {
     
-    func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> FrameSystemAccountInfo
+    func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> AccountInfo
+    
+    func getAccountOverview(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> AccountOverview?
     
     func getAsset(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> PalletUniquesItemDetails?
     
@@ -1180,7 +1182,7 @@ public convenience init(storage: VxAcurastStorage) {
     
 
     
-open func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> FrameSystemAccountInfo  {
+open func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> AccountInfo  {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -1192,9 +1194,26 @@ open func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterTypeFrameSystemAccountInfo_lift,
+            liftFunc: FfiConverterTypeAccountInfo_lift,
             errorHandler: nil
             
+        )
+}
+    
+open func getAccountOverview(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> AccountOverview?  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acuraststorage_get_account_overview(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeAccountOverview.lift,
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -2103,7 +2122,9 @@ public protocol VxAcurastStorageProtocol: AnyObject, Sendable {
     
     func getAsset(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> PalletUniquesItemDetails?
     
-    func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> FrameSystemAccountInfo
+    func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> AccountInfo
+    
+    func getAccountOverview(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> AccountOverview?
     
     func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> [JobAssignment]
     
@@ -2235,7 +2256,7 @@ open func getAsset(managerId: Int32, blockHash: Data?, timeout: UInt64?)async  -
         )
 }
     
-open func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> FrameSystemAccountInfo  {
+open func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> AccountInfo  {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -2247,9 +2268,26 @@ open func getAccountInfo(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterTypeFrameSystemAccountInfo_lift,
+            liftFunc: FfiConverterTypeAccountInfo_lift,
             errorHandler: nil
             
+        )
+}
+    
+open func getAccountOverview(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> AccountOverview?  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_vxacuraststorage_get_account_overview(
+                    self.uniffiClonePointer(),
+                    FfiConverterData.lower(accountId),FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeAccountOverview.lift,
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -2584,6 +2622,272 @@ public func FfiConverterTypeAccountId32_lower(_ value: AccountId32) -> RustBuffe
 }
 
 
+public struct AccountInfo {
+    public var nonce: UInt32
+    public var consumers: UInt32
+    public var providers: UInt32
+    public var sufficients: UInt32
+    public var data: AccountInfoData
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(nonce: UInt32, consumers: UInt32, providers: UInt32, sufficients: UInt32, data: AccountInfoData) {
+        self.nonce = nonce
+        self.consumers = consumers
+        self.providers = providers
+        self.sufficients = sufficients
+        self.data = data
+    }
+}
+
+#if compiler(>=6)
+extension AccountInfo: Sendable {}
+#endif
+
+
+extension AccountInfo: Equatable, Hashable {
+    public static func ==(lhs: AccountInfo, rhs: AccountInfo) -> Bool {
+        if lhs.nonce != rhs.nonce {
+            return false
+        }
+        if lhs.consumers != rhs.consumers {
+            return false
+        }
+        if lhs.providers != rhs.providers {
+            return false
+        }
+        if lhs.sufficients != rhs.sufficients {
+            return false
+        }
+        if lhs.data != rhs.data {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(nonce)
+        hasher.combine(consumers)
+        hasher.combine(providers)
+        hasher.combine(sufficients)
+        hasher.combine(data)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAccountInfo: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AccountInfo {
+        return
+            try AccountInfo(
+                nonce: FfiConverterUInt32.read(from: &buf), 
+                consumers: FfiConverterUInt32.read(from: &buf), 
+                providers: FfiConverterUInt32.read(from: &buf), 
+                sufficients: FfiConverterUInt32.read(from: &buf), 
+                data: FfiConverterTypeAccountInfoData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AccountInfo, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.nonce, into: &buf)
+        FfiConverterUInt32.write(value.consumers, into: &buf)
+        FfiConverterUInt32.write(value.providers, into: &buf)
+        FfiConverterUInt32.write(value.sufficients, into: &buf)
+        FfiConverterTypeAccountInfoData.write(value.data, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountInfo_lift(_ buf: RustBuffer) throws -> AccountInfo {
+    return try FfiConverterTypeAccountInfo.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountInfo_lower(_ value: AccountInfo) -> RustBuffer {
+    return FfiConverterTypeAccountInfo.lower(value)
+}
+
+
+public struct AccountInfoData {
+    public var free: BigUint
+    public var reserved: BigUint
+    public var frozen: BigUint
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(free: BigUint, reserved: BigUint, frozen: BigUint) {
+        self.free = free
+        self.reserved = reserved
+        self.frozen = frozen
+    }
+}
+
+#if compiler(>=6)
+extension AccountInfoData: Sendable {}
+#endif
+
+
+extension AccountInfoData: Equatable, Hashable {
+    public static func ==(lhs: AccountInfoData, rhs: AccountInfoData) -> Bool {
+        if lhs.free != rhs.free {
+            return false
+        }
+        if lhs.reserved != rhs.reserved {
+            return false
+        }
+        if lhs.frozen != rhs.frozen {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(free)
+        hasher.combine(reserved)
+        hasher.combine(frozen)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAccountInfoData: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AccountInfoData {
+        return
+            try AccountInfoData(
+                free: FfiConverterTypeBigUint.read(from: &buf), 
+                reserved: FfiConverterTypeBigUint.read(from: &buf), 
+                frozen: FfiConverterTypeBigUint.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AccountInfoData, into buf: inout [UInt8]) {
+        FfiConverterTypeBigUint.write(value.free, into: &buf)
+        FfiConverterTypeBigUint.write(value.reserved, into: &buf)
+        FfiConverterTypeBigUint.write(value.frozen, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountInfoData_lift(_ buf: RustBuffer) throws -> AccountInfoData {
+    return try FfiConverterTypeAccountInfoData.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountInfoData_lower(_ value: AccountInfoData) -> RustBuffer {
+    return FfiConverterTypeAccountInfoData.lower(value)
+}
+
+
+public struct AccountOverview {
+    public var accountInfo: AccountInfo
+    public var commitment: Commitment?
+    public var delegations: [DelegationWithCommitment]
+    public var vesting: [Vesting]
+    public var conversion: TokenConversion?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(accountInfo: AccountInfo, commitment: Commitment?, delegations: [DelegationWithCommitment], vesting: [Vesting], conversion: TokenConversion?) {
+        self.accountInfo = accountInfo
+        self.commitment = commitment
+        self.delegations = delegations
+        self.vesting = vesting
+        self.conversion = conversion
+    }
+}
+
+#if compiler(>=6)
+extension AccountOverview: Sendable {}
+#endif
+
+
+extension AccountOverview: Equatable, Hashable {
+    public static func ==(lhs: AccountOverview, rhs: AccountOverview) -> Bool {
+        if lhs.accountInfo != rhs.accountInfo {
+            return false
+        }
+        if lhs.commitment != rhs.commitment {
+            return false
+        }
+        if lhs.delegations != rhs.delegations {
+            return false
+        }
+        if lhs.vesting != rhs.vesting {
+            return false
+        }
+        if lhs.conversion != rhs.conversion {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(accountInfo)
+        hasher.combine(commitment)
+        hasher.combine(delegations)
+        hasher.combine(vesting)
+        hasher.combine(conversion)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAccountOverview: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AccountOverview {
+        return
+            try AccountOverview(
+                accountInfo: FfiConverterTypeAccountInfo.read(from: &buf), 
+                commitment: FfiConverterOptionTypeCommitment.read(from: &buf), 
+                delegations: FfiConverterSequenceTypeDelegationWithCommitment.read(from: &buf), 
+                vesting: FfiConverterSequenceTypeVesting.read(from: &buf), 
+                conversion: FfiConverterOptionTypeTokenConversion.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AccountOverview, into buf: inout [UInt8]) {
+        FfiConverterTypeAccountInfo.write(value.accountInfo, into: &buf)
+        FfiConverterOptionTypeCommitment.write(value.commitment, into: &buf)
+        FfiConverterSequenceTypeDelegationWithCommitment.write(value.delegations, into: &buf)
+        FfiConverterSequenceTypeVesting.write(value.vesting, into: &buf)
+        FfiConverterOptionTypeTokenConversion.write(value.conversion, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountOverview_lift(_ buf: RustBuffer) throws -> AccountOverview {
+    return try FfiConverterTypeAccountOverview.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccountOverview_lower(_ value: AccountOverview) -> RustBuffer {
+    return FfiConverterTypeAccountOverview.lower(value)
+}
+
+
 public struct Attestation {
     public var certIds: [CertId]
     public var content: AttestationContent
@@ -2802,6 +3106,210 @@ public func FfiConverterTypeCertId_lower(_ value: CertId) -> RustBuffer {
 }
 
 
+public struct Commitment {
+    public var stake: Stake?
+    public var commission: BigRational
+    public var delegationsTotalAmount: BigUint
+    public var delegationsTotalRewardableAmount: BigUint
+    public var weights: WeightsMemoryBuffer
+    public var poolRewards: PoolRewardsMemoryBuffer
+    public var lastScoringEpoch: UInt32
+    public var lastSlashingEpoch: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(stake: Stake?, commission: BigRational, delegationsTotalAmount: BigUint, delegationsTotalRewardableAmount: BigUint, weights: WeightsMemoryBuffer, poolRewards: PoolRewardsMemoryBuffer, lastScoringEpoch: UInt32, lastSlashingEpoch: UInt32) {
+        self.stake = stake
+        self.commission = commission
+        self.delegationsTotalAmount = delegationsTotalAmount
+        self.delegationsTotalRewardableAmount = delegationsTotalRewardableAmount
+        self.weights = weights
+        self.poolRewards = poolRewards
+        self.lastScoringEpoch = lastScoringEpoch
+        self.lastSlashingEpoch = lastSlashingEpoch
+    }
+}
+
+#if compiler(>=6)
+extension Commitment: Sendable {}
+#endif
+
+
+extension Commitment: Equatable, Hashable {
+    public static func ==(lhs: Commitment, rhs: Commitment) -> Bool {
+        if lhs.stake != rhs.stake {
+            return false
+        }
+        if lhs.commission != rhs.commission {
+            return false
+        }
+        if lhs.delegationsTotalAmount != rhs.delegationsTotalAmount {
+            return false
+        }
+        if lhs.delegationsTotalRewardableAmount != rhs.delegationsTotalRewardableAmount {
+            return false
+        }
+        if lhs.weights != rhs.weights {
+            return false
+        }
+        if lhs.poolRewards != rhs.poolRewards {
+            return false
+        }
+        if lhs.lastScoringEpoch != rhs.lastScoringEpoch {
+            return false
+        }
+        if lhs.lastSlashingEpoch != rhs.lastSlashingEpoch {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(stake)
+        hasher.combine(commission)
+        hasher.combine(delegationsTotalAmount)
+        hasher.combine(delegationsTotalRewardableAmount)
+        hasher.combine(weights)
+        hasher.combine(poolRewards)
+        hasher.combine(lastScoringEpoch)
+        hasher.combine(lastSlashingEpoch)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCommitment: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Commitment {
+        return
+            try Commitment(
+                stake: FfiConverterOptionTypeStake.read(from: &buf), 
+                commission: FfiConverterTypeBigRational.read(from: &buf), 
+                delegationsTotalAmount: FfiConverterTypeBigUint.read(from: &buf), 
+                delegationsTotalRewardableAmount: FfiConverterTypeBigUint.read(from: &buf), 
+                weights: FfiConverterTypeWeightsMemoryBuffer.read(from: &buf), 
+                poolRewards: FfiConverterTypePoolRewardsMemoryBuffer.read(from: &buf), 
+                lastScoringEpoch: FfiConverterUInt32.read(from: &buf), 
+                lastSlashingEpoch: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Commitment, into buf: inout [UInt8]) {
+        FfiConverterOptionTypeStake.write(value.stake, into: &buf)
+        FfiConverterTypeBigRational.write(value.commission, into: &buf)
+        FfiConverterTypeBigUint.write(value.delegationsTotalAmount, into: &buf)
+        FfiConverterTypeBigUint.write(value.delegationsTotalRewardableAmount, into: &buf)
+        FfiConverterTypeWeightsMemoryBuffer.write(value.weights, into: &buf)
+        FfiConverterTypePoolRewardsMemoryBuffer.write(value.poolRewards, into: &buf)
+        FfiConverterUInt32.write(value.lastScoringEpoch, into: &buf)
+        FfiConverterUInt32.write(value.lastSlashingEpoch, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommitment_lift(_ buf: RustBuffer) throws -> Commitment {
+    return try FfiConverterTypeCommitment.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommitment_lower(_ value: Commitment) -> RustBuffer {
+    return FfiConverterTypeCommitment.lower(value)
+}
+
+
+public struct CommitmentWeights {
+    public var selfRewardWeight: BigUint
+    public var selfSlashWeight: BigUint
+    public var delegationsRewardWeight: BigUint
+    public var delegationsSlashWeight: BigUint
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(selfRewardWeight: BigUint, selfSlashWeight: BigUint, delegationsRewardWeight: BigUint, delegationsSlashWeight: BigUint) {
+        self.selfRewardWeight = selfRewardWeight
+        self.selfSlashWeight = selfSlashWeight
+        self.delegationsRewardWeight = delegationsRewardWeight
+        self.delegationsSlashWeight = delegationsSlashWeight
+    }
+}
+
+#if compiler(>=6)
+extension CommitmentWeights: Sendable {}
+#endif
+
+
+extension CommitmentWeights: Equatable, Hashable {
+    public static func ==(lhs: CommitmentWeights, rhs: CommitmentWeights) -> Bool {
+        if lhs.selfRewardWeight != rhs.selfRewardWeight {
+            return false
+        }
+        if lhs.selfSlashWeight != rhs.selfSlashWeight {
+            return false
+        }
+        if lhs.delegationsRewardWeight != rhs.delegationsRewardWeight {
+            return false
+        }
+        if lhs.delegationsSlashWeight != rhs.delegationsSlashWeight {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(selfRewardWeight)
+        hasher.combine(selfSlashWeight)
+        hasher.combine(delegationsRewardWeight)
+        hasher.combine(delegationsSlashWeight)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCommitmentWeights: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CommitmentWeights {
+        return
+            try CommitmentWeights(
+                selfRewardWeight: FfiConverterTypeBigUint.read(from: &buf), 
+                selfSlashWeight: FfiConverterTypeBigUint.read(from: &buf), 
+                delegationsRewardWeight: FfiConverterTypeBigUint.read(from: &buf), 
+                delegationsSlashWeight: FfiConverterTypeBigUint.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: CommitmentWeights, into buf: inout [UInt8]) {
+        FfiConverterTypeBigUint.write(value.selfRewardWeight, into: &buf)
+        FfiConverterTypeBigUint.write(value.selfSlashWeight, into: &buf)
+        FfiConverterTypeBigUint.write(value.delegationsRewardWeight, into: &buf)
+        FfiConverterTypeBigUint.write(value.delegationsSlashWeight, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommitmentWeights_lift(_ buf: RustBuffer) throws -> CommitmentWeights {
+    return try FfiConverterTypeCommitmentWeights.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommitmentWeights_lower(_ value: CommitmentWeights) -> RustBuffer {
+    return FfiConverterTypeCommitmentWeights.lower(value)
+}
+
+
 public struct Config {
     public var name: String
     public var numerator: BigUint
@@ -2877,6 +3385,170 @@ public func FfiConverterTypeConfig_lift(_ buf: RustBuffer) throws -> Config {
 #endif
 public func FfiConverterTypeConfig_lower(_ value: Config) -> RustBuffer {
     return FfiConverterTypeConfig.lower(value)
+}
+
+
+public struct Delegation {
+    public var stake: Stake
+    public var rewardWeight: BigUint
+    public var slashWeight: BigUint
+    public var rewardDebt: BigUint
+    public var slashDebt: BigUint
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(stake: Stake, rewardWeight: BigUint, slashWeight: BigUint, rewardDebt: BigUint, slashDebt: BigUint) {
+        self.stake = stake
+        self.rewardWeight = rewardWeight
+        self.slashWeight = slashWeight
+        self.rewardDebt = rewardDebt
+        self.slashDebt = slashDebt
+    }
+}
+
+#if compiler(>=6)
+extension Delegation: Sendable {}
+#endif
+
+
+extension Delegation: Equatable, Hashable {
+    public static func ==(lhs: Delegation, rhs: Delegation) -> Bool {
+        if lhs.stake != rhs.stake {
+            return false
+        }
+        if lhs.rewardWeight != rhs.rewardWeight {
+            return false
+        }
+        if lhs.slashWeight != rhs.slashWeight {
+            return false
+        }
+        if lhs.rewardDebt != rhs.rewardDebt {
+            return false
+        }
+        if lhs.slashDebt != rhs.slashDebt {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(stake)
+        hasher.combine(rewardWeight)
+        hasher.combine(slashWeight)
+        hasher.combine(rewardDebt)
+        hasher.combine(slashDebt)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeDelegation: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Delegation {
+        return
+            try Delegation(
+                stake: FfiConverterTypeStake.read(from: &buf), 
+                rewardWeight: FfiConverterTypeBigUint.read(from: &buf), 
+                slashWeight: FfiConverterTypeBigUint.read(from: &buf), 
+                rewardDebt: FfiConverterTypeBigUint.read(from: &buf), 
+                slashDebt: FfiConverterTypeBigUint.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Delegation, into buf: inout [UInt8]) {
+        FfiConverterTypeStake.write(value.stake, into: &buf)
+        FfiConverterTypeBigUint.write(value.rewardWeight, into: &buf)
+        FfiConverterTypeBigUint.write(value.slashWeight, into: &buf)
+        FfiConverterTypeBigUint.write(value.rewardDebt, into: &buf)
+        FfiConverterTypeBigUint.write(value.slashDebt, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDelegation_lift(_ buf: RustBuffer) throws -> Delegation {
+    return try FfiConverterTypeDelegation.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDelegation_lower(_ value: Delegation) -> RustBuffer {
+    return FfiConverterTypeDelegation.lower(value)
+}
+
+
+public struct DelegationWithCommitment {
+    public var delegation: Delegation
+    public var commitment: Commitment
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(delegation: Delegation, commitment: Commitment) {
+        self.delegation = delegation
+        self.commitment = commitment
+    }
+}
+
+#if compiler(>=6)
+extension DelegationWithCommitment: Sendable {}
+#endif
+
+
+extension DelegationWithCommitment: Equatable, Hashable {
+    public static func ==(lhs: DelegationWithCommitment, rhs: DelegationWithCommitment) -> Bool {
+        if lhs.delegation != rhs.delegation {
+            return false
+        }
+        if lhs.commitment != rhs.commitment {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(delegation)
+        hasher.combine(commitment)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeDelegationWithCommitment: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DelegationWithCommitment {
+        return
+            try DelegationWithCommitment(
+                delegation: FfiConverterTypeDelegation.read(from: &buf), 
+                commitment: FfiConverterTypeCommitment.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: DelegationWithCommitment, into buf: inout [UInt8]) {
+        FfiConverterTypeDelegation.write(value.delegation, into: &buf)
+        FfiConverterTypeCommitment.write(value.commitment, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDelegationWithCommitment_lift(_ buf: RustBuffer) throws -> DelegationWithCommitment {
+    return try FfiConverterTypeDelegationWithCommitment.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDelegationWithCommitment_lower(_ value: DelegationWithCommitment) -> RustBuffer {
+    return FfiConverterTypeDelegationWithCommitment.lower(value)
 }
 
 
@@ -3127,186 +3799,6 @@ public func FfiConverterTypeExecutionSpecifier_lift(_ buf: RustBuffer) throws ->
 #endif
 public func FfiConverterTypeExecutionSpecifier_lower(_ value: ExecutionSpecifier) -> RustBuffer {
     return FfiConverterTypeExecutionSpecifier.lower(value)
-}
-
-
-public struct FrameSystemAccountInfo {
-    public var nonce: UInt32
-    public var consumers: UInt32
-    public var providers: UInt32
-    public var sufficients: UInt32
-    public var data: FrameSystemAccountInfoData
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(nonce: UInt32, consumers: UInt32, providers: UInt32, sufficients: UInt32, data: FrameSystemAccountInfoData) {
-        self.nonce = nonce
-        self.consumers = consumers
-        self.providers = providers
-        self.sufficients = sufficients
-        self.data = data
-    }
-}
-
-#if compiler(>=6)
-extension FrameSystemAccountInfo: Sendable {}
-#endif
-
-
-extension FrameSystemAccountInfo: Equatable, Hashable {
-    public static func ==(lhs: FrameSystemAccountInfo, rhs: FrameSystemAccountInfo) -> Bool {
-        if lhs.nonce != rhs.nonce {
-            return false
-        }
-        if lhs.consumers != rhs.consumers {
-            return false
-        }
-        if lhs.providers != rhs.providers {
-            return false
-        }
-        if lhs.sufficients != rhs.sufficients {
-            return false
-        }
-        if lhs.data != rhs.data {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(nonce)
-        hasher.combine(consumers)
-        hasher.combine(providers)
-        hasher.combine(sufficients)
-        hasher.combine(data)
-    }
-}
-
-
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public struct FfiConverterTypeFrameSystemAccountInfo: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FrameSystemAccountInfo {
-        return
-            try FrameSystemAccountInfo(
-                nonce: FfiConverterUInt32.read(from: &buf), 
-                consumers: FfiConverterUInt32.read(from: &buf), 
-                providers: FfiConverterUInt32.read(from: &buf), 
-                sufficients: FfiConverterUInt32.read(from: &buf), 
-                data: FfiConverterTypeFrameSystemAccountInfoData.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: FrameSystemAccountInfo, into buf: inout [UInt8]) {
-        FfiConverterUInt32.write(value.nonce, into: &buf)
-        FfiConverterUInt32.write(value.consumers, into: &buf)
-        FfiConverterUInt32.write(value.providers, into: &buf)
-        FfiConverterUInt32.write(value.sufficients, into: &buf)
-        FfiConverterTypeFrameSystemAccountInfoData.write(value.data, into: &buf)
-    }
-}
-
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeFrameSystemAccountInfo_lift(_ buf: RustBuffer) throws -> FrameSystemAccountInfo {
-    return try FfiConverterTypeFrameSystemAccountInfo.lift(buf)
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeFrameSystemAccountInfo_lower(_ value: FrameSystemAccountInfo) -> RustBuffer {
-    return FfiConverterTypeFrameSystemAccountInfo.lower(value)
-}
-
-
-public struct FrameSystemAccountInfoData {
-    public var free: BigUint
-    public var reserved: BigUint
-    public var miscFrozen: BigUint
-    public var feeFrozen: BigUint
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(free: BigUint, reserved: BigUint, miscFrozen: BigUint, feeFrozen: BigUint) {
-        self.free = free
-        self.reserved = reserved
-        self.miscFrozen = miscFrozen
-        self.feeFrozen = feeFrozen
-    }
-}
-
-#if compiler(>=6)
-extension FrameSystemAccountInfoData: Sendable {}
-#endif
-
-
-extension FrameSystemAccountInfoData: Equatable, Hashable {
-    public static func ==(lhs: FrameSystemAccountInfoData, rhs: FrameSystemAccountInfoData) -> Bool {
-        if lhs.free != rhs.free {
-            return false
-        }
-        if lhs.reserved != rhs.reserved {
-            return false
-        }
-        if lhs.miscFrozen != rhs.miscFrozen {
-            return false
-        }
-        if lhs.feeFrozen != rhs.feeFrozen {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(free)
-        hasher.combine(reserved)
-        hasher.combine(miscFrozen)
-        hasher.combine(feeFrozen)
-    }
-}
-
-
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public struct FfiConverterTypeFrameSystemAccountInfoData: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FrameSystemAccountInfoData {
-        return
-            try FrameSystemAccountInfoData(
-                free: FfiConverterTypeBigUint.read(from: &buf), 
-                reserved: FfiConverterTypeBigUint.read(from: &buf), 
-                miscFrozen: FfiConverterTypeBigUint.read(from: &buf), 
-                feeFrozen: FfiConverterTypeBigUint.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: FrameSystemAccountInfoData, into buf: inout [UInt8]) {
-        FfiConverterTypeBigUint.write(value.free, into: &buf)
-        FfiConverterTypeBigUint.write(value.reserved, into: &buf)
-        FfiConverterTypeBigUint.write(value.miscFrozen, into: &buf)
-        FfiConverterTypeBigUint.write(value.feeFrozen, into: &buf)
-    }
-}
-
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeFrameSystemAccountInfoData_lift(_ buf: RustBuffer) throws -> FrameSystemAccountInfoData {
-    return try FfiConverterTypeFrameSystemAccountInfoData.lift(buf)
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeFrameSystemAccountInfoData_lower(_ value: FrameSystemAccountInfoData) -> RustBuffer {
-    return FfiConverterTypeFrameSystemAccountInfoData.lower(value)
 }
 
 
@@ -5030,6 +5522,216 @@ public func FfiConverterTypePlannedExecution_lower(_ value: PlannedExecution) ->
 }
 
 
+public struct PoolReward {
+    public var rewardPerWeight: BigUint
+    public var slashPerWeight: BigUint
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(rewardPerWeight: BigUint, slashPerWeight: BigUint) {
+        self.rewardPerWeight = rewardPerWeight
+        self.slashPerWeight = slashPerWeight
+    }
+}
+
+#if compiler(>=6)
+extension PoolReward: Sendable {}
+#endif
+
+
+extension PoolReward: Equatable, Hashable {
+    public static func ==(lhs: PoolReward, rhs: PoolReward) -> Bool {
+        if lhs.rewardPerWeight != rhs.rewardPerWeight {
+            return false
+        }
+        if lhs.slashPerWeight != rhs.slashPerWeight {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(rewardPerWeight)
+        hasher.combine(slashPerWeight)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePoolReward: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PoolReward {
+        return
+            try PoolReward(
+                rewardPerWeight: FfiConverterTypeBigUint.read(from: &buf), 
+                slashPerWeight: FfiConverterTypeBigUint.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PoolReward, into buf: inout [UInt8]) {
+        FfiConverterTypeBigUint.write(value.rewardPerWeight, into: &buf)
+        FfiConverterTypeBigUint.write(value.slashPerWeight, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePoolReward_lift(_ buf: RustBuffer) throws -> PoolReward {
+    return try FfiConverterTypePoolReward.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePoolReward_lower(_ value: PoolReward) -> RustBuffer {
+    return FfiConverterTypePoolReward.lower(value)
+}
+
+
+public struct PoolRewardsMemoryBuffer {
+    public var past: PoolRewardsMemoryBufferItem?
+    public var current: PoolRewardsMemoryBufferItem
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(past: PoolRewardsMemoryBufferItem?, current: PoolRewardsMemoryBufferItem) {
+        self.past = past
+        self.current = current
+    }
+}
+
+#if compiler(>=6)
+extension PoolRewardsMemoryBuffer: Sendable {}
+#endif
+
+
+extension PoolRewardsMemoryBuffer: Equatable, Hashable {
+    public static func ==(lhs: PoolRewardsMemoryBuffer, rhs: PoolRewardsMemoryBuffer) -> Bool {
+        if lhs.past != rhs.past {
+            return false
+        }
+        if lhs.current != rhs.current {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(past)
+        hasher.combine(current)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePoolRewardsMemoryBuffer: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PoolRewardsMemoryBuffer {
+        return
+            try PoolRewardsMemoryBuffer(
+                past: FfiConverterOptionTypePoolRewardsMemoryBufferItem.read(from: &buf), 
+                current: FfiConverterTypePoolRewardsMemoryBufferItem.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PoolRewardsMemoryBuffer, into buf: inout [UInt8]) {
+        FfiConverterOptionTypePoolRewardsMemoryBufferItem.write(value.past, into: &buf)
+        FfiConverterTypePoolRewardsMemoryBufferItem.write(value.current, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePoolRewardsMemoryBuffer_lift(_ buf: RustBuffer) throws -> PoolRewardsMemoryBuffer {
+    return try FfiConverterTypePoolRewardsMemoryBuffer.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePoolRewardsMemoryBuffer_lower(_ value: PoolRewardsMemoryBuffer) -> RustBuffer {
+    return FfiConverterTypePoolRewardsMemoryBuffer.lower(value)
+}
+
+
+public struct PoolRewardsMemoryBufferItem {
+    public var timestamp: UInt32
+    public var poolReward: PoolReward
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(timestamp: UInt32, poolReward: PoolReward) {
+        self.timestamp = timestamp
+        self.poolReward = poolReward
+    }
+}
+
+#if compiler(>=6)
+extension PoolRewardsMemoryBufferItem: Sendable {}
+#endif
+
+
+extension PoolRewardsMemoryBufferItem: Equatable, Hashable {
+    public static func ==(lhs: PoolRewardsMemoryBufferItem, rhs: PoolRewardsMemoryBufferItem) -> Bool {
+        if lhs.timestamp != rhs.timestamp {
+            return false
+        }
+        if lhs.poolReward != rhs.poolReward {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(timestamp)
+        hasher.combine(poolReward)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePoolRewardsMemoryBufferItem: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PoolRewardsMemoryBufferItem {
+        return
+            try PoolRewardsMemoryBufferItem(
+                timestamp: FfiConverterUInt32.read(from: &buf), 
+                poolReward: FfiConverterTypePoolReward.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PoolRewardsMemoryBufferItem, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.timestamp, into: &buf)
+        FfiConverterTypePoolReward.write(value.poolReward, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePoolRewardsMemoryBufferItem_lift(_ buf: RustBuffer) throws -> PoolRewardsMemoryBufferItem {
+    return try FfiConverterTypePoolRewardsMemoryBufferItem.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePoolRewardsMemoryBufferItem_lower(_ value: PoolRewardsMemoryBufferItem) -> RustBuffer {
+    return FfiConverterTypePoolRewardsMemoryBufferItem.lower(value)
+}
+
+
 public struct ProcessorOverview {
     public var managerIdentifier: Int32?
     public var isAttested: Bool
@@ -5458,6 +6160,140 @@ public func FfiConverterTypeSLA_lower(_ value: Sla) -> RustBuffer {
 }
 
 
+public struct Stake {
+    public var amount: BigUint
+    public var rewardableAmount: BigUint
+    public var created: UInt32
+    public var cooldownPeriod: UInt32
+    public var cooldownStarted: UInt32?
+    public var accuredReward: BigUint
+    public var accruedSlash: BigUint
+    public var allowAutoCompound: Bool
+    public var paid: BigUint
+    public var appliedSlash: BigUint
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(amount: BigUint, rewardableAmount: BigUint, created: UInt32, cooldownPeriod: UInt32, cooldownStarted: UInt32?, accuredReward: BigUint, accruedSlash: BigUint, allowAutoCompound: Bool, paid: BigUint, appliedSlash: BigUint) {
+        self.amount = amount
+        self.rewardableAmount = rewardableAmount
+        self.created = created
+        self.cooldownPeriod = cooldownPeriod
+        self.cooldownStarted = cooldownStarted
+        self.accuredReward = accuredReward
+        self.accruedSlash = accruedSlash
+        self.allowAutoCompound = allowAutoCompound
+        self.paid = paid
+        self.appliedSlash = appliedSlash
+    }
+}
+
+#if compiler(>=6)
+extension Stake: Sendable {}
+#endif
+
+
+extension Stake: Equatable, Hashable {
+    public static func ==(lhs: Stake, rhs: Stake) -> Bool {
+        if lhs.amount != rhs.amount {
+            return false
+        }
+        if lhs.rewardableAmount != rhs.rewardableAmount {
+            return false
+        }
+        if lhs.created != rhs.created {
+            return false
+        }
+        if lhs.cooldownPeriod != rhs.cooldownPeriod {
+            return false
+        }
+        if lhs.cooldownStarted != rhs.cooldownStarted {
+            return false
+        }
+        if lhs.accuredReward != rhs.accuredReward {
+            return false
+        }
+        if lhs.accruedSlash != rhs.accruedSlash {
+            return false
+        }
+        if lhs.allowAutoCompound != rhs.allowAutoCompound {
+            return false
+        }
+        if lhs.paid != rhs.paid {
+            return false
+        }
+        if lhs.appliedSlash != rhs.appliedSlash {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(amount)
+        hasher.combine(rewardableAmount)
+        hasher.combine(created)
+        hasher.combine(cooldownPeriod)
+        hasher.combine(cooldownStarted)
+        hasher.combine(accuredReward)
+        hasher.combine(accruedSlash)
+        hasher.combine(allowAutoCompound)
+        hasher.combine(paid)
+        hasher.combine(appliedSlash)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeStake: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Stake {
+        return
+            try Stake(
+                amount: FfiConverterTypeBigUint.read(from: &buf), 
+                rewardableAmount: FfiConverterTypeBigUint.read(from: &buf), 
+                created: FfiConverterUInt32.read(from: &buf), 
+                cooldownPeriod: FfiConverterUInt32.read(from: &buf), 
+                cooldownStarted: FfiConverterOptionUInt32.read(from: &buf), 
+                accuredReward: FfiConverterTypeBigUint.read(from: &buf), 
+                accruedSlash: FfiConverterTypeBigUint.read(from: &buf), 
+                allowAutoCompound: FfiConverterBool.read(from: &buf), 
+                paid: FfiConverterTypeBigUint.read(from: &buf), 
+                appliedSlash: FfiConverterTypeBigUint.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Stake, into buf: inout [UInt8]) {
+        FfiConverterTypeBigUint.write(value.amount, into: &buf)
+        FfiConverterTypeBigUint.write(value.rewardableAmount, into: &buf)
+        FfiConverterUInt32.write(value.created, into: &buf)
+        FfiConverterUInt32.write(value.cooldownPeriod, into: &buf)
+        FfiConverterOptionUInt32.write(value.cooldownStarted, into: &buf)
+        FfiConverterTypeBigUint.write(value.accuredReward, into: &buf)
+        FfiConverterTypeBigUint.write(value.accruedSlash, into: &buf)
+        FfiConverterBool.write(value.allowAutoCompound, into: &buf)
+        FfiConverterTypeBigUint.write(value.paid, into: &buf)
+        FfiConverterTypeBigUint.write(value.appliedSlash, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStake_lift(_ buf: RustBuffer) throws -> Stake {
+    return try FfiConverterTypeStake.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStake_lower(_ value: Stake) -> RustBuffer {
+    return FfiConverterTypeStake.lower(value)
+}
+
+
 public struct StringBigRational {
     public var numer: String
     public var denom: String
@@ -5578,6 +6414,76 @@ public func FfiConverterTypeSubmitAttestationExtrinsic_lift(_ buf: RustBuffer) t
 #endif
 public func FfiConverterTypeSubmitAttestationExtrinsic_lower(_ value: SubmitAttestationExtrinsic) -> RustBuffer {
     return FfiConverterTypeSubmitAttestationExtrinsic.lower(value)
+}
+
+
+public struct TokenConversion {
+    public var amount: BigUint
+    public var lockStart: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(amount: BigUint, lockStart: UInt32) {
+        self.amount = amount
+        self.lockStart = lockStart
+    }
+}
+
+#if compiler(>=6)
+extension TokenConversion: Sendable {}
+#endif
+
+
+extension TokenConversion: Equatable, Hashable {
+    public static func ==(lhs: TokenConversion, rhs: TokenConversion) -> Bool {
+        if lhs.amount != rhs.amount {
+            return false
+        }
+        if lhs.lockStart != rhs.lockStart {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(amount)
+        hasher.combine(lockStart)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTokenConversion: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TokenConversion {
+        return
+            try TokenConversion(
+                amount: FfiConverterTypeBigUint.read(from: &buf), 
+                lockStart: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TokenConversion, into buf: inout [UInt8]) {
+        FfiConverterTypeBigUint.write(value.amount, into: &buf)
+        FfiConverterUInt32.write(value.lockStart, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTokenConversion_lift(_ buf: RustBuffer) throws -> TokenConversion {
+    return try FfiConverterTypeTokenConversion.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTokenConversion_lower(_ value: TokenConversion) -> RustBuffer {
+    return FfiConverterTypeTokenConversion.lower(value)
 }
 
 
@@ -5788,6 +6694,224 @@ public func FfiConverterTypeVariable_lift(_ buf: RustBuffer) throws -> Variable 
 #endif
 public func FfiConverterTypeVariable_lower(_ value: Variable) -> RustBuffer {
     return FfiConverterTypeVariable.lower(value)
+}
+
+
+public struct Vesting {
+    public var locked: BigUint
+    public var perBlock: BigUint
+    public var startingBlock: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(locked: BigUint, perBlock: BigUint, startingBlock: UInt32) {
+        self.locked = locked
+        self.perBlock = perBlock
+        self.startingBlock = startingBlock
+    }
+}
+
+#if compiler(>=6)
+extension Vesting: Sendable {}
+#endif
+
+
+extension Vesting: Equatable, Hashable {
+    public static func ==(lhs: Vesting, rhs: Vesting) -> Bool {
+        if lhs.locked != rhs.locked {
+            return false
+        }
+        if lhs.perBlock != rhs.perBlock {
+            return false
+        }
+        if lhs.startingBlock != rhs.startingBlock {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(locked)
+        hasher.combine(perBlock)
+        hasher.combine(startingBlock)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeVesting: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Vesting {
+        return
+            try Vesting(
+                locked: FfiConverterTypeBigUint.read(from: &buf), 
+                perBlock: FfiConverterTypeBigUint.read(from: &buf), 
+                startingBlock: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Vesting, into buf: inout [UInt8]) {
+        FfiConverterTypeBigUint.write(value.locked, into: &buf)
+        FfiConverterTypeBigUint.write(value.perBlock, into: &buf)
+        FfiConverterUInt32.write(value.startingBlock, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeVesting_lift(_ buf: RustBuffer) throws -> Vesting {
+    return try FfiConverterTypeVesting.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeVesting_lower(_ value: Vesting) -> RustBuffer {
+    return FfiConverterTypeVesting.lower(value)
+}
+
+
+public struct WeightsMemoryBuffer {
+    public var past: WeightsMemoryBufferItem?
+    public var current: WeightsMemoryBufferItem
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(past: WeightsMemoryBufferItem?, current: WeightsMemoryBufferItem) {
+        self.past = past
+        self.current = current
+    }
+}
+
+#if compiler(>=6)
+extension WeightsMemoryBuffer: Sendable {}
+#endif
+
+
+extension WeightsMemoryBuffer: Equatable, Hashable {
+    public static func ==(lhs: WeightsMemoryBuffer, rhs: WeightsMemoryBuffer) -> Bool {
+        if lhs.past != rhs.past {
+            return false
+        }
+        if lhs.current != rhs.current {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(past)
+        hasher.combine(current)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeWeightsMemoryBuffer: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> WeightsMemoryBuffer {
+        return
+            try WeightsMemoryBuffer(
+                past: FfiConverterOptionTypeWeightsMemoryBufferItem.read(from: &buf), 
+                current: FfiConverterTypeWeightsMemoryBufferItem.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: WeightsMemoryBuffer, into buf: inout [UInt8]) {
+        FfiConverterOptionTypeWeightsMemoryBufferItem.write(value.past, into: &buf)
+        FfiConverterTypeWeightsMemoryBufferItem.write(value.current, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeWeightsMemoryBuffer_lift(_ buf: RustBuffer) throws -> WeightsMemoryBuffer {
+    return try FfiConverterTypeWeightsMemoryBuffer.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeWeightsMemoryBuffer_lower(_ value: WeightsMemoryBuffer) -> RustBuffer {
+    return FfiConverterTypeWeightsMemoryBuffer.lower(value)
+}
+
+
+public struct WeightsMemoryBufferItem {
+    public var timestamp: UInt32
+    public var weights: CommitmentWeights
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(timestamp: UInt32, weights: CommitmentWeights) {
+        self.timestamp = timestamp
+        self.weights = weights
+    }
+}
+
+#if compiler(>=6)
+extension WeightsMemoryBufferItem: Sendable {}
+#endif
+
+
+extension WeightsMemoryBufferItem: Equatable, Hashable {
+    public static func ==(lhs: WeightsMemoryBufferItem, rhs: WeightsMemoryBufferItem) -> Bool {
+        if lhs.timestamp != rhs.timestamp {
+            return false
+        }
+        if lhs.weights != rhs.weights {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(timestamp)
+        hasher.combine(weights)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeWeightsMemoryBufferItem: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> WeightsMemoryBufferItem {
+        return
+            try WeightsMemoryBufferItem(
+                timestamp: FfiConverterUInt32.read(from: &buf), 
+                weights: FfiConverterTypeCommitmentWeights.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: WeightsMemoryBufferItem, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.timestamp, into: &buf)
+        FfiConverterTypeCommitmentWeights.write(value.weights, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeWeightsMemoryBufferItem_lift(_ buf: RustBuffer) throws -> WeightsMemoryBufferItem {
+    return try FfiConverterTypeWeightsMemoryBufferItem.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeWeightsMemoryBufferItem_lower(_ value: WeightsMemoryBufferItem) -> RustBuffer {
+    return FfiConverterTypeWeightsMemoryBufferItem.lower(value)
 }
 
 // Note that we don't yet support `indirect` for enums.
@@ -6684,6 +7808,30 @@ fileprivate struct FfiConverterOptionUInt8: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionUInt32: FfiConverterRustBuffer {
+    typealias SwiftType = UInt32?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt32.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt32.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionInt32: FfiConverterRustBuffer {
     typealias SwiftType = Int32?
 
@@ -6804,6 +7952,30 @@ fileprivate struct FfiConverterOptionData: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeAccountOverview: FfiConverterRustBuffer {
+    typealias SwiftType = AccountOverview?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeAccountOverview.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeAccountOverview.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeAttestation: FfiConverterRustBuffer {
     typealias SwiftType = Attestation?
 
@@ -6820,6 +7992,30 @@ fileprivate struct FfiConverterOptionTypeAttestation: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeAttestation.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeCommitment: FfiConverterRustBuffer {
+    typealias SwiftType = Commitment?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeCommitment.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeCommitment.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -7044,6 +8240,30 @@ fileprivate struct FfiConverterOptionTypePalletUniquesItemDetails: FfiConverterR
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypePoolRewardsMemoryBufferItem: FfiConverterRustBuffer {
+    typealias SwiftType = PoolRewardsMemoryBufferItem?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypePoolRewardsMemoryBufferItem.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypePoolRewardsMemoryBufferItem.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeProcessorOverview: FfiConverterRustBuffer {
     typealias SwiftType = ProcessorOverview?
 
@@ -7084,6 +8304,78 @@ fileprivate struct FfiConverterOptionTypeProcessorUpdateInfo: FfiConverterRustBu
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeProcessorUpdateInfo.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeStake: FfiConverterRustBuffer {
+    typealias SwiftType = Stake?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeStake.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeStake.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeTokenConversion: FfiConverterRustBuffer {
+    typealias SwiftType = TokenConversion?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTokenConversion.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTokenConversion.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeWeightsMemoryBufferItem: FfiConverterRustBuffer {
+    typealias SwiftType = WeightsMemoryBufferItem?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeWeightsMemoryBufferItem.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeWeightsMemoryBufferItem.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -7313,6 +8605,31 @@ fileprivate struct FfiConverterSequenceTypeConfig: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeDelegationWithCommitment: FfiConverterRustBuffer {
+    typealias SwiftType = [DelegationWithCommitment]
+
+    public static func write(_ value: [DelegationWithCommitment], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeDelegationWithCommitment.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [DelegationWithCommitment] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [DelegationWithCommitment]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeDelegationWithCommitment.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeJobAssignment: FfiConverterRustBuffer {
     typealias SwiftType = [JobAssignment]
 
@@ -7380,6 +8697,31 @@ fileprivate struct FfiConverterSequenceTypeVariable: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeVariable.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeVesting: FfiConverterRustBuffer {
+    typealias SwiftType = [Vesting]
+
+    public static func write(_ value: [Vesting], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeVesting.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Vesting] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Vesting]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeVesting.read(from: &buf))
         }
         return seq
     }
@@ -7677,7 +9019,10 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_submit_extrinsic() != 57315) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_account_info() != 141) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_account_info() != 56209) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_account_overview() != 26690) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_asset() != 60291) {
@@ -7746,43 +9091,46 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_asset() != 56054) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_account_info() != 12690) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_account_info() != 19171) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_assigned_jobs() != 13508) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_account_overview() != 5831) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_registration() != 2370) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_assigned_jobs() != 15193) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_data() != 18797) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_registration() != 27490) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_environment() != 24059) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_data() != 10405) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_is_attested() != 31002) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_environment() != 45917) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 52076) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_is_attested() != 60892) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_pricing() != 27639) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 63735) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_advertisement_restriction() != 57099) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_pricing() != 54880) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 4448) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_advertisement_restriction() != 60953) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 26030) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 56428) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_data() != 21058) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pools() != 47786) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_processor_overview() != 18208) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_management_data() != 57851) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_processor_overview() != 4248) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_acurastrpcclient_new() != 61570) {
