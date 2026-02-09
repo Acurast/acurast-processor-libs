@@ -4,23 +4,22 @@ use num_traits::Zero;
 use std::io::{Cursor, Read};
 
 #[derive(uniffi::Record, Debug)]
-pub struct FrameSystemAccountInfoData {
+pub struct AccountInfoData {
     pub free: BigUint,
     pub reserved: BigUint,
-    pub misc_frozen: BigUint,
-    pub fee_frozen: BigUint,
+    pub frozen: BigUint,
 }
 
 #[derive(uniffi::Record, Debug)]
-pub struct FrameSystemAccountInfo {
+pub struct AccountInfo {
     pub nonce: u32,
     pub consumers: u32,
     pub providers: u32,
     pub sufficients: u32,
-    pub data: FrameSystemAccountInfoData,
+    pub data: AccountInfoData,
 }
 
-impl FrameSystemAccountInfo {
+impl AccountInfo {
     pub fn read_account_info(buffer: &[u8]) -> Self {
         let mut cursor = Cursor::new(buffer);
 
@@ -29,14 +28,13 @@ impl FrameSystemAccountInfo {
         let providers = cursor.read_u32::<LittleEndian>().unwrap();
         let sufficients = cursor.read_u32::<LittleEndian>().unwrap();
 
-        let data = FrameSystemAccountInfoData {
+        let data = AccountInfoData {
             free: Self::read_u128(&mut cursor),
             reserved: Self::read_u128(&mut cursor),
-            misc_frozen: Self::read_u128(&mut cursor),
-            fee_frozen: Self::read_u128(&mut cursor),
+            frozen: Self::read_u128(&mut cursor),
         };
 
-        FrameSystemAccountInfo {
+        AccountInfo {
             nonce,
             consumers,
             providers,
@@ -46,18 +44,17 @@ impl FrameSystemAccountInfo {
     }
 
     pub fn empty() -> Self {
-        let data = FrameSystemAccountInfoData {
+        let data = AccountInfoData {
             free: BigUint::zero(),
             reserved: BigUint::zero(),
-            misc_frozen: BigUint::zero(),
-            fee_frozen: BigUint::zero(),
+            frozen: BigUint::zero(),
         };
-        FrameSystemAccountInfo {
+        AccountInfo {
             nonce: 0,
             consumers: 0,
             providers: 0,
             sufficients: 0,
-            data: data,
+            data,
         }
     }
 

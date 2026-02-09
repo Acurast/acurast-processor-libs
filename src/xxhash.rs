@@ -1,43 +1,22 @@
 use xxhash_rust::xxh64::Xxh64;
 
-pub fn xxh128_unsigned(input: &[u8]) -> [u8; 16] {
-    let mut hasher1 = Xxh64::new(0);
-    hasher1.update(input);
-    let hash1 = hasher1.digest();
-
-    let mut hasher2 = Xxh64::new(1);
-    hasher2.update(input);
-    let hash2 = hasher2.digest();
-
-    let mut result = [0u8; 16];
-    let hash1_bytes = hash1.to_le_bytes();
-    let hash2_bytes = hash2.to_le_bytes();
-
-    for i in 0..8 {
-        result[i] = hash1_bytes[i];
-        result[i + 8] = hash2_bytes[i];
-    }
-
-    result
+macro_rules! xxh {
+    ($name:ident, $segments:literal, $typ:ident) => {
+        pub fn $name(input: &[u8]) -> [$typ; $segments * 8] {
+            let mut result: [$typ; $segments * 8] = [0; $segments * 8];
+            for i in 0..$segments {
+                let mut hasher = Xxh64::new(i as u64);
+                hasher.update(input);
+                let hash = hasher.digest();
+                let hash_bytes = hash.to_le_bytes();
+                for j in 0..8 {
+                    result[i * 8 + j] = hash_bytes[j] as $typ;
+                }
+            }
+            result
+        }
+    };
 }
 
-pub fn xxh128_signed(input: &[u8]) -> [i8; 16] {
-    let mut hasher1 = Xxh64::new(0);
-    hasher1.update(input);
-    let hash1 = hasher1.digest();
-
-    let mut hasher2 = Xxh64::new(1);
-    hasher2.update(input);
-    let hash2 = hasher2.digest();
-
-    let mut result = [0i8; 16];
-    let hash1_bytes = hash1.to_le_bytes();
-    let hash2_bytes = hash2.to_le_bytes();
-
-    for i in 0..8 {
-        result[i] = hash1_bytes[i] as i8;
-        result[i + 8] = hash2_bytes[i] as i8;
-    }
-
-    result
-}
+xxh!(xxh64_unsigned, 1, u8);
+xxh!(xxh128_unsigned, 2, u8);

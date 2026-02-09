@@ -1,18 +1,19 @@
 use super::v0_acurast_storage::{V0AcurastStorageImpl, VXAcurastStorage};
+use crate::codec::types::account_overview::AccountOverview;
 use crate::codec::types::acurast::advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing};
 use crate::codec::types::acurast::attestation::Attestation;
 use crate::codec::types::acurast::job_registration::JobRegistration;
 use crate::codec::types::acurast::{
     job_environment::JobEnvironment, job_identifier::JobIdentifier,
 };
+use crate::codec::types::compute::metrics::MetricPool;
+use crate::codec::types::account_info::AccountInfo;
 use crate::codec::types::job_data::JobData;
 use crate::codec::types::management_data::ManagementData;
 use crate::codec::types::marketplace::job_assigment::JobAssignment;
-use crate::codec::types::metrics::MetricPool;
 use crate::codec::types::processor_overview::ProcessorOverview;
 use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
 use crate::engine::pallet::state::State;
-use crate::types::system::FrameSystemAccountInfo;
 use crate::Result;
 use crate::RpcEngine;
 use async_trait::async_trait;
@@ -67,9 +68,20 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> FrameSystemAccountInfo {
+    ) -> AccountInfo {
         self.base
             .get_account_info(account_id, block_hash, timeout)
+            .await
+    }
+
+    async fn get_account_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Option<AccountOverview>> {
+        self.base
+            .get_account_overview(account_id, block_hash, timeout)
             .await
     }
 

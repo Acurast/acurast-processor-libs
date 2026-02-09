@@ -1,15 +1,20 @@
 use super::v0_acurast_storage::VXAcurastStorage;
-use crate::{
-    blake2b::blake2b_128,
-    codec::types::{
-        acurast::{
-            advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing}, attestation::Attestation, job_environment::JobEnvironment, job_identifier::JobIdentifier, job_registration::JobRegistration
-        }, job_data::JobData, management_data::ManagementData, marketplace::job_assigment::JobAssignment, metrics::MetricPool, processor_overview::ProcessorOverview, uniques::pallet_uniques_item_details::PalletUniquesItemDetails
-    },
-    types::system::FrameSystemAccountInfo,
-    xxhash::xxh128_unsigned,
-    Result,
-};
+use crate::codec::types::account_overview::AccountOverview;
+use crate::Result;
+use crate::xxhash::{xxh128_unsigned, xxh64_unsigned};
+use crate::blake2b::blake2b_128;
+use crate::codec::types::account_info::AccountInfo;
+use crate::codec::types::acurast::job_registration::JobRegistration;
+use crate::codec::types::acurast::job_identifier::JobIdentifier;
+use crate::codec::types::acurast::job_environment::JobEnvironment;
+use crate::codec::types::acurast::attestation::Attestation;
+use crate::codec::types::acurast::advertisement::{MarketplaceAdvertisementRestriction, MarketplacePricing};
+use crate::codec::types::uniques::pallet_uniques_item_details::PalletUniquesItemDetails;
+use crate::codec::types::processor_overview::ProcessorOverview;
+use crate::codec::types::marketplace::job_assigment::JobAssignment;
+use crate::codec::types::management_data::ManagementData;
+use crate::codec::types::job_data::JobData;
+use crate::codec::types::compute::metrics::MetricPool;
 use std::sync::Arc;
 
 #[derive(uniffi::Object)]
@@ -65,9 +70,20 @@ impl AcurastStorage {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> FrameSystemAccountInfo {
+    ) -> AccountInfo {
         self.storage
             .get_account_info(account_id, block_hash, timeout)
+            .await
+    }
+
+    async fn get_account_overview(
+        &self,
+        account_id: &[u8],
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Option<AccountOverview>> {
+        self.storage
+            .get_account_overview(account_id, block_hash, timeout)
             .await
     }
 
@@ -210,6 +226,8 @@ pub trait StorageKey {
     fn extend_with_storage_prefix(&mut self, module: &str, method: &str);
     fn extend_with_blake2_128(&mut self, bytes: &[u8]);
     fn extend_with_blake2_128concat(&mut self, bytes: &[u8]);
+    fn extend_with_xxh64(&mut self, bytes: &[u8]);
+    fn extend_with_xxh64concat(&mut self, bytes: &[u8]);
 }
 
 impl StorageKey for Vec<u8> {
@@ -224,6 +242,15 @@ impl StorageKey for Vec<u8> {
 
     fn extend_with_blake2_128concat(&mut self, bytes: &[u8]) {
         self.extend_with_blake2_128(bytes);
+        self.extend_from_slice(bytes);
+    }
+
+    fn extend_with_xxh64(&mut self, bytes: &[u8]) {
+        self.extend_from_slice(&xxh64_unsigned(bytes));
+    }
+
+    fn extend_with_xxh64concat(&mut self, bytes: &[u8]) {
+        self.extend_with_xxh64(bytes);
         self.extend_from_slice(bytes);
     }
 }

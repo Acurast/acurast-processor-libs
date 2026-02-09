@@ -83,6 +83,19 @@ pub fn read_fixed_u128(cursor: &mut Cursor<Vec<u8>>) -> Result<BigRational, Box<
     Ok(value)
 }
 
+pub fn read_u256(cursor: &mut Cursor<Vec<u8>>) -> Result<BigUint, Box<dyn Error>> {
+    let mut bytes = [0u8; 32];
+    cursor.read_exact(&mut bytes)?;
+    Ok(BigUint::from_bytes_le(&bytes))
+}
+
+pub fn read_perbill(cursor: &mut Cursor<Vec<u8>>) -> Result<BigRational, Box<dyn Error>> {
+    let value = read_u32(cursor)?;
+    let value = BigRational::new(BigInt::from(value), BigInt::from(10).pow(9u32));
+
+    Ok(value)
+}
+
 pub fn read_perquintill(cursor: &mut Cursor<Vec<u8>>) -> Result<BigRational, Box<dyn Error>> {
     let value = read_u64(cursor)?;
     let value = BigRational::new(BigInt::from(value), BigInt::from(10).pow(18u32));
