@@ -3,5 +3,4 @@
 /generated
 .DS_Store
 xcuserdata/
-Cargo.lock
 .swiftpm
