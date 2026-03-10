@@ -6166,7 +6166,7 @@ public struct Stake {
     public var created: UInt32
     public var cooldownPeriod: UInt32
     public var cooldownStarted: UInt32?
-    public var accuredReward: BigUint
+    public var accruedReward: BigUint
     public var accruedSlash: BigUint
     public var allowAutoCompound: Bool
     public var paid: BigUint
@@ -6174,13 +6174,13 @@ public struct Stake {
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(amount: BigUint, rewardableAmount: BigUint, created: UInt32, cooldownPeriod: UInt32, cooldownStarted: UInt32?, accuredReward: BigUint, accruedSlash: BigUint, allowAutoCompound: Bool, paid: BigUint, appliedSlash: BigUint) {
+    public init(amount: BigUint, rewardableAmount: BigUint, created: UInt32, cooldownPeriod: UInt32, cooldownStarted: UInt32?, accruedReward: BigUint, accruedSlash: BigUint, allowAutoCompound: Bool, paid: BigUint, appliedSlash: BigUint) {
         self.amount = amount
         self.rewardableAmount = rewardableAmount
         self.created = created
         self.cooldownPeriod = cooldownPeriod
         self.cooldownStarted = cooldownStarted
-        self.accuredReward = accuredReward
+        self.accruedReward = accruedReward
         self.accruedSlash = accruedSlash
         self.allowAutoCompound = allowAutoCompound
         self.paid = paid
@@ -6210,7 +6210,7 @@ extension Stake: Equatable, Hashable {
         if lhs.cooldownStarted != rhs.cooldownStarted {
             return false
         }
-        if lhs.accuredReward != rhs.accuredReward {
+        if lhs.accruedReward != rhs.accruedReward {
             return false
         }
         if lhs.accruedSlash != rhs.accruedSlash {
@@ -6234,7 +6234,7 @@ extension Stake: Equatable, Hashable {
         hasher.combine(created)
         hasher.combine(cooldownPeriod)
         hasher.combine(cooldownStarted)
-        hasher.combine(accuredReward)
+        hasher.combine(accruedReward)
         hasher.combine(accruedSlash)
         hasher.combine(allowAutoCompound)
         hasher.combine(paid)
@@ -6256,7 +6256,7 @@ public struct FfiConverterTypeStake: FfiConverterRustBuffer {
                 created: FfiConverterUInt32.read(from: &buf), 
                 cooldownPeriod: FfiConverterUInt32.read(from: &buf), 
                 cooldownStarted: FfiConverterOptionUInt32.read(from: &buf), 
-                accuredReward: FfiConverterTypeBigUint.read(from: &buf), 
+                accruedReward: FfiConverterTypeBigUint.read(from: &buf), 
                 accruedSlash: FfiConverterTypeBigUint.read(from: &buf), 
                 allowAutoCompound: FfiConverterBool.read(from: &buf), 
                 paid: FfiConverterTypeBigUint.read(from: &buf), 
@@ -6270,7 +6270,7 @@ public struct FfiConverterTypeStake: FfiConverterRustBuffer {
         FfiConverterUInt32.write(value.created, into: &buf)
         FfiConverterUInt32.write(value.cooldownPeriod, into: &buf)
         FfiConverterOptionUInt32.write(value.cooldownStarted, into: &buf)
-        FfiConverterTypeBigUint.write(value.accuredReward, into: &buf)
+        FfiConverterTypeBigUint.write(value.accruedReward, into: &buf)
         FfiConverterTypeBigUint.write(value.accruedSlash, into: &buf)
         FfiConverterBool.write(value.allowAutoCompound, into: &buf)
         FfiConverterTypeBigUint.write(value.paid, into: &buf)

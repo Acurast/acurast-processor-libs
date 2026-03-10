@@ -11,7 +11,7 @@ pub struct Stake {
     pub created: u32,
     pub cooldown_period: u32,
     pub cooldown_started: Option<u32>,
-    pub accured_reward: BigUint,
+    pub accrued_reward: BigUint,
     pub accrued_slash: BigUint,
     pub allow_auto_compound: bool,
     pub paid: BigUint,
@@ -25,7 +25,7 @@ impl Stake {
         let created = read_u32(cursor)?;
         let cooldown_period = read_u32(cursor)?;
         let cooldown_started = cursor.read_optional(|c| read_u32(c))?;
-        let accured_reward = read_u128(cursor)?;
+        let accrued_reward = read_u128(cursor)?;
         let accrued_slash = read_u128(cursor)?;
         let allow_auto_compound = cursor.read_boolean()?;
         let paid = read_u128(cursor)?;
@@ -37,7 +37,7 @@ impl Stake {
             created,
             cooldown_period,
             cooldown_started,
-            accured_reward,
+            accrued_reward,
             accrued_slash,
             allow_auto_compound,
             paid,

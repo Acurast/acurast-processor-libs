@@ -56,7 +56,7 @@ mod test {
                     created: 8_930_271,
                     cooldown_period: 28_800,
                     cooldown_started: None,
-                    accured_reward: BigUint::from_str("0").unwrap(),
+                    accrued_reward: BigUint::from_str("0").unwrap(),
                     accrued_slash: BigUint::from_str("0").unwrap(),
                     allow_auto_compound: true,
                     paid: BigUint::from_str("0").unwrap(),
