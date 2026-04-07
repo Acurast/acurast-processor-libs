@@ -96,6 +96,10 @@ impl AcurastRpcClient {
 
 #[uniffi::export(async_runtime = "tokio")]
 impl AcurastRpcClient {
+    pub async fn get_finalized_block_hash(&self, timeout: Option<u64>) -> Result<Option<String>> {
+        self.acurastrpc.get_finalized_block_hash(timeout).await
+    }
+
     pub async fn get_header(
         &self,
         block_hash: Option<Vec<u8>>,

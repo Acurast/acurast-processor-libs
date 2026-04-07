@@ -27,9 +27,14 @@ pub trait AcurastRpc: Send + Sync {
         block_number: Option<i64>,
         timeout: Option<u64>,
     ) -> Result<Option<String>>;
+    async fn get_finalized_block_hash(&self, timeout: Option<u64>) -> Result<Option<String>>;
     async fn get_header(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>)
         -> Result<Header>;
-    async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Result<u32>;
+    async fn get_api_version(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<u32>;
     async fn get_runtime_version(
         &self,
         block_hash: Option<Vec<u8>>,
@@ -47,7 +52,11 @@ pub trait AcurastRpc: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Option<Vec<u8>>;
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<Option<String>>;
+    async fn submit_extrinsic(
+        &self,
+        extrinsic: Vec<u8>,
+        timeout: Option<u64>,
+    ) -> Result<Option<String>>;
     async fn call(
         &self,
         method: String,
@@ -99,6 +108,13 @@ impl AcurastRpcImpl {
 
 #[async_trait]
 impl AcurastRpc for AcurastRpcImpl {
+    async fn get_finalized_block_hash(&self, timeout: Option<u64>) -> Result<Option<String>> {
+        self.chain
+            .get_finalized_head(timeout, &self.engine)
+            .await
+            .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
+    }
+
     async fn get_block_hash(
         &self,
         block_number: Option<i64>,
@@ -121,10 +137,13 @@ impl AcurastRpc for AcurastRpcImpl {
             .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
     }
 
-    async fn get_api_version(&self, block_hash: Option<Vec<u8>>, timeout: Option<u64>) -> Result<u32> {
+    async fn get_api_version(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<u32> {
         let key = acurast_processor_manager_api_version();
-        self
-            .state
+        self.state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
             .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
@@ -136,7 +155,9 @@ impl AcurastRpc for AcurastRpcImpl {
 
                 let storage = hex_to_ba(&storage);
                 let mut cursor = std::io::Cursor::new(storage);
-                cursor.read_u32::<LittleEndian>().map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
+                cursor
+                    .read_u32::<LittleEndian>()
+                    .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
             })
     }
 
@@ -199,7 +220,11 @@ impl AcurastRpc for AcurastRpcImpl {
         }
     }
 
-    async fn submit_extrinsic(&self, extrinsic: Vec<u8>, timeout: Option<u64>) -> Result<Option<String>> {
+    async fn submit_extrinsic(
+        &self,
+        extrinsic: Vec<u8>,
+        timeout: Option<u64>,
+    ) -> Result<Option<String>> {
         self.author
             .submit_extrinsic(extrinsic, timeout, &self.engine)
             .await
