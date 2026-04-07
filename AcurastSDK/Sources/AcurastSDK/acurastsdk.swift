@@ -567,6 +567,8 @@ public protocol AcurastRpcProtocol: AnyObject, Sendable {
     
     func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String?
     
+    func getFinalizedBlockHash(timeout: UInt64?) async throws  -> String?
+    
     func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
     func getApiVersion(blockHash: Data?, timeout: UInt64?) async throws  -> UInt32
@@ -643,6 +645,23 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> St
                 uniffi_acurastsdk_fn_method_acurastrpc_get_block_hash(
                     self.uniffiClonePointer(),
                     FfiConverterOptionInt64.lower(blockNumber),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionString.lift,
+            errorHandler: FfiConverterTypeAcurastError_lift
+        )
+}
+    
+open func getFinalizedBlockHash(timeout: UInt64?)async throws  -> String?  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acurastrpc_get_finalized_block_hash(
+                    self.uniffiClonePointer(),
+                    FfiConverterOptionUInt64.lower(timeout)
                 )
             },
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
@@ -846,6 +865,8 @@ public protocol AcurastRpcClientProtocol: AnyObject, Sendable {
     
     func getBlockHash(blockNumber: Int64?, timeout: UInt64?) async throws  -> String?
     
+    func getFinalizedBlockHash(timeout: UInt64?) async throws  -> String?
+    
     func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async throws  -> RuntimeVersion
@@ -941,6 +962,23 @@ open func getBlockHash(blockNumber: Int64?, timeout: UInt64?)async throws  -> St
                 uniffi_acurastsdk_fn_method_acurastrpcclient_get_block_hash(
                     self.uniffiClonePointer(),
                     FfiConverterOptionInt64.lower(blockNumber),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionString.lift,
+            errorHandler: FfiConverterTypeAcurastError_lift
+        )
+}
+    
+open func getFinalizedBlockHash(timeout: UInt64?)async throws  -> String?  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acurastrpcclient_get_finalized_block_hash(
+                    self.uniffiClonePointer(),
+                    FfiConverterOptionUInt64.lower(timeout)
                 )
             },
             pollFunc: ffi_acurastsdk_rust_future_poll_rust_buffer,
@@ -8974,34 +9012,40 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_block_hash() != 18315) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 3278) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_finalized_block_hash() != 10597) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 19281) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_header() != 35895) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 22921) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_api_version() != 57514) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 47673) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 13252) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 18053) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 39185) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 10984) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 39206) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 52034) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 43275) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 52316) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 16115) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 46858) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_call() != 61606) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_block_hash() != 48322) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_finalized_block_hash() != 59295) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 33956) {

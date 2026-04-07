@@ -29,6 +29,17 @@ impl Chain {
         self.read_string_result(response)
     }
 
+    pub async fn get_finalized_head(
+        &self,
+        timeout: Option<u64>,
+        engine: &Arc<dyn RpcEngine>,
+    ) -> Result<Option<String>, String> {
+        let params = json!([]);
+        let response = rpc_engine_request(engine, "chain_getFinalizedHead", params, timeout).await;
+
+        self.read_string_result(response)
+    }
+
     pub async fn get_header(
         &self,
         block_hash: Option<Vec<u8>>,
