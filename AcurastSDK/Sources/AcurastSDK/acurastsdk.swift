@@ -1131,7 +1131,7 @@ public protocol AcurastStorageProtocol: AnyObject, Sendable {
     
     func getAsset(managerId: Int32, blockHash: Data?, timeout: UInt64?) async  -> PalletUniquesItemDetails?
     
-    func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> [JobAssignment]
+    func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [JobAssignment]
     
     func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
     
@@ -1273,9 +1273,9 @@ open func getAsset(managerId: Int32, blockHash: Data?, timeout: UInt64?)async  -
         )
 }
     
-open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> [JobAssignment]  {
+open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> [JobAssignment]  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_assigned_jobs(
                     self.uniffiClonePointer(),
@@ -1286,8 +1286,7 @@ open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)as
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeJobAssignment.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -2164,7 +2163,7 @@ public protocol VxAcurastStorageProtocol: AnyObject, Sendable {
     
     func getAccountOverview(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> AccountOverview?
     
-    func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> [JobAssignment]
+    func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [JobAssignment]
     
     func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
     
@@ -2329,9 +2328,9 @@ open func getAccountOverview(accountId: Data, blockHash: Data?, timeout: UInt64?
         )
 }
     
-open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> [JobAssignment]  {
+open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> [JobAssignment]  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_assigned_jobs(
                     self.uniffiClonePointer(),
@@ -2342,8 +2341,7 @@ open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)as
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterSequenceTypeJobAssignment.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -9072,7 +9070,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_asset() != 60291) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_assigned_jobs() != 59376) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_assigned_jobs() != 37004) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_attestation() != 55529) {
@@ -9141,7 +9139,7 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_account_overview() != 5831) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_assigned_jobs() != 15193) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_assigned_jobs() != 11672) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_registration() != 27490) {

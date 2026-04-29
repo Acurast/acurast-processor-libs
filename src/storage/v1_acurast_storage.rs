@@ -90,7 +90,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<JobAssignment> {
+    ) -> Result<Vec<JobAssignment>> {
         self.base
             .get_assigned_jobs(account_id, block_hash, timeout)
             .await
