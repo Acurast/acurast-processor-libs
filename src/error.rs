@@ -9,3 +9,9 @@ pub enum AcurastError {
     #[error("Unknown error")]
     Unknown,
 }
+
+impl From<String> for AcurastError {
+    fn from(s: String) -> Self {
+        AcurastError::RuntimeError(s)
+    }
+}

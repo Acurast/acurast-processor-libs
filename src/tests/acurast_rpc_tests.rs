@@ -129,7 +129,7 @@ async fn test_get_assigned_jobs() {
     let account_hex = "967dd37bb56eb6352d956b4ad4c557118ba90b0d6ccf10fa30cbaed39940d298";
     let decoded_bytes = hex::decode(account_hex).expect("Decoding failed");
 
-    let job_assignment = storage.get_assigned_jobs(&decoded_bytes, None, None).await;
+    let job_assignment = storage.get_assigned_jobs(&decoded_bytes, None, None).await.unwrap();
     println!(
         "job_assigments:job_id {:?}",
         job_assignment.first().unwrap().job_id.id.to_u8a()

@@ -78,7 +78,7 @@ pub trait VXAcurastStorage: Send + Sync {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<JobAssignment>;
+    ) -> Result<Vec<JobAssignment>>;
 
     async fn get_job_registration(
         &self,
@@ -295,7 +295,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Vec<JobAssignment> {
+    ) -> Result<Vec<JobAssignment>> {
         let key = acurast_marketplace_stored_matches(account_id);
 
         let mut jobs: Vec<JobAssignment> = Vec::new();
@@ -303,39 +303,32 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         let keys = self
             .state
             .get_keys(&key, block_hash, timeout, &self.engine)
-            .await
-            .unwrap_or(Vec::new());
-        if let Ok(storage) = self
+            .await?;
+        let storage = self
             .state
             .get_storage_at(keys, None, None, &self.engine)
-            .await
-        {
-            log::debug!("get_assigned_jobs {:?}", storage);
-            if !storage.is_empty() {
-                for change in &storage[0].changes {
-                    let change: Vec<&str> = change
-                        .iter()
-                        .filter_map(|c| c.as_ref().map(|s| s.as_str()))
-                        .collect();
+            .await?;
+        log::debug!("get_assigned_jobs {:?}", storage);
+        if !storage.is_empty() {
+            for change in &storage[0].changes {
+                let change: Vec<&str> = change
+                    .iter()
+                    .filter_map(|c| c.as_ref().map(|s| s.as_str()))
+                    .collect();
 
-                    if change.len() < 2 {
-                        continue;
-                    }
-
-                    let job_assignment = JobAssignment::read(
-                        change,
-                        self.version,
-                    )
-                    .unwrap();
-                    jobs.push(job_assignment);
-                    /*if let Ok(job_assignment) = JobAssignment::read(change.iter().map(|s| s.as_str()).collect(), 0) {
-                        jobs.push(job_assignment);
-                    }*/
+                if change.len() < 2 {
+                    continue;
                 }
+
+                let job_assignment = JobAssignment::read(
+                    change,
+                    self.version,
+                )
+                .unwrap();
+                jobs.push(job_assignment);
             }
-            return jobs;
         }
-        jobs
+        Ok(jobs)
     }
 
     async fn get_job_registration(
