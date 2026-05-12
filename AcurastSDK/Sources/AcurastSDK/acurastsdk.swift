@@ -5986,6 +5986,76 @@ public func FfiConverterTypeProcessorVersion_lower(_ value: ProcessorVersion) ->
 }
 
 
+public struct RequiredProcessorVersion {
+    public var platform: UInt32
+    public var buildNumber: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(platform: UInt32, buildNumber: UInt32) {
+        self.platform = platform
+        self.buildNumber = buildNumber
+    }
+}
+
+#if compiler(>=6)
+extension RequiredProcessorVersion: Sendable {}
+#endif
+
+
+extension RequiredProcessorVersion: Equatable, Hashable {
+    public static func ==(lhs: RequiredProcessorVersion, rhs: RequiredProcessorVersion) -> Bool {
+        if lhs.platform != rhs.platform {
+            return false
+        }
+        if lhs.buildNumber != rhs.buildNumber {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(platform)
+        hasher.combine(buildNumber)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRequiredProcessorVersion: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RequiredProcessorVersion {
+        return
+            try RequiredProcessorVersion(
+                platform: FfiConverterUInt32.read(from: &buf), 
+                buildNumber: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RequiredProcessorVersion, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.platform, into: &buf)
+        FfiConverterUInt32.write(value.buildNumber, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRequiredProcessorVersion_lift(_ buf: RustBuffer) throws -> RequiredProcessorVersion {
+    return try FfiConverterTypeRequiredProcessorVersion.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRequiredProcessorVersion_lower(_ value: RequiredProcessorVersion) -> RustBuffer {
+    return FfiConverterTypeRequiredProcessorVersion.lower(value)
+}
+
+
 public struct Reward {
     public var current: BigRational
     public var next: Next?
@@ -7550,7 +7620,7 @@ extension Platform: Equatable, Hashable {}
 
 public enum ProcessorVersionRequirements {
     
-    case min(platform: UInt32, buildNumber: UInt32
+    case min(versions: [RequiredProcessorVersion]
     )
 }
 
@@ -7569,7 +7639,7 @@ public struct FfiConverterTypeProcessorVersionRequirements: FfiConverterRustBuff
         let variant: Int32 = try readInt(&buf)
         switch variant {
         
-        case 1: return .min(platform: try FfiConverterUInt32.read(from: &buf), buildNumber: try FfiConverterUInt32.read(from: &buf)
+        case 1: return .min(versions: try FfiConverterSequenceTypeRequiredProcessorVersion.read(from: &buf)
         )
         
         default: throw UniffiInternalError.unexpectedEnumCase
@@ -7580,10 +7650,9 @@ public struct FfiConverterTypeProcessorVersionRequirements: FfiConverterRustBuff
         switch value {
         
         
-        case let .min(platform,buildNumber):
+        case let .min(versions):
             writeInt(&buf, Int32(1))
-            FfiConverterUInt32.write(platform, into: &buf)
-            FfiConverterUInt32.write(buildNumber, into: &buf)
+            FfiConverterSequenceTypeRequiredProcessorVersion.write(versions, into: &buf)
             
         }
     }
@@ -8708,6 +8777,31 @@ fileprivate struct FfiConverterSequenceTypeMultiOrigin: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeMultiOrigin.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeRequiredProcessorVersion: FfiConverterRustBuffer {
+    typealias SwiftType = [RequiredProcessorVersion]
+
+    public static func write(_ value: [RequiredProcessorVersion], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeRequiredProcessorVersion.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [RequiredProcessorVersion] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [RequiredProcessorVersion]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeRequiredProcessorVersion.read(from: &buf))
         }
         return seq
     }

@@ -104,9 +104,32 @@ impl Default for JobRegistrationExtra {
     }
 }
 
+#[derive(uniffi::Record, Debug)]
+pub struct RequiredProcessorVersion {
+    pub platform: u32,
+    pub build_number: u32,
+}
+
+impl RequiredProcessorVersion {
+    pub fn read(cursor: &mut Cursor<Vec<u8>>) -> Result<Self, Box<dyn Error>> {
+        let mut platform_buf = [0u8; 4];
+        cursor.read_exact(&mut platform_buf)?;
+        let platform = u32::from_le_bytes(platform_buf);
+
+        let mut build_number_buf = [0u8; 4];
+        cursor.read_exact(&mut build_number_buf)?;
+        let build_number = u32::from_le_bytes(build_number_buf);
+
+        Ok(RequiredProcessorVersion {
+            platform,
+            build_number,
+        })
+    }
+}
+
 #[derive(uniffi::Enum, Debug)]
 pub enum ProcessorVersionRequirements {
-    Min { platform: u32, build_number: u32 },
+    Min { versions: Vec<RequiredProcessorVersion> },
 }
 
 impl ProcessorVersionRequirements {
@@ -118,18 +141,8 @@ impl ProcessorVersionRequirements {
 
         match id {
             0 => {
-                let mut platform_buf = [0u8; 4];
-                cursor.read_exact(&mut platform_buf)?;
-                let platform = u32::from_le_bytes(platform_buf);
-
-                let mut build_number_buf = [0u8; 4];
-                cursor.read_exact(&mut build_number_buf)?;
-                let build_number = u32::from_le_bytes(build_number_buf);
-
-                Ok(ProcessorVersionRequirements::Min {
-                    platform,
-                    build_number,
-                })
+                let versions = read_list(cursor, RequiredProcessorVersion::read)?;
+                Ok(ProcessorVersionRequirements::Min { versions })
             }
             _ => Err(format!("Unknown ProcessorVersionRequirements ID: {}", id).into()),
         }
@@ -245,5 +258,47 @@ impl JobModule {
                 format!("Unknown JobModule {}", id),
             ))),
         }
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hex::hex_to_ba;
+
+    #[test]
+    fn decode_job_requirements_with_processor_version_min_vec() {
+        // JobRequirements with:
+        //   assignment_strategy = Competing                           -> 01
+        //   slots               = 64                                  -> 40
+        //   reward              = 1000 (u128 LE)                      -> e8030000000000000000000000000000
+        //   min_reputation      = None                                -> 00
+        //   processor_version   = Some(Min([{platform=0, build=118}]))-> 01 00 04 00000000 76000000
+        //   runtime             = NodeJSWithBundle                    -> 01
+        //
+        // This exercises the BoundedVec length prefix that must be consumed
+        // before the version structs. Without the fix the next byte
+        // (the runtime tag) would be read from the wrong offset and decode
+        // as NodeJS instead of NodeJSWithBundle.
+        let encoded = hex_to_ba(
+            "0x0140e8030000000000000000000000000000000100040000000076000000 01"
+                .replace(' ', "")
+                .as_str(),
+        );
+        let mut cursor = Cursor::new(encoded);
+
+        let requirements = JobRequirements::read(&mut cursor).unwrap();
+
+        assert!(matches!(requirements.assignment_strategy, AssignmentStrategy::Competing));
+        assert_eq!(requirements.slots, 64);
+        assert_eq!(requirements.reward, BigUint::from(1000u32));
+        assert!(requirements.min_reputation.is_none());
+
+        let processor_version = requirements.processor_version.expect("processor_version present");
+        let ProcessorVersionRequirements::Min { versions } = processor_version;
+        assert_eq!(versions.len(), 1);
+        assert_eq!(versions[0].platform, 0);
+        assert_eq!(versions[0].build_number, 118);
+
+        assert!(matches!(requirements.runtime, Runtime::NodeJSWithBundle));
     }
 }
