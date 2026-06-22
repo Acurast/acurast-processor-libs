@@ -4,6 +4,7 @@ use std::io::Cursor;
 #[derive(Debug, PartialEq, uniffi::Enum)]
 pub enum Platform {
     Android,
+    AndroidLite,
     Ios,
 }
 
@@ -15,6 +16,7 @@ impl Platform {
         match platform_value {
             0 => Platform::Android,
             1 => Platform::Ios,
+            2 => Platform::AndroidLite,
             _ => unreachable!("Unknown platform value"),
         }
     }
@@ -23,6 +25,7 @@ impl Platform {
         match self {
             Platform::Android => vec![0x00, 0x00, 0x00, 0x00],
             Platform::Ios => vec![0x00, 0x00, 0x00, 0x01],
+            Platform::AndroidLite => vec![0x00, 0x00, 0x00, 0x02],
         }
     }
 }
