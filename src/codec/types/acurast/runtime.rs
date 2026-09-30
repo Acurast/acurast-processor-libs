@@ -4,6 +4,7 @@ use std::{error::Error, io::{Cursor, Read}};
 pub enum Runtime {
     NodeJS,
     NodeJSWithBundle,
+    Shell,
 }
 
 impl Runtime {
@@ -11,6 +12,7 @@ impl Runtime {
         match self {
             Runtime::NodeJS => 0,
             Runtime::NodeJSWithBundle => 1,
+            Runtime::Shell => 2,
         }
     }
 
@@ -22,6 +24,7 @@ impl Runtime {
         match id {
             0 => Ok(Runtime::NodeJS),
             1 => Ok(Runtime::NodeJSWithBundle),
+            2 => Ok(Runtime::Shell),
             _ => Err(format!("Unknown Runtime ID: {}", id).into()),
         }
     }

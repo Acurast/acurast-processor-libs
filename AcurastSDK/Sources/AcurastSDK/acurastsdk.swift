@@ -1133,13 +1133,13 @@ public protocol AcurastStorageProtocol: AnyObject, Sendable {
     
     func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [JobAssignment]
     
-    func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
+    func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> Attestation?
     
-    func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobData?
+    func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async throws  -> JobData?
     
-    func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> JobEnvironment?
+    func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> JobEnvironment?
     
-    func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
+    func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async throws  -> JobRegistration?
     
     func getManagementData(managerId: Int32, managerAccountId: Data?, blockHash: Data?, timeout: UInt64?) async throws  -> ManagementData?
     
@@ -1147,9 +1147,9 @@ public protocol AcurastStorageProtocol: AnyObject, Sendable {
     
     func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> Int32?
     
-    func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplaceAdvertisementRestriction?
+    func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> MarketplaceAdvertisementRestriction?
     
-    func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplacePricing?
+    func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> MarketplacePricing?
     
     func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async throws  -> [UInt8?]
     
@@ -1290,9 +1290,9 @@ open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)as
         )
 }
     
-open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> Attestation?  {
+open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> Attestation?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_attestation(
                     self.uniffiClonePointer(),
@@ -1303,14 +1303,13 @@ open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeAttestation.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async  -> JobData?  {
+open func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async throws  -> JobData?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_job_data(
                     self.uniffiClonePointer(),
@@ -1321,14 +1320,13 @@ open func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UI
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobData.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> JobEnvironment?  {
+open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> JobEnvironment?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_job_environment(
                     self.uniffiClonePointer(),
@@ -1339,14 +1337,13 @@ open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, block
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobEnvironment.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async  -> JobRegistration?  {
+open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async throws  -> JobRegistration?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_job_registration(
                     self.uniffiClonePointer(),
@@ -1357,8 +1354,7 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobRegistration.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -1414,9 +1410,9 @@ open func getManagerIdentifier(accountId: Data, blockHash: Data?, timeout: UInt6
         )
 }
     
-open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplaceAdvertisementRestriction?  {
+open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> MarketplaceAdvertisementRestriction?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_marketplace_advertisement_restriction(
                     self.uniffiClonePointer(),
@@ -1427,14 +1423,13 @@ open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Dat
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeMarketplaceAdvertisementRestriction.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplacePricing?  {
+open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> MarketplacePricing?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_acuraststorage_get_marketplace_pricing(
                     self.uniffiClonePointer(),
@@ -1445,8 +1440,7 @@ open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeMarketplacePricing.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -2165,19 +2159,19 @@ public protocol VxAcurastStorageProtocol: AnyObject, Sendable {
     
     func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> [JobAssignment]
     
-    func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobRegistration?
+    func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async throws  -> JobRegistration?
     
-    func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async  -> JobData?
+    func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?) async throws  -> JobData?
     
-    func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> JobEnvironment?
+    func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> JobEnvironment?
     
     func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Bool
     
-    func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> Attestation?
+    func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> Attestation?
     
-    func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplacePricing?
+    func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> MarketplacePricing?
     
-    func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> MarketplaceAdvertisementRestriction?
+    func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?) async throws  -> MarketplaceAdvertisementRestriction?
     
     func getMetricPoolIds(names: [String], blockHash: Data?, timeout: UInt64?) async throws  -> [UInt8?]
     
@@ -2345,9 +2339,9 @@ open func getAssignedJobs(accountId: Data, blockHash: Data?, timeout: UInt64?)as
         )
 }
     
-open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async  -> JobRegistration?  {
+open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async throws  -> JobRegistration?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_job_registration(
                     self.uniffiClonePointer(),
@@ -2358,14 +2352,13 @@ open func getJobRegistration(jobIdentifier: JobIdentifier, blockHash: Data?, tim
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobRegistration.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async  -> JobData?  {
+open func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UInt64?)async throws  -> JobData?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_job_data(
                     self.uniffiClonePointer(),
@@ -2376,14 +2369,13 @@ open func getJobData(jobIdentifier: JobIdentifier, blockHash: Data?, timeout: UI
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobData.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> JobEnvironment?  {
+open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> JobEnvironment?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_job_environment(
                     self.uniffiClonePointer(),
@@ -2394,8 +2386,7 @@ open func getJobEnvironment(jobIdentifier: JobIdentifier, accountId: Data, block
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeJobEnvironment.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -2417,9 +2408,9 @@ open func isAttested(accountId: Data, blockHash: Data?, timeout: UInt64?)async  
         )
 }
     
-open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> Attestation?  {
+open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> Attestation?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_attestation(
                     self.uniffiClonePointer(),
@@ -2430,14 +2421,13 @@ open func getAttestation(accountId: Data, blockHash: Data?, timeout: UInt64?)asy
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeAttestation.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplacePricing?  {
+open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> MarketplacePricing?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_marketplace_pricing(
                     self.uniffiClonePointer(),
@@ -2448,14 +2438,13 @@ open func getMarketplacePricing(accountId: Data, blockHash: Data?, timeout: UInt
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeMarketplacePricing.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
-open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?)async  -> MarketplaceAdvertisementRestriction?  {
+open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Data?, timeout: UInt64?)async throws  -> MarketplaceAdvertisementRestriction?  {
     return
-        try!  await uniffiRustCallAsync(
+        try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_acurastsdk_fn_method_vxacuraststorage_get_marketplace_advertisement_restriction(
                     self.uniffiClonePointer(),
@@ -2466,8 +2455,7 @@ open func getMarketplaceAdvertisementRestriction(accountId: Data, blockHash: Dat
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeMarketplaceAdvertisementRestriction.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
     
@@ -7407,6 +7395,7 @@ public enum JobModule {
     
     case dataEncryption
     case llm
+    case shell
 }
 
 
@@ -7428,6 +7417,8 @@ public struct FfiConverterTypeJobModule: FfiConverterRustBuffer {
         
         case 2: return .llm
         
+        case 3: return .shell
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -7442,6 +7433,10 @@ public struct FfiConverterTypeJobModule: FfiConverterRustBuffer {
         
         case .llm:
             writeInt(&buf, Int32(2))
+        
+        
+        case .shell:
+            writeInt(&buf, Int32(3))
         
         }
     }
@@ -7554,6 +7549,7 @@ extension Kind: Equatable, Hashable {}
 public enum Platform {
     
     case android
+    case androidLite
     case ios
 }
 
@@ -7574,7 +7570,9 @@ public struct FfiConverterTypePlatform: FfiConverterRustBuffer {
         
         case 1: return .android
         
-        case 2: return .ios
+        case 2: return .androidLite
+        
+        case 3: return .ios
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -7588,8 +7586,12 @@ public struct FfiConverterTypePlatform: FfiConverterRustBuffer {
             writeInt(&buf, Int32(1))
         
         
-        case .ios:
+        case .androidLite:
             writeInt(&buf, Int32(2))
+        
+        
+        case .ios:
+            writeInt(&buf, Int32(3))
         
         }
     }
@@ -7685,6 +7687,7 @@ public enum Runtime {
     
     case nodeJs
     case nodeJsWithBundle
+    case shell
 }
 
 
@@ -7706,6 +7709,8 @@ public struct FfiConverterTypeRuntime: FfiConverterRustBuffer {
         
         case 2: return .nodeJsWithBundle
         
+        case 3: return .shell
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -7720,6 +7725,10 @@ public struct FfiConverterTypeRuntime: FfiConverterRustBuffer {
         
         case .nodeJsWithBundle:
             writeInt(&buf, Int32(2))
+        
+        
+        case .shell:
+            writeInt(&buf, Int32(3))
         
         }
     }
@@ -9167,16 +9176,16 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_assigned_jobs() != 37004) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_attestation() != 55529) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_attestation() != 12581) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_data() != 50417) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_data() != 1282) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_environment() != 382) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_environment() != 49120) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_registration() != 27665) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_job_registration() != 65515) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_management_data() != 22120) {
@@ -9188,10 +9197,10 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_manager_identifier() != 44621) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_marketplace_advertisement_restriction() != 18749) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_marketplace_advertisement_restriction() != 64909) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_marketplace_pricing() != 22806) {
+    if (uniffi_acurastsdk_checksum_method_acuraststorage_get_marketplace_pricing() != 4065) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acuraststorage_get_metric_pool_ids() != 16914) {
@@ -9236,25 +9245,25 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_assigned_jobs() != 11672) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_registration() != 27490) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_registration() != 21894) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_data() != 10405) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_data() != 184) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_environment() != 45917) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_job_environment() != 37844) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_is_attested() != 60892) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 63735) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_attestation() != 61804) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_pricing() != 54880) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_pricing() != 36414) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_advertisement_restriction() != 60953) {
+    if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_marketplace_advertisement_restriction() != 31656) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_vxacuraststorage_get_metric_pool_ids() != 56428) {
