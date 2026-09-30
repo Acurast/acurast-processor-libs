@@ -64,7 +64,8 @@ async fn test_get_job_environment() {
             None,
             None,
         )
-        .await;
+        .await
+        .unwrap();
     println!("test_get_job_environment {:?}", environment);
     assert!(environment.is_some())
 }
@@ -109,7 +110,7 @@ async fn test_get_attestation() {
     let decoded_bytes = hex::decode(hex_str).expect("Decoding failed");
     println!("test_get_attestation: {:?}", decoded_bytes);
     let byte_slice: &[u8] = &decoded_bytes;
-    let attestation = storage.get_attestation(byte_slice, None, None).await;
+    let attestation = storage.get_attestation(byte_slice, None, None).await.unwrap();
     match attestation {
         Some(r) => {
             println!("attestation owner: {:?}", r.content);
@@ -145,7 +146,8 @@ async fn test_get_assigned_jobs() {
     let job_id = &job_assignment.first().unwrap().job_id;
     let job_registration = storage
         .get_job_registration(job_id.clone(), None, None)
-        .await;
+        .await
+        .unwrap();
     println!("job_registration {:?}", job_registration);
 }
 

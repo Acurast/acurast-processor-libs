@@ -85,14 +85,14 @@ pub trait VXAcurastStorage: Send + Sync {
         job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobRegistration>;
+    ) -> Result<Option<JobRegistration>>;
 
     async fn get_job_data(
         &self,
         job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobData>;
+    ) -> Result<Option<JobData>>;
 
     async fn get_job_environment(
         &self,
@@ -100,7 +100,7 @@ pub trait VXAcurastStorage: Send + Sync {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobEnvironment>;
+    ) -> Result<Option<JobEnvironment>>;
 
     async fn is_attested(
         &self,
@@ -114,21 +114,21 @@ pub trait VXAcurastStorage: Send + Sync {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Attestation>;
+    ) -> Result<Option<Attestation>>;
 
     async fn get_marketplace_pricing(
         &self,
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<MarketplacePricing>;
+    ) -> Result<Option<MarketplacePricing>>;
 
     async fn get_marketplace_advertisement_restriction(
         &self,
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<MarketplaceAdvertisementRestriction>;
+    ) -> Result<Option<MarketplaceAdvertisementRestriction>>;
 
     async fn get_metric_pool_ids(
         &self,
@@ -324,7 +324,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
                     change,
                     self.version,
                 )
-                .unwrap();
+                .map_err(|e| AcurastError::RuntimeError(e.to_string()))?;
                 jobs.push(job_assignment);
             }
         }
@@ -336,7 +336,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobRegistration> {
+    ) -> Result<Option<JobRegistration>> {
         let key = acurast_stored_job_registration(&job_identifier);
 
         if let Ok(Some(storage)) = self
@@ -346,9 +346,11 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         {
             let ba = hex_to_ba(&storage);
             let mut cursor = Cursor::new(ba);
-            return Some(JobRegistration::read(&mut cursor, self.version).unwrap());
+            return JobRegistration::read(&mut cursor, self.version)
+                .map(Some)
+                .map_err(|e| AcurastError::RuntimeError(e.to_string()));
         }
-        None
+        Ok(None)
     }
 
     async fn get_job_data(
@@ -356,7 +358,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobData> {
+    ) -> Result<Option<JobData>> {
         let registration_key = acurast_stored_job_registration(&job_identifier);
         let key_id_key = acurast_marketplace_job_key_ids(&job_identifier);
 
@@ -370,22 +372,29 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
             .get_storage_at(keys, block_hash, timeout, &self.engine)
             .await
         else {
-            return None;
+            return Ok(None);
         };
 
-        let changes = storage.first().map(|r| &r.changes)?;
+        let Some(changes) = storage.first().map(|r| &r.changes) else {
+            return Ok(None);
+        };
 
-        let registration = read_changes_opt(changes, 0, |bytes| {
-            JobRegistration::read(&mut Cursor::new(bytes), self.version).unwrap()
-        })?;
+        let Some(registration) = read_changes_opt(changes, 0, |bytes| {
+            JobRegistration::read(&mut Cursor::new(bytes), self.version)
+        })
+        .transpose()
+        .map_err(|e| AcurastError::RuntimeError(e.to_string()))?
+        else {
+            return Ok(None);
+        };
         let key_id = read_changes_opt(changes, 1, |bytes| {
             bytes
         });
 
-        Some(JobData {
+        Ok(Some(JobData {
             registration,
             key_id,
-        })
+        }))
     }
 
     async fn get_job_environment(
@@ -394,7 +403,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobEnvironment> {
+    ) -> Result<Option<JobEnvironment>> {
         let key = acurast_execution_environment(&job_identifier, account_id);
         if let Ok(Some(storage)) = self
             .state
@@ -403,9 +412,11 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         {
             let ba = hex_to_ba(&storage);
             let mut cursor = Cursor::new(ba);
-            return Some(JobEnvironment::read(&mut cursor, self.version).unwrap());
+            return JobEnvironment::read(&mut cursor, self.version)
+                .map(Some)
+                .map_err(|e| AcurastError::RuntimeError(e.to_string()));
         }
-        None
+        Ok(None)
     }
 
     async fn is_attested(
@@ -437,7 +448,7 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Attestation> {
+    ) -> Result<Option<Attestation>> {
         let key = acurast_stored_attestation(account_id);
         if let Ok(Some(storage)) = self
             .state
@@ -446,9 +457,11 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         {
             let ba = hex_to_ba(&storage);
             let mut cursor = Cursor::new(ba);
-            return Some(Attestation::read(&mut cursor).unwrap());
+            return Attestation::read(&mut cursor)
+                .map(Some)
+                .map_err(|e| AcurastError::RuntimeError(e.to_string()));
         }
-        None
+        Ok(None)
     }
 
     async fn get_marketplace_pricing(
@@ -456,19 +469,21 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<MarketplacePricing> {
+    ) -> Result<Option<MarketplacePricing>> {
         let key = acurast_marketplace_stored_advertisement_pricing(account_id);
         let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         else {
-            return None;
+            return Ok(None);
         };
 
         let ba = hex_to_ba(&storage);
         let mut cursor = Cursor::new(ba);
-        return Some(MarketplacePricing::read(&mut cursor).unwrap());
+        return MarketplacePricing::read(&mut cursor)
+            .map(Some)
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()));
     }
 
     async fn get_marketplace_advertisement_restriction(
@@ -476,19 +491,21 @@ impl VXAcurastStorage for V0AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<MarketplaceAdvertisementRestriction> {
+    ) -> Result<Option<MarketplaceAdvertisementRestriction>> {
         let key = acurast_marketplace_stored_advertisement_restriction(account_id);
         let Ok(Some(storage)) = self
             .state
             .get_storage(&key, block_hash, timeout, &self.engine)
             .await
         else {
-            return None;
+            return Ok(None);
         };
 
         let ba = hex_to_ba(&storage);
         let mut cursor = Cursor::new(ba);
-        return Some(MarketplaceAdvertisementRestriction::read(&mut cursor).unwrap());
+        return MarketplaceAdvertisementRestriction::read(&mut cursor)
+            .map(Some)
+            .map_err(|e| AcurastError::RuntimeError(e.to_string()));
     }
 
     async fn get_metric_pool_ids(

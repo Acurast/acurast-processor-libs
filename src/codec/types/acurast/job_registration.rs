@@ -245,6 +245,7 @@ impl AssignmentStrategy {
 pub enum JobModule {
     DataEncryption,
     LLM,
+    Shell,
 }
 
 impl JobModule {
@@ -253,6 +254,7 @@ impl JobModule {
         match id {
             0 => Ok(JobModule::DataEncryption),
             1 => Ok(JobModule::LLM),
+            2 => Ok(JobModule::Shell),
             _ => Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 format!("Unknown JobModule {}", id),
@@ -300,5 +302,48 @@ mod tests {
         assert_eq!(versions[0].build_number, 118);
 
         assert!(matches!(requirements.runtime, Runtime::NodeJSWithBundle));
+    }
+
+    #[test]
+    fn decode_job_registration_with_shell_runtime_and_module() {
+        // JobRegistration with:
+        //   script                      = "ipfs://"                   -> 1c 697066733a2f2f
+        //   allowed_sources             = None                        -> 00
+        //   allow_only_verified_sources = true                        -> 01
+        //   schedule                    = duration 16, start 0, end 16, interval 16, max_start_delay 120000
+        //   memory, network_requests, storage = 0                     -> 00000000 x3
+        //   required_modules            = [Shell]                     -> 04 02
+        //   assignment_strategy         = Single(Some([{source=0x11.., start_delay=0}]))
+        //                                                             -> 00 01 04 11..11 0000000000000000
+        //   slots                       = 1                           -> 01
+        //   reward                      = 1000 (u128 LE)              -> e8030000000000000000000000000000
+        //   min_reputation              = None                        -> 00
+        //   processor_version           = None                        -> 00
+        //   runtime                     = Shell                       -> 02
+        let encoded = hex_to_ba(
+            &format!(
+                "0x 1c697066733a2f2f 00 01 \
+                 1000000000000000 0000000000000000 1000000000000000 1000000000000000 c0d4010000000000 \
+                 00000000 00000000 00000000 \
+                 04 02 \
+                 00 01 04 {} 0000000000000000 \
+                 01 e8030000000000000000000000000000 00 00 02",
+                "11".repeat(32)
+            )
+            .replace(' ', ""),
+        );
+        let length = encoded.len() as u64;
+        let mut cursor = Cursor::new(encoded);
+
+        let registration = JobRegistration::read(&mut cursor, 1).unwrap();
+
+        assert_eq!(cursor.position(), length);
+        assert_eq!(registration.script, b"ipfs://".to_vec());
+        assert!(registration.allow_only_verified_sources);
+        assert_eq!(registration.schedule.max_start_delay, 120000);
+        assert!(matches!(registration.required_modules.as_slice(), [JobModule::Shell]));
+        assert!(matches!(registration.extra.requirements.assignment_strategy, AssignmentStrategy::Single));
+        assert_eq!(registration.extra.requirements.slots, 1);
+        assert!(matches!(registration.extra.requirements.runtime, Runtime::Shell));
     }
 }

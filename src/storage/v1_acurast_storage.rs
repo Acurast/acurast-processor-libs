@@ -101,7 +101,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobRegistration> {
+    ) -> Result<Option<JobRegistration>> {
         self.base
             .get_job_registration(job_identifier, block_hash, timeout)
             .await
@@ -112,7 +112,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         job_identifier: JobIdentifier,
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobData> {
+    ) -> Result<Option<JobData>> {
         self.base
             .get_job_data(job_identifier, block_hash, timeout)
             .await
@@ -124,7 +124,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<JobEnvironment> {
+    ) -> Result<Option<JobEnvironment>> {
         self.base
             .get_job_environment(job_identifier, account_id, block_hash, timeout)
             .await
@@ -144,7 +144,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<Attestation> {
+    ) -> Result<Option<Attestation>> {
         self.base
             .get_attestation(account_id, block_hash, timeout)
             .await
@@ -155,7 +155,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<MarketplacePricing> {
+    ) -> Result<Option<MarketplacePricing>> {
         self.base
             .get_marketplace_pricing(account_id, block_hash, timeout)
             .await
@@ -166,7 +166,7 @@ impl VXAcurastStorage for V1AcurastStorageImpl {
         account_id: &[u8],
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
-    ) -> Option<MarketplaceAdvertisementRestriction> {
+    ) -> Result<Option<MarketplaceAdvertisementRestriction>> {
         self.base
             .get_marketplace_advertisement_restriction(account_id, block_hash, timeout)
             .await
