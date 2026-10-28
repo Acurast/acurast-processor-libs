@@ -1,0 +1,21 @@
+[package]
+name = "acurast-p2p-proto"
+description = "Shared protocol definitions of the Acurast P2P layer (iroh): ALPNs, tags, messages, framing."
+license = "MIT"
+authors = { workspace = true }
+version = { workspace = true }
+repository = { workspace = true }
+edition = "2021"
+
+[dependencies]
+blake2 = { version = "0.10", default-features = false }
+postcard = { version = "1", default-features = false, features = ["alloc"], optional = true }
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+hex-literal = { workspace = true }
+
+[features]
+default = ["std"]
+# Without `std` only the constants, tags and hashes are available (enough for the runtime).
+std = ["blake2/std", "dep:postcard", "postcard/use-std", "dep:serde", "serde/std"]
