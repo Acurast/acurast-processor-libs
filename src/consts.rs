@@ -23,6 +23,17 @@ pub const TAG_GOSSIP: &[u8] = b"acurast/gossip/msg/v1";
 /// Network secret commitment.
 pub const TAG_COMMIT: &[u8] = b"acurast/secret/commit/v1";
 
+// Roles of an endpoint, as bits of the value returned by the `P2pApi_roles` runtime API.
+
+/// The endpoint is registered by an account.
+pub const ROLE_REGISTERED: u8 = 0b0001;
+/// The endpoint is registered by an attested processor.
+pub const ROLE_PROCESSOR: u8 = 0b0010;
+/// The endpoint is registered by a manager.
+pub const ROLE_MANAGER: u8 = 0b0100;
+/// The endpoint is a relay node.
+pub const ROLE_RELAY: u8 = 0b1000;
+
 // Application close codes.
 
 /// Normal close.
@@ -52,6 +63,8 @@ pub const MAX_DIRECT_ADDRS: usize = 8;
 pub const MAX_NAMESPACES: usize = 8;
 /// Maximum number of records returned by one `Discover`.
 pub const MAX_DISCOVER_LIMIT: u16 = 100;
+/// Maximum length of a relay URL in bytes, on chain and in registry records.
+pub const MAX_RELAY_URL_LEN: usize = 128;
 /// Maximum length of a namespace in bytes.
 pub const MAX_NAMESPACE_LEN: usize = 64;
 /// Maximum length of a job-defined protocol name in `JobHello`.
