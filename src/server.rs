@@ -7,7 +7,7 @@ use std::{
 
 use acurast_p2p_proto::{
 	frame::{self, HEADER_LEN},
-	messages::{RegistryRequest, RegistryResponse},
+	messages::{Record, RegistryRequest, RegistryResponse},
 	EndpointId, ERR_LIMIT, ERR_PROTOCOL, ERR_ROLE, MAX_FRAME, ROLE_REGISTERED, ROLE_RELAY,
 };
 use iroh::{
@@ -52,6 +52,12 @@ impl Registry {
 
 	pub fn is_empty(&self) -> bool {
 		self.len() == 0
+	}
+
+	/// Record of `id` held here, if present and not expired.
+	pub fn lookup(&self, id: &EndpointId) -> Option<Record> {
+		let store = self.store.lock().expect("registry store lock poisoned");
+		store.lookup(id, Instant::now())
 	}
 
 	fn handle(&self, caller: EndpointId, roles: u8, request: RegistryRequest) -> RegistryResponse {

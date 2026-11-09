@@ -109,7 +109,8 @@ impl Store {
 		Ok(RegistryResponse::Registered { ttl_secs })
 	}
 
-	fn lookup(&self, id: &EndpointId, now: Instant) -> Option<Record> {
+	/// Record of `id` at time `now`, if present and not expired.
+	pub fn lookup(&self, id: &EndpointId, now: Instant) -> Option<Record> {
 		self.records.get(id).map(|stored| answer(stored, now))
 	}
 
