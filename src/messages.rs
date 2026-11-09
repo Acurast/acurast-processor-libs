@@ -108,6 +108,32 @@ pub enum JobError {
 	Forbidden,
 }
 
+// Job assignments, ALPN `acurast/assignments/1`.
+
+/// Sent by a relay node when jobs were assigned to the processor. Only a hint: the processor reads
+/// its assignments from the chain before acting on it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AssignmentNotice {
+	/// Block in which the jobs were assigned.
+	pub block: u32,
+	/// SCALE-encoded `JobId<AccountId32>` of the assigned jobs, at most [`crate::MAX_NOTICE_JOBS`].
+	pub jobs: Vec<Vec<u8>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AssignmentNoticeReply {
+	Ok,
+	Err(AssignmentNoticeError),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AssignmentNoticeError {
+	/// The caller is not a relay node.
+	Forbidden,
+	/// The notice breaks a limit.
+	Invalid,
+}
+
 // Network secret, ALPN `acurast/secret-fetch/1`.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

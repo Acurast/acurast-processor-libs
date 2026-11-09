@@ -152,6 +152,14 @@ mod tests {
 	}
 
 	#[test]
+	fn assignment_messages_round_trip() {
+		round_trip(AssignmentNotice { block: 230_571, jobs: vec![vec![0, 1, 2], vec![3]] });
+		round_trip(AssignmentNotice { block: 1, jobs: vec![] });
+		round_trip(AssignmentNoticeReply::Ok);
+		round_trip(AssignmentNoticeReply::Err(AssignmentNoticeError::Forbidden));
+	}
+
+	#[test]
 	fn gossip_round_trip_and_signing_payload() {
 		round_trip(SignedGossip {
 			author: [1; 32],

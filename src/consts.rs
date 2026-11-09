@@ -8,6 +8,8 @@ pub const ALPN_REGISTRY: &[u8] = b"acurast/registry/1";
 pub const ALPN_SECRET_FETCH: &[u8] = b"acurast/secret-fetch/1";
 /// Connections to jobs running on a processor.
 pub const ALPN_JOB: &[u8] = b"acurast/job/1";
+/// Notices of new job assignments, sent by relay nodes to processors.
+pub const ALPN_ASSIGNMENTS: &[u8] = b"acurast/assignments/1";
 
 // Domain-separation tags: every signed or hashed value starts with one, so a signature or hash
 // made for one purpose can never be reused for another.
@@ -69,5 +71,7 @@ pub const MAX_RELAY_URL_LEN: usize = 128;
 pub const MAX_NAMESPACE_LEN: usize = 64;
 /// Maximum length of a job-defined protocol name in `JobHello`.
 pub const MAX_JOB_PROTOCOL_LEN: usize = 64;
+/// Jobs listed in one assignment notice.
+pub const MAX_NOTICE_JOBS: usize = 64;
 /// Maximum gossip payload in bytes.
 pub const GOSSIP_MAX_PAYLOAD: usize = 4 * 1024;
