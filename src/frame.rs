@@ -160,6 +160,26 @@ mod tests {
 	}
 
 	#[test]
+	fn manage_messages_round_trip() {
+		round_trip(ManageRequest { sent_at_ms: 1_762_700_000_000, command: ManageCommand::Status });
+		round_trip(ManageRequest { sent_at_ms: 1, command: ManageCommand::Reboot { force: true } });
+		round_trip(ManageRequest {
+			sent_at_ms: 1,
+			command: ManageCommand::RestartApp { force: false },
+		});
+		round_trip(ManageReply::Status(ProcessorStatus {
+			app_version: "1.2.3 (456)".into(),
+			os: "Android 16".into(),
+			battery_percent: Some(87),
+			charging: None,
+			busy: true,
+			uptime_secs: 3_600,
+		}));
+		round_trip(ManageReply::Accepted);
+		round_trip(ManageReply::Err(ManageError::Busy));
+	}
+
+	#[test]
 	fn gossip_round_trip_and_signing_payload() {
 		round_trip(SignedGossip {
 			author: [1; 32],

@@ -10,6 +10,8 @@ pub const ALPN_SECRET_FETCH: &[u8] = b"acurast/secret-fetch/1";
 pub const ALPN_JOB: &[u8] = b"acurast/job/1";
 /// Notices of new job assignments, sent by relay nodes to processors.
 pub const ALPN_ASSIGNMENTS: &[u8] = b"acurast/assignments/1";
+/// Commands of a manager to its processors.
+pub const ALPN_MANAGE: &[u8] = b"acurast/manage/1";
 
 // Domain-separation tags: every signed or hashed value starts with one, so a signature or hash
 // made for one purpose can never be reused for another.
@@ -73,5 +75,9 @@ pub const MAX_NAMESPACE_LEN: usize = 64;
 pub const MAX_JOB_PROTOCOL_LEN: usize = 64;
 /// Jobs listed in one assignment notice.
 pub const MAX_NOTICE_JOBS: usize = 64;
+/// Maximum age of a manager command in seconds: older commands are refused.
+pub const MANAGE_MAX_AGE_SECS: u64 = 60;
+/// Maximum length of a text field of a processor status in bytes.
+pub const MAX_STATUS_TEXT_LEN: usize = 64;
 /// Maximum gossip payload in bytes.
 pub const GOSSIP_MAX_PAYLOAD: usize = 4 * 1024;

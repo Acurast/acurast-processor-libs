@@ -134,6 +134,66 @@ pub enum AssignmentNoticeError {
 	Invalid,
 }
 
+// Manager commands, ALPN `acurast/manage/1`.
+
+/// Sent by a manager to one of its processors; one per connection.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ManageRequest {
+	/// When the manager sent the command (unix ms). Commands older than
+	/// [`crate::MANAGE_MAX_AGE_SECS`] are refused.
+	pub sent_at_ms: u64,
+	pub command: ManageCommand,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ManageCommand {
+	/// Current state of the processor.
+	Status,
+	/// Restarts the device. Without `force` it is refused while a job runs.
+	Reboot { force: bool },
+	/// Restarts the processor app. Without `force` it is refused while a job runs.
+	RestartApp { force: bool },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ManageReply {
+	/// Answer to `Status`.
+	Status(ProcessorStatus),
+	/// The command runs once the reply is sent.
+	Accepted,
+	Err(ManageError),
+}
+
+/// State of a processor, as reported to its manager.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProcessorStatus {
+	/// Version of the processor app, at most [`crate::MAX_STATUS_TEXT_LEN`] bytes.
+	pub app_version: String,
+	/// Operating system and its version, at most [`crate::MAX_STATUS_TEXT_LEN`] bytes.
+	pub os: String,
+	/// Battery level in percent.
+	pub battery_percent: Option<u8>,
+	pub charging: Option<bool>,
+	/// Whether a job is running.
+	pub busy: bool,
+	/// Seconds since the app started.
+	pub uptime_secs: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ManageError {
+	/// The caller is not the manager of this processor.
+	Forbidden,
+	/// The command is older than [`crate::MANAGE_MAX_AGE_SECS`] or comes from the future.
+	Stale,
+	/// A job runs and the command was not forced.
+	Busy,
+	/// The processor cannot run this command (e.g. reboot without device owner rights).
+	Unsupported,
+	/// The command could not be run.
+	Failed,
+}
+
 // Network secret, ALPN `acurast/secret-fetch/1`.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
