@@ -180,6 +180,36 @@ mod tests {
 	}
 
 	#[test]
+	fn telemetry_messages_round_trip() {
+		round_trip(TelemetryReport {
+			platform: TelemetryPlatform::Android,
+			app_version: "1.2.3 (456)".into(),
+			network: Some(NetworkReport {
+				udp_v4: true,
+				udp_v6: false,
+				global_v4: true,
+				global_v6: false,
+				symmetric_nat: Some(false),
+			}),
+			home_relay_connected: true,
+			connections: ConnectionStats {
+				direct: 4,
+				relayed: 1,
+				avg_time_to_direct_ms: Some(850),
+			},
+		});
+		round_trip(TelemetryReport {
+			platform: TelemetryPlatform::Ios,
+			app_version: String::new(),
+			network: None,
+			home_relay_connected: false,
+			connections: ConnectionStats::default(),
+		});
+		round_trip(TelemetryReply::Ok);
+		round_trip(TelemetryReply::Err(TelemetryError::TooOften));
+	}
+
+	#[test]
 	fn gossip_round_trip_and_signing_payload() {
 		round_trip(SignedGossip {
 			author: [1; 32],

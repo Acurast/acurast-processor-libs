@@ -194,6 +194,76 @@ pub enum ManageError {
 	Failed,
 }
 
+// Telemetry, ALPN `acurast/telemetry/1`.
+
+/// Network report of a processor, sent every [`crate::TELEMETRY_INTERVAL_SECS`] to the relay node
+/// of its home relay; one per connection.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TelemetryReport {
+	pub platform: TelemetryPlatform,
+	/// Version of the processor app, at most [`crate::MAX_STATUS_TEXT_LEN`] bytes.
+	pub app_version: String,
+	/// Result of the endpoint's latest network check, `None` before the first one finished.
+	pub network: Option<NetworkReport>,
+	/// Whether the endpoint is connected to its home relay.
+	pub home_relay_connected: bool,
+	/// Connections to other processors and managers (not to relay nodes) since the previous
+	/// report: counted as direct when they first use a direct path, as relayed when they close
+	/// without one.
+	pub connections: ConnectionStats,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TelemetryPlatform {
+	Android,
+	Ios,
+	Other,
+}
+
+/// What the endpoint found out about its network.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NetworkReport {
+	/// UDP over IPv4 works.
+	pub udp_v4: bool,
+	/// UDP over IPv6 works.
+	pub udp_v6: bool,
+	/// A public IPv4 address was seen by a relay.
+	pub global_v4: bool,
+	/// A public IPv6 address was seen by a relay.
+	pub global_v6: bool,
+	/// The public address changes with the destination (symmetric NAT), so direct paths are
+	/// unlikely. `None` if it could not be measured.
+	pub symmetric_nat: Option<bool>,
+}
+
+/// Connections since the previous report.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ConnectionStats {
+	/// Connections that used a direct path.
+	pub direct: u32,
+	/// Connections that only used the relay.
+	pub relayed: u32,
+	/// Average time from opening a connection to its first direct path, in milliseconds, over
+	/// the `direct` connections.
+	pub avg_time_to_direct_ms: Option<u32>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TelemetryReply {
+	Ok,
+	Err(TelemetryError),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TelemetryError {
+	/// The caller is not a processor.
+	Forbidden,
+	/// The previous report of the caller is less than [`crate::TELEMETRY_MIN_INTERVAL_SECS`] old.
+	TooOften,
+	/// The report breaks a limit.
+	Invalid,
+}
+
 // Network secret, ALPN `acurast/secret-fetch/1`.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

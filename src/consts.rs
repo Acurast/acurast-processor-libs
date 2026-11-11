@@ -12,6 +12,8 @@ pub const ALPN_JOB: &[u8] = b"acurast/job/1";
 pub const ALPN_ASSIGNMENTS: &[u8] = b"acurast/assignments/1";
 /// Commands of a manager to its processors.
 pub const ALPN_MANAGE: &[u8] = b"acurast/manage/1";
+/// Network reports of processors, sent to the relay node of their home relay.
+pub const ALPN_TELEMETRY: &[u8] = b"acurast/telemetry/1";
 
 // Domain-separation tags: every signed or hashed value starts with one, so a signature or hash
 // made for one purpose can never be reused for another.
@@ -79,5 +81,12 @@ pub const MAX_NOTICE_JOBS: usize = 64;
 pub const MANAGE_MAX_AGE_SECS: u64 = 60;
 /// Maximum length of a text field of a processor status in bytes.
 pub const MAX_STATUS_TEXT_LEN: usize = 64;
+/// How often a processor sends its network report, in seconds.
+pub const TELEMETRY_INTERVAL_SECS: u64 = 30 * 60;
+/// Delay of the first network report after the endpoint started, in seconds, so the network
+/// check and the first connections have finished.
+pub const TELEMETRY_FIRST_DELAY_SECS: u64 = 2 * 60;
+/// Minimum time between two reports of the same endpoint accepted by a relay node, in seconds.
+pub const TELEMETRY_MIN_INTERVAL_SECS: u64 = 10 * 60;
 /// Maximum gossip payload in bytes.
 pub const GOSSIP_MAX_PAYLOAD: usize = 4 * 1024;
