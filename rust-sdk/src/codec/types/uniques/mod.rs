@@ -1,0 +1,1 @@
+pub mod pallet_uniques_item_details;
