@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 acurast-p2p = { workspace = true }
-acurast-p2p-proto = { workspace = true }
+acurast-p2p-proto = { workspace = true, features = ["std"] }
 async-trait = { workspace = true }
 blake2 = "0.10"
 bs58 = "0.5"

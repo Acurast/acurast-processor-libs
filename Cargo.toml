@@ -1,0 +1,39 @@
+[workspace]
+members = [
+	"p2p-proto",
+	"p2p-registry",
+	"p2p/acurast-p2p",
+	"p2p/acurast-p2p-cli",
+	"p2p/acurast-p2p-ffi",
+	"rust-sdk",
+	"benchmark/rust",
+]
+resolver = "2"
+
+[workspace.package]
+authors = ["Papers AG"]
+repository = "https://github.com/Acurast/acurast-processor-libs"
+version = "0.1.0"
+edition = "2024"
+
+[workspace.dependencies]
+acurast-p2p = { path = "p2p/acurast-p2p" }
+acurast-p2p-proto = { path = "p2p-proto", default-features = false }
+acurast-p2p-registry = { path = "p2p-registry" }
+async-trait = "0.1"
+hex-literal = { version = "0.4", default-features = false }
+iroh = "=1.2.0"
+iroh-relay = "1"
+log = { version = "0.4.21", default-features = false }
+parity-scale-codec = { version = "3", features = ["derive"] }
+serde = { version = "1.0.195", features = ["derive"], default-features = false }
+thiserror = "2"
+tokio = { version = "1", features = ["sync", "time"] }
+uniffi = "0.29.4"
+
+# The benchmark measures plain integer arithmetic: overflow checks would slow it down.
+[profile.dev.package.acubench]
+overflow-checks = false
+
+[profile.release.package.acubench]
+overflow-checks = false
