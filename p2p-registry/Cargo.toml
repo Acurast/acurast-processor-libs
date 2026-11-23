@@ -1,0 +1,16 @@
+[package]
+name = "acurast-p2p-registry"
+description = "Registry of the Acurast P2P layer (iroh), served by relay nodes: where endpoints can be reached and which namespaces they joined."
+license = "MIT"
+authors = { workspace = true }
+version = { workspace = true }
+repository = { workspace = true }
+edition = "2021"
+
+[dependencies]
+acurast-p2p-proto = { workspace = true, features = ["std"] }
+iroh = "=1.2.0"
+log = { workspace = true, features = ["std"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
