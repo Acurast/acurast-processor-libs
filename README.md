@@ -10,5 +10,6 @@ as a single native library.
 | `p2p` | P2P layer of the processors (library, FFI bindings, CLI for managers) |
 | `rust-sdk` | Acurast SDK (light client) |
 | `benchmark` | Device benchmark |
+| `processor-ffi` | The single native library for the apps: bindings of the P2P layer, the SDK (not on Android) and the benchmark |
 
 Each folder was imported from its original repository with `git subtree`, keeping its history.

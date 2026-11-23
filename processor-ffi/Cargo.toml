@@ -1,0 +1,25 @@
+[package]
+name = "acurast-processor-ffi"
+description = "The single native library of the Acurast processors: the bindings of every library in this workspace"
+authors = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+name = "acurast_processor_ffi"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+acubench = { path = "../benchmark/rust" }
+acurast-p2p-ffi = { path = "../p2p/acurast-p2p-ffi" }
+uniffi = { workspace = true }
+
+# Android uses the Kotlin SDK, and the SDK's HTTP client needs OpenSSL there.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+acurast-rust-sdk = { path = "../rust-sdk" }
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "bin/uniffi-bindgen.rs"
+required-features = ["uniffi/cli"]

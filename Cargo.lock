@@ -93,6 +93,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "acurast-processor-ffi"
+version = "0.1.0"
+dependencies = [
+ "acubench",
+ "acurast-p2p-ffi",
+ "acurast-rust-sdk",
+ "uniffi",
+]
+
+[[package]]
 name = "acurast-rust-sdk"
 version = "0.1.0"
 dependencies = [

@@ -5,6 +5,7 @@ members = [
 	"p2p/acurast-p2p",
 	"p2p/acurast-p2p-cli",
 	"p2p/acurast-p2p-ffi",
+	"processor-ffi",
 	"rust-sdk",
 	"benchmark/rust",
 ]
