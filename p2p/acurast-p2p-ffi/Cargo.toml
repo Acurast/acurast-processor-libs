@@ -1,0 +1,31 @@
+[package]
+name = "acurast-p2p-ffi"
+description = "uniffi bindings of acurast-p2p for Kotlin and Swift"
+authors = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+name = "acurast_p2p_ffi"
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+acurast-p2p = { workspace = true }
+async-trait = { workspace = true }
+hex = "0.4"
+thiserror = { workspace = true }
+uniffi = { workspace = true, features = ["tokio"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni-sys = "0.3"
+ndk-context = "0.1"
+
+[dev-dependencies]
+parity-scale-codec = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "bin/uniffi-bindgen.rs"
+required-features = ["uniffi/cli"]
