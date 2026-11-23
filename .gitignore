@@ -1,2 +1,4 @@
 target/
 .DS_Store
+# Swift package built by `make ios`
+.build/

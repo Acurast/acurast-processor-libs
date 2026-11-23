@@ -32,6 +32,12 @@ thiserror = "2"
 tokio = { version = "1", features = ["sync", "time"] }
 uniffi = "0.29.4"
 
+# The apps ship one native library: link-time optimization drops the code they do not use (the iOS
+# static library goes from ~68 to ~24 MB per architecture, below GitHub's file size limit).
+[profile.release]
+lto = true
+codegen-units = 1
+
 # The benchmark measures plain integer arithmetic: overflow checks would slow it down.
 [profile.dev.package.acubench]
 overflow-checks = false

@@ -16,30 +16,13 @@ callbacks, so the library underneath can change without renaming anything.
 Platform-specific work (storing the iroh key, chain RPC, signing extrinsics with the processor
 key) stays in the apps and is passed to the library as callbacks.
 
-## Build and test
+## Build, test and packages
 
-```sh
-cargo build
-cargo test
-```
-
-Generate the bindings from the host library:
-
-```sh
-cargo build -p acurast-p2p-ffi
-cargo run -p acurast-p2p-ffi --features uniffi/cli --bin uniffi-bindgen -- \
-  generate --library target/debug/libacurast_p2p_ffi.dylib --language kotlin --out-dir target/bindings
-```
-
-## Packages for the apps
-
-| platform | command | output |
-|---|---|---|
-| iOS | `make ios` (needs [`cargo-swift`](https://github.com/antoniusnaumann/cargo-swift) 0.9.0: `make install-cargo-swift`) | Swift package `AcurastP2P/` with `AcurastP2PFFI.xcframework` (not committed), added to the app as a local package like `AcurastSDK` |
-| Android | `make android` (NDK 29.0.14206865, JDK 17; `android/local.properties` with `sdk.dir`) | `android/lib/build/outputs/aar/lib-release.aar`, published as `com.acurast:acurast-p2p` (`./gradlew :lib:publishToMavenLocal` locally) |
+From the repo root: `cargo build`, `cargo test`. The apps get this library inside the single native
+library of the workspace (`processor-ffi`); see the README at the repo root for the packages.
 
 `libc` is pinned to 0.2.186 in `Cargo.lock`: later versions no longer define `in6_ifreq` on iOS,
-which `netdev` (via iroh) needs. The iOS minimum is 13.0, as for `AcurastSDK`.
+which `netdev` (via iroh) needs.
 
 ## Manage processors from the command line
 

@@ -1,0 +1,50 @@
+{
+  "buildFiles": [
+    "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/marco/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/.cxx/RelWithDebInfo/1d1g4s26/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/marco/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/.cxx/RelWithDebInfo/1d1g4s26/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "acubench::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "acubench",
+      "output": "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/build/intermediates/cxx/RelWithDebInfo/1d1g4s26/obj/arm64-v8a/libacubench.so",
+      "runtimeFiles": [
+        "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/build/rustJniLibs/android/arm64-v8a/libacurast_processor_ffi.so"
+      ]
+    },
+    "acubenchtest::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "acubenchtest",
+      "output": "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/build/intermediates/cxx/RelWithDebInfo/1d1g4s26/obj/arm64-v8a/libacubenchtest.so",
+      "runtimeFiles": [
+        "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/build/intermediates/cxx/RelWithDebInfo/1d1g4s26/obj/arm64-v8a/libacubench.so",
+        "/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/build/rustJniLibs/android/arm64-v8a/libacurast_processor_ffi.so"
+      ]
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/Users/marco/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/Users/marco/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}
