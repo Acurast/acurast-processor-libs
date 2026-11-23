@@ -1,0 +1,19 @@
+include:
+  - project: "papers/papers-internal/internal"
+    file: "/.base-gitlab-ci.yml"
+
+variables:
+  # The P2P crates; rust-sdk and benchmark are not yet clean for fmt and clippy.
+  LINTED: -p acurast-p2p -p acurast-p2p-cli -p acurast-p2p-ffi -p acurast-p2p-proto -p acurast-p2p-registry
+
+# Build and tests of the whole workspace (host), fmt and clippy of the linted crates.
+test:
+  stage: test
+  image: rust:1.94.0
+  before_script:
+    - rustup component add rustfmt clippy
+  script:
+    - cargo fmt --check $LINTED
+    - cargo clippy --all-targets $LINTED -- -D warnings
+    # The rust-sdk RPC tests call a devnet node that no longer exists.
+    - cargo test --workspace -- --skip acurast_rpc_tests
