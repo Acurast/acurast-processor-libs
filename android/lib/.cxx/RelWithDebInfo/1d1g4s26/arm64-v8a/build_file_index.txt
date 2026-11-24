@@ -1,1 +1,0 @@
-/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/src/main/cpp/CMakeLists.txt

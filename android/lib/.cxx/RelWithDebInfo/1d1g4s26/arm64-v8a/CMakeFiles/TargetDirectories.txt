@@ -1,4 +1,0 @@
-/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/.cxx/RelWithDebInfo/1d1g4s26/arm64-v8a/CMakeFiles/acubench.dir
-/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/.cxx/RelWithDebInfo/1d1g4s26/arm64-v8a/CMakeFiles/acubenchtest.dir
-/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/.cxx/RelWithDebInfo/1d1g4s26/arm64-v8a/CMakeFiles/edit_cache.dir
-/Users/marco/Projects/Papers/Acurast/acurast-processor-libs/android/lib/.cxx/RelWithDebInfo/1d1g4s26/arm64-v8a/CMakeFiles/rebuild_cache.dir
