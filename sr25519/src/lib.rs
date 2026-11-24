@@ -29,6 +29,9 @@ pub enum Sr25519Error {
     /// The path is not a derivation path such as `//44//434//0/0/0`.
     #[error("invalid derivation path: {path}")]
     InvalidDerivationPath { path: String },
+    /// The bytes are not a key pair serialized with [`Sr25519KeyPair::to_bytes`].
+    #[error("invalid key pair: {reason}")]
+    InvalidKeyPair { reason: String },
 }
 
 /// An sr25519 key pair derived from a recovery phrase the way Substrate wallets derive it.
@@ -60,6 +63,21 @@ impl Sr25519KeyPair {
         Ok(Arc::new(Self {
             keypair: secret.to_keypair(),
         }))
+    }
+
+    /// Restores a key pair serialized with [`Sr25519KeyPair::to_bytes`].
+    #[uniffi::constructor]
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<Arc<Self>, Sr25519Error> {
+        let keypair = Keypair::from_bytes(&bytes).map_err(|e| Sr25519Error::InvalidKeyPair {
+            reason: e.to_string(),
+        })?;
+
+        Ok(Arc::new(Self { keypair }))
+    }
+
+    /// The key pair as 96 bytes, to store it: secret key (64 bytes) and public key (32 bytes).
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.keypair.to_bytes().to_vec()
     }
 
     /// The 32-byte public key, which is also the Substrate account id.

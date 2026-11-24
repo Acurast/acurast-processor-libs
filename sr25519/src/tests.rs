@@ -142,6 +142,32 @@ fn signatures_verify_against_the_public_key() {
 }
 
 #[test]
+fn restores_a_key_pair_from_its_bytes() {
+    let keypair =
+        Sr25519KeyPair::new(bytes(VECTORS[0].entropy), "//44//434//0/0/0".to_string()).unwrap();
+
+    let bytes = keypair.to_bytes();
+    let restored = Sr25519KeyPair::from_bytes(bytes.clone()).unwrap();
+
+    assert_eq!(bytes.len(), 96);
+    assert_eq!(restored.public_key(), keypair.public_key());
+    let message = b"hello".to_vec();
+    assert!(sr25519_verify(
+        keypair.public_key(),
+        message.clone(),
+        restored.sign(message)
+    ));
+}
+
+#[test]
+fn from_bytes_rejects_malformed_key_pairs() {
+    assert!(matches!(
+        Sr25519KeyPair::from_bytes(vec![0; 95]),
+        Err(Sr25519Error::InvalidKeyPair { .. })
+    ));
+}
+
+#[test]
 fn verifies_a_polkadot_js_signature() {
     let public_key = bytes(VECTORS[0].public_keys[0].1);
     let signature = bytes(concat!(

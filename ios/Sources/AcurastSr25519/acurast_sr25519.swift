@@ -498,6 +498,11 @@ public protocol Sr25519KeyPairProtocol: AnyObject, Sendable {
      */
     func sign(message: Data)  -> Data
     
+    /**
+     * The key pair as 96 bytes, to store it: secret key (64 bytes) and public key (32 bytes).
+     */
+    func toBytes()  -> Data
+    
 }
 /**
  * An sr25519 key pair derived from a recovery phrase the way Substrate wallets derive it.
@@ -565,6 +570,17 @@ public convenience init(entropy: Data, path: String)throws  {
     }
 
     
+    /**
+     * Restores a key pair serialized with [`Sr25519KeyPair::to_bytes`].
+     */
+public static func fromBytes(bytes: Data)throws  -> Sr25519KeyPair  {
+    return try  FfiConverterTypeSr25519KeyPair_lift(try rustCallWithError(FfiConverterTypeSr25519Error_lift) {
+    uniffi_acurast_sr25519_fn_constructor_sr25519keypair_from_bytes(
+        FfiConverterData.lower(bytes),$0
+    )
+})
+}
+    
 
     
     /**
@@ -584,6 +600,16 @@ open func sign(message: Data) -> Data  {
     return try!  FfiConverterData.lift(try! rustCall() {
     uniffi_acurast_sr25519_fn_method_sr25519keypair_sign(self.uniffiClonePointer(),
         FfiConverterData.lower(message),$0
+    )
+})
+}
+    
+    /**
+     * The key pair as 96 bytes, to store it: secret key (64 bytes) and public key (32 bytes).
+     */
+open func toBytes() -> Data  {
+    return try!  FfiConverterData.lift(try! rustCall() {
+    uniffi_acurast_sr25519_fn_method_sr25519keypair_to_bytes(self.uniffiClonePointer(),$0
     )
 })
 }
@@ -661,6 +687,11 @@ public enum Sr25519Error: Swift.Error {
      */
     case InvalidDerivationPath(path: String
     )
+    /**
+     * The bytes are not a key pair serialized with [`Sr25519KeyPair::to_bytes`].
+     */
+    case InvalidKeyPair(reason: String
+    )
 }
 
 
@@ -683,6 +714,9 @@ public struct FfiConverterTypeSr25519Error: FfiConverterRustBuffer {
         case 2: return .InvalidDerivationPath(
             path: try FfiConverterString.read(from: &buf)
             )
+        case 3: return .InvalidKeyPair(
+            reason: try FfiConverterString.read(from: &buf)
+            )
 
          default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -703,6 +737,11 @@ public struct FfiConverterTypeSr25519Error: FfiConverterRustBuffer {
         case let .InvalidDerivationPath(path):
             writeInt(&buf, Int32(2))
             FfiConverterString.write(path, into: &buf)
+            
+        
+        case let .InvalidKeyPair(reason):
+            writeInt(&buf, Int32(3))
+            FfiConverterString.write(reason, into: &buf)
             
         }
     }
@@ -772,6 +811,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurast_sr25519_checksum_method_sr25519keypair_sign() != 35672) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurast_sr25519_checksum_method_sr25519keypair_to_bytes() != 59036) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurast_sr25519_checksum_constructor_sr25519keypair_from_bytes() != 18762) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurast_sr25519_checksum_constructor_sr25519keypair_new() != 1090) {
