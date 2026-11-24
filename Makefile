@@ -17,7 +17,7 @@ ios:
 	rm -rf $(BUILD) && mkdir -p $(BUILD)/sim $(BUILD)/headers/$(FFI) $(BUILD)/swift
 	lipo -create target/aarch64-apple-ios-sim/release/$(LIB) target/x86_64-apple-ios/release/$(LIB) -output $(BUILD)/sim/$(LIB)
 	# Swift bindings and C headers of the uniffi libraries, read from the library itself.
-	cargo run --release -p acurast-processor-ffi --features uniffi/cli --bin uniffi-bindgen -- generate \
+	cargo run --release -p uniffi-bindgen -- generate \
 		--library target/aarch64-apple-ios/release/$(LIB) --language swift --out-dir $(BUILD)/swift
 	cp $(BUILD)/swift/*.h benchmark/rust/ffi/include/ffi.h $(BUILD)/headers/$(FFI)/
 	# One C module, named after the xcframework (the only name Xcode finds), with every header.

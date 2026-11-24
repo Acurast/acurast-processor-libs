@@ -102,9 +102,7 @@ val uniffiBindings = tasks.register<Exec>("uniffiBindings") {
     workingDir("../..")
     commandLine(
         "cargo", "run", "--release",
-        "-p", "acurast-processor-ffi",
-        "--features", "uniffi/cli",
-        "--bin", "uniffi-bindgen",
+        "-p", "uniffi-bindgen",
         "--", "generate",
         "--library", "target/aarch64-linux-android/release/libacurast_processor_ffi.so",
         "--language", "kotlin",

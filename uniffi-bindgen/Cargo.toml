@@ -1,0 +1,13 @@
+[package]
+name = "uniffi-bindgen"
+description = "Generates the Kotlin and Swift bindings of the native library; runs on the build machine"
+authors = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+publish = false
+
+# Only uniffi: the build machine compiles this, and the libraries' dependencies
+# (OpenSSL in the SDK on Linux) are not needed to read the bindings from the built library.
+[dependencies]
+uniffi = { workspace = true, features = ["cli"] }
