@@ -18,6 +18,7 @@ let package = Package(
     ],
     products: [
         .library(name: "AcurastP2P", targets: ["AcurastP2P"]),
+        .library(name: "AcurastSr25519", targets: ["AcurastSr25519"]),
         .library(name: "AcurastSDK", targets: ["AcurastSDK"]),
         .library(name: "Acubench", targets: ["Acubench"]),
     ],
@@ -27,6 +28,12 @@ let package = Package(
             name: "AcurastP2P",
             dependencies: ["AcurastProcessorFFI"],
             path: "ios/Sources/AcurastP2P",
+            linkerSettings: systemFrameworks
+        ),
+        .target(
+            name: "AcurastSr25519",
+            dependencies: ["AcurastProcessorFFI"],
+            path: "ios/Sources/AcurastSr25519",
             linkerSettings: systemFrameworks
         ),
         .target(

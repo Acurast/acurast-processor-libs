@@ -8,6 +8,7 @@ members = [
 	"processor-ffi",
 	"rust-sdk",
 	"benchmark/rust",
+	"sr25519",
 	"uniffi-bindgen",
 ]
 resolver = "2"

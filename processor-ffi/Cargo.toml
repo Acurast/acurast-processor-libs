@@ -13,6 +13,7 @@ crate-type = ["cdylib", "staticlib"]
 [dependencies]
 acubench = { path = "../benchmark/rust" }
 acurast-p2p-ffi = { path = "../p2p/acurast-p2p-ffi" }
+acurast-sr25519 = { path = "../sr25519" }
 uniffi = { workspace = true }
 
 # Android uses the Kotlin SDK, and the SDK's HTTP client needs OpenSSL there.

@@ -3,8 +3,8 @@ include:
     file: "/.base-gitlab-ci.yml"
 
 variables:
-  # The P2P crates; rust-sdk and benchmark are not yet clean for fmt and clippy.
-  LINTED: -p acurast-p2p -p acurast-p2p-cli -p acurast-p2p-ffi -p acurast-p2p-proto -p acurast-p2p-registry
+  # The P2P and sr25519 crates; rust-sdk and benchmark are not yet clean for fmt and clippy.
+  LINTED: -p acurast-p2p -p acurast-p2p-cli -p acurast-p2p-ffi -p acurast-p2p-proto -p acurast-p2p-registry -p acurast-sr25519
 
 # Build and tests of the whole workspace (host), fmt and clippy of the linted crates.
 test:

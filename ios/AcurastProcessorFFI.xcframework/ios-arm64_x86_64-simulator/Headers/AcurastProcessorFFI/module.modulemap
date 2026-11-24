@@ -1,5 +1,6 @@
 module AcurastProcessorFFI {
     header "acurast_p2p_ffiFFI.h"
+    header "acurast_sr25519FFI.h"
     header "acurastsdkFFI.h"
     header "ffi.h"
     export *

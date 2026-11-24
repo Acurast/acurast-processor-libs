@@ -21,14 +21,15 @@ ios:
 		--library target/aarch64-apple-ios/release/$(LIB) --language swift --out-dir $(BUILD)/swift
 	cp $(BUILD)/swift/*.h benchmark/rust/ffi/include/ffi.h $(BUILD)/headers/$(FFI)/
 	# One C module, named after the xcframework (the only name Xcode finds), with every header.
-	printf 'module $(FFI) {\n    header "acurast_p2p_ffiFFI.h"\n    header "acurastsdkFFI.h"\n    header "ffi.h"\n    export *\n}\n' > $(BUILD)/headers/$(FFI)/module.modulemap
+	printf 'module $(FFI) {\n    header "acurast_p2p_ffiFFI.h"\n    header "acurast_sr25519FFI.h"\n    header "acurastsdkFFI.h"\n    header "ffi.h"\n    export *\n}\n' > $(BUILD)/headers/$(FFI)/module.modulemap
 	rm -rf $(XCFRAMEWORK)
 	xcodebuild -create-xcframework \
 		-library target/aarch64-apple-ios/release/$(LIB) -headers $(BUILD)/headers \
 		-library $(BUILD)/sim/$(LIB) -headers $(BUILD)/headers \
 		-output $(XCFRAMEWORK)
-	mkdir -p ios/Sources/AcurastP2P ios/Sources/AcurastSDK
+	mkdir -p ios/Sources/AcurastP2P ios/Sources/AcurastSr25519 ios/Sources/AcurastSDK
 	cp $(BUILD)/swift/acurast_p2p_ffi.swift ios/Sources/AcurastP2P/
+	cp $(BUILD)/swift/acurast_sr25519.swift ios/Sources/AcurastSr25519/
 	cp $(BUILD)/swift/acurastsdk.swift ios/Sources/AcurastSDK/
 
 android:

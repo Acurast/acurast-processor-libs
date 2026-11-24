@@ -1,0 +1,6 @@
+# The Swift bindings import the C module of the apps' single native library (processor-ffi): Xcode
+# finds a module in an xcframework only if it is named after the xcframework. The header file name
+# stays the default one.
+[bindings.swift]
+ffi_module_name = "AcurastProcessorFFI"
+ffi_module_filename = "acurast_sr25519FFI"

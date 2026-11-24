@@ -1,0 +1,23 @@
+[package]
+name = "acurast-sr25519"
+description = "sr25519 keys of Substrate wallets (polkadot-js, SubWallet, Talisman, AirGap Vault) for the apps, on the reference schnorrkel implementation"
+authors = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+name = "acurast_sr25519"
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+blake2 = "0.10"
+parity-scale-codec = { workspace = true }
+schnorrkel = "0.11.5"
+# Parity's conversion of a recovery phrase's entropy into the sr25519 mini secret key.
+substrate-bip39 = "0.6.1"
+thiserror = { workspace = true }
+uniffi = { workspace = true }
+
+[dev-dependencies]
+hex = "0.4"
