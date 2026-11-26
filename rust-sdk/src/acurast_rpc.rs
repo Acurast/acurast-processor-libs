@@ -4,7 +4,8 @@ use crate::engine::engine::RpcEngine;
 use crate::engine::pallet::author::Author;
 use crate::engine::pallet::chain::Chain;
 use crate::engine::pallet::state::{RuntimeVersion, State};
-use crate::hex::hex_to_ba;
+use crate::hex::{hex_to_ba, is_hex};
+use crate::metadata::RuntimeMetadata;
 use crate::storage::acurast_storage::StorageKey;
 use crate::storage::v0_acurast_storage::V0AcurastStorageImpl;
 use crate::storage::v0_acurast_storage::VXAcurastStorage;
@@ -40,6 +41,11 @@ pub trait AcurastRpc: Send + Sync {
         block_hash: Option<Vec<u8>>,
         timeout: Option<u64>,
     ) -> Result<RuntimeVersion>;
+    async fn get_metadata(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Arc<RuntimeMetadata>>;
     async fn get_update_info(
         &self,
         account_id: Vec<u8>,
@@ -170,6 +176,24 @@ impl AcurastRpc for AcurastRpcImpl {
             .get_runtime_version(block_hash, timeout, &self.engine)
             .await
             .map_err(|e| AcurastError::RuntimeError(format!("{}", e)))
+    }
+
+    async fn get_metadata(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Arc<RuntimeMetadata>> {
+        let metadata = self
+            .state
+            .get_metadata(block_hash, timeout, &self.engine)
+            .await
+            .map_err(AcurastError::RuntimeError)?
+            .ok_or_else(|| AcurastError::RuntimeError("No metadata".to_string()))?;
+        if !is_hex(&metadata) || metadata.trim_start_matches("0x").len() % 2 != 0 {
+            return Err(AcurastError::RuntimeError("Metadata is not hex".to_string()));
+        }
+
+        RuntimeMetadata::from_bytes(hex_to_ba(&metadata))
     }
 
     async fn get_update_info(
