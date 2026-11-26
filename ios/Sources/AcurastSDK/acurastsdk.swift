@@ -581,6 +581,8 @@ public protocol AcurastRpcProtocol: AnyObject, Sendable {
     
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async throws  -> RuntimeVersion
     
+    func getMetadata(blockHash: Data?, timeout: UInt64?) async throws  -> RuntimeMetadata
+    
     func getUpdateInfo(accountId: Data, blockHash: Data?, timeout: UInt64?) async  -> ProcessorUpdateInfo?
     
     func getKnownBinaryHash(version: ProcessorVersion, blockHash: Data?, timeout: UInt64?) async  -> Data?
@@ -725,6 +727,23 @@ open func getRuntimeVersion(blockHash: Data?, timeout: UInt64?)async throws  -> 
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeRuntimeVersion_lift,
+            errorHandler: FfiConverterTypeAcurastError_lift
+        )
+}
+    
+open func getMetadata(blockHash: Data?, timeout: UInt64?)async throws  -> RuntimeMetadata  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acurastrpc_get_metadata(
+                    self.uniffiClonePointer(),
+                    FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_pointer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_pointer,
+            freeFunc: ffi_acurastsdk_rust_future_free_pointer,
+            liftFunc: FfiConverterTypeRuntimeMetadata_lift,
             errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
@@ -875,6 +894,11 @@ public protocol AcurastRpcClientProtocol: AnyObject, Sendable {
     
     func getHeader(blockHash: Data?, timeout: UInt64?) async throws  -> Header
     
+    /**
+     * Runtime metadata at `block_hash` (the best block if `None`), to decode calls with.
+     */
+    func getMetadata(blockHash: Data?, timeout: UInt64?) async throws  -> RuntimeMetadata
+    
     func getRuntimeVersion(blockHash: Data?, timeout: UInt64?) async throws  -> RuntimeVersion
     
     func getStorageVersion(blockHash: Data?, timeout: UInt64?) async throws  -> UInt32
@@ -1008,6 +1032,26 @@ open func getHeader(blockHash: Data?, timeout: UInt64?)async throws  -> Header  
             completeFunc: ffi_acurastsdk_rust_future_complete_rust_buffer,
             freeFunc: ffi_acurastsdk_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeHeader_lift,
+            errorHandler: FfiConverterTypeAcurastError_lift
+        )
+}
+    
+    /**
+     * Runtime metadata at `block_hash` (the best block if `None`), to decode calls with.
+     */
+open func getMetadata(blockHash: Data?, timeout: UInt64?)async throws  -> RuntimeMetadata  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurastsdk_fn_method_acurastrpcclient_get_metadata(
+                    self.uniffiClonePointer(),
+                    FfiConverterOptionData.lower(blockHash),FfiConverterOptionUInt64.lower(timeout)
+                )
+            },
+            pollFunc: ffi_acurastsdk_rust_future_poll_pointer,
+            completeFunc: ffi_acurastsdk_rust_future_complete_pointer,
+            freeFunc: ffi_acurastsdk_rust_future_free_pointer,
+            liftFunc: FfiConverterTypeRuntimeMetadata_lift,
             errorHandler: FfiConverterTypeAcurastError_lift
         )
 }
@@ -1874,6 +1918,154 @@ public func FfiConverterTypePublicKey_lift(_ pointer: UnsafeMutableRawPointer) t
 #endif
 public func FfiConverterTypePublicKey_lower(_ value: PublicKey) -> UnsafeMutableRawPointer {
     return FfiConverterTypePublicKey.lower(value)
+}
+
+
+
+
+
+
+/**
+ * The metadata of a runtime version (`state_getMetadata`, V14 or V15), used to decode calls.
+ */
+public protocol RuntimeMetadataProtocol: AnyObject, Sendable {
+    
+    /**
+     * Decodes the SCALE-encoded call of a transaction. Fails unless the call decodes exactly,
+     * consuming every byte.
+     */
+    func decodeCall(call: Data) throws  -> DecodedCall
+    
+}
+/**
+ * The metadata of a runtime version (`state_getMetadata`, V14 or V15), used to decode calls.
+ */
+open class RuntimeMetadata: RuntimeMetadataProtocol, @unchecked Sendable {
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noPointer: NoPointer) {
+        self.pointer = nil
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_acurastsdk_fn_clone_runtimemetadata(self.pointer, $0) }
+    }
+    // No primary constructor declared for this class.
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_acurastsdk_fn_free_runtimemetadata(pointer, $0) }
+    }
+
+    
+    /**
+     * Decodes the SCALE-encoded `RuntimeMetadataPrefixed` returned by `state_getMetadata`.
+     */
+public static func fromBytes(bytes: Data)throws  -> RuntimeMetadata  {
+    return try  FfiConverterTypeRuntimeMetadata_lift(try rustCallWithError(FfiConverterTypeAcurastError_lift) {
+    uniffi_acurastsdk_fn_constructor_runtimemetadata_from_bytes(
+        FfiConverterData.lower(bytes),$0
+    )
+})
+}
+    
+
+    
+    /**
+     * Decodes the SCALE-encoded call of a transaction. Fails unless the call decodes exactly,
+     * consuming every byte.
+     */
+open func decodeCall(call: Data)throws  -> DecodedCall  {
+    return try  FfiConverterTypeDecodedCall_lift(try rustCallWithError(FfiConverterTypeAcurastError_lift) {
+    uniffi_acurastsdk_fn_method_runtimemetadata_decode_call(self.uniffiClonePointer(),
+        FfiConverterData.lower(call),$0
+    )
+})
+}
+    
+
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeMetadata: FfiConverter {
+
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = RuntimeMetadata
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> RuntimeMetadata {
+        return RuntimeMetadata(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: RuntimeMetadata) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeMetadata {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: RuntimeMetadata, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeMetadata_lift(_ pointer: UnsafeMutableRawPointer) throws -> RuntimeMetadata {
+    return try FfiConverterTypeRuntimeMetadata.lift(pointer)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeMetadata_lower(_ value: RuntimeMetadata) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeRuntimeMetadata.lower(value)
 }
 
 
@@ -3060,6 +3252,90 @@ public func FfiConverterTypeAttestationValidity_lower(_ value: AttestationValidi
 }
 
 
+public struct CallArgument {
+    public var name: String?
+    /**
+     * The type name declared in the metadata, e.g. `BalanceOf<T>`.
+     */
+    public var typeName: String?
+    public var value: CallValue
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(name: String?, 
+        /**
+         * The type name declared in the metadata, e.g. `BalanceOf<T>`.
+         */typeName: String?, value: CallValue) {
+        self.name = name
+        self.typeName = typeName
+        self.value = value
+    }
+}
+
+#if compiler(>=6)
+extension CallArgument: Sendable {}
+#endif
+
+
+extension CallArgument: Equatable, Hashable {
+    public static func ==(lhs: CallArgument, rhs: CallArgument) -> Bool {
+        if lhs.name != rhs.name {
+            return false
+        }
+        if lhs.typeName != rhs.typeName {
+            return false
+        }
+        if lhs.value != rhs.value {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+        hasher.combine(typeName)
+        hasher.combine(value)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCallArgument: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CallArgument {
+        return
+            try CallArgument(
+                name: FfiConverterOptionString.read(from: &buf), 
+                typeName: FfiConverterOptionString.read(from: &buf), 
+                value: FfiConverterTypeCallValue.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: CallArgument, into buf: inout [UInt8]) {
+        FfiConverterOptionString.write(value.name, into: &buf)
+        FfiConverterOptionString.write(value.typeName, into: &buf)
+        FfiConverterTypeCallValue.write(value.value, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCallArgument_lift(_ buf: RustBuffer) throws -> CallArgument {
+    return try FfiConverterTypeCallArgument.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCallArgument_lower(_ value: CallArgument) -> RustBuffer {
+    return FfiConverterTypeCallArgument.lower(value)
+}
+
+
 public struct CertId {
     public var issuerName: Data
     public var serialNumber: Data
@@ -3409,6 +3685,113 @@ public func FfiConverterTypeConfig_lift(_ buf: RustBuffer) throws -> Config {
 #endif
 public func FfiConverterTypeConfig_lower(_ value: Config) -> RustBuffer {
     return FfiConverterTypeConfig.lower(value)
+}
+
+
+/**
+ * A call decoded with the runtime metadata: `pallet.call(arguments)`.
+ */
+public struct DecodedCall {
+    /**
+     * The pallet as named in the metadata, e.g. `Balances`.
+     */
+    public var pallet: String
+    /**
+     * The call as named in the metadata, e.g. `transfer_keep_alive`.
+     */
+    public var name: String
+    /**
+     * The call in polkadot-js notation, e.g. `balances.transferKeepAlive`.
+     */
+    public var id: String
+    public var arguments: [CallArgument]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The pallet as named in the metadata, e.g. `Balances`.
+         */pallet: String, 
+        /**
+         * The call as named in the metadata, e.g. `transfer_keep_alive`.
+         */name: String, 
+        /**
+         * The call in polkadot-js notation, e.g. `balances.transferKeepAlive`.
+         */id: String, arguments: [CallArgument]) {
+        self.pallet = pallet
+        self.name = name
+        self.id = id
+        self.arguments = arguments
+    }
+}
+
+#if compiler(>=6)
+extension DecodedCall: Sendable {}
+#endif
+
+
+extension DecodedCall: Equatable, Hashable {
+    public static func ==(lhs: DecodedCall, rhs: DecodedCall) -> Bool {
+        if lhs.pallet != rhs.pallet {
+            return false
+        }
+        if lhs.name != rhs.name {
+            return false
+        }
+        if lhs.id != rhs.id {
+            return false
+        }
+        if lhs.arguments != rhs.arguments {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(pallet)
+        hasher.combine(name)
+        hasher.combine(id)
+        hasher.combine(arguments)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeDecodedCall: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DecodedCall {
+        return
+            try DecodedCall(
+                pallet: FfiConverterString.read(from: &buf), 
+                name: FfiConverterString.read(from: &buf), 
+                id: FfiConverterString.read(from: &buf), 
+                arguments: FfiConverterSequenceTypeCallArgument.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: DecodedCall, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.pallet, into: &buf)
+        FfiConverterString.write(value.name, into: &buf)
+        FfiConverterString.write(value.id, into: &buf)
+        FfiConverterSequenceTypeCallArgument.write(value.arguments, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDecodedCall_lift(_ buf: RustBuffer) throws -> DecodedCall {
+    return try FfiConverterTypeDecodedCall.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDecodedCall_lower(_ value: DecodedCall) -> RustBuffer {
+    return FfiConverterTypeDecodedCall.lower(value)
 }
 
 
@@ -7336,6 +7719,162 @@ extension AttestationContent: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
+public enum CallValue {
+    
+    case bool(value: Bool
+    )
+    /**
+     * An integer of any size, in decimal (negative for signed types).
+     */
+    case number(value: String
+    )
+    case text(value: String
+    )
+    case bytes(value: Data
+    )
+    case account(accountId: Data
+    )
+    case composite(fields: [CallArgument]
+    )
+    /**
+     * An enum value: its variant `name` and `fields`, and the `type_path` of the enum it belongs
+     * to (e.g. `sp_runtime::multiaddress::MultiAddress`), which tells variants with the same name
+     * apart.
+     */
+    case variant(name: String, fields: [CallArgument], typePath: [String]
+    )
+    case sequence(items: [CallValue]
+    )
+    case call(call: DecodedCall
+    )
+}
+
+
+#if compiler(>=6)
+extension CallValue: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCallValue: FfiConverterRustBuffer {
+    typealias SwiftType = CallValue
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CallValue {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .bool(value: try FfiConverterBool.read(from: &buf)
+        )
+        
+        case 2: return .number(value: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 3: return .text(value: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 4: return .bytes(value: try FfiConverterData.read(from: &buf)
+        )
+        
+        case 5: return .account(accountId: try FfiConverterData.read(from: &buf)
+        )
+        
+        case 6: return .composite(fields: try FfiConverterSequenceTypeCallArgument.read(from: &buf)
+        )
+        
+        case 7: return .variant(name: try FfiConverterString.read(from: &buf), fields: try FfiConverterSequenceTypeCallArgument.read(from: &buf), typePath: try FfiConverterSequenceString.read(from: &buf)
+        )
+        
+        case 8: return .sequence(items: try FfiConverterSequenceTypeCallValue.read(from: &buf)
+        )
+        
+        case 9: return .call(call: try FfiConverterTypeDecodedCall.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: CallValue, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .bool(value):
+            writeInt(&buf, Int32(1))
+            FfiConverterBool.write(value, into: &buf)
+            
+        
+        case let .number(value):
+            writeInt(&buf, Int32(2))
+            FfiConverterString.write(value, into: &buf)
+            
+        
+        case let .text(value):
+            writeInt(&buf, Int32(3))
+            FfiConverterString.write(value, into: &buf)
+            
+        
+        case let .bytes(value):
+            writeInt(&buf, Int32(4))
+            FfiConverterData.write(value, into: &buf)
+            
+        
+        case let .account(accountId):
+            writeInt(&buf, Int32(5))
+            FfiConverterData.write(accountId, into: &buf)
+            
+        
+        case let .composite(fields):
+            writeInt(&buf, Int32(6))
+            FfiConverterSequenceTypeCallArgument.write(fields, into: &buf)
+            
+        
+        case let .variant(name,fields,typePath):
+            writeInt(&buf, Int32(7))
+            FfiConverterString.write(name, into: &buf)
+            FfiConverterSequenceTypeCallArgument.write(fields, into: &buf)
+            FfiConverterSequenceString.write(typePath, into: &buf)
+            
+        
+        case let .sequence(items):
+            writeInt(&buf, Int32(8))
+            FfiConverterSequenceTypeCallValue.write(items, into: &buf)
+            
+        
+        case let .call(call):
+            writeInt(&buf, Int32(9))
+            FfiConverterTypeDecodedCall.write(call, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCallValue_lift(_ buf: RustBuffer) throws -> CallValue {
+    return try FfiConverterTypeCallValue.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCallValue_lower(_ value: CallValue) -> RustBuffer {
+    return FfiConverterTypeCallValue.lower(value)
+}
+
+
+extension CallValue: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
 public enum ExecutionSpecifierKind {
     
     case all
@@ -8705,6 +9244,31 @@ fileprivate struct FfiConverterSequenceTypeAccountId32: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeCallArgument: FfiConverterRustBuffer {
+    typealias SwiftType = [CallArgument]
+
+    public static func write(_ value: [CallArgument], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeCallArgument.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [CallArgument] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [CallArgument]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeCallArgument.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeCertId: FfiConverterRustBuffer {
     typealias SwiftType = [CertId]
 
@@ -8897,6 +9461,31 @@ fileprivate struct FfiConverterSequenceTypeVesting: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeVesting.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeCallValue: FfiConverterRustBuffer {
+    typealias SwiftType = [CallValue]
+
+    public static func write(_ value: [CallValue], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeCallValue.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [CallValue] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [CallValue]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeCallValue.read(from: &buf))
         }
         return seq
     }
@@ -9161,19 +9750,22 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version() != 13252) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 39185) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_metadata() != 55447) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 39206) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info() != 15819) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 43275) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_get_known_binary_hash() != 64021) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 16115) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_submit_extrinsic() != 15325) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 46858) {
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_call() != 17158) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acurastrpc_storage() != 40889) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_call() != 61606) {
@@ -9186,6 +9778,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header() != 33956) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_metadata() != 64649) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_method_acurastrpcclient_get_runtime_version() != 29312) {
@@ -9257,6 +9852,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_acurastsdk_checksum_method_publickey_to_u8a() != 25755) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_acurastsdk_checksum_method_runtimemetadata_decode_call() != 64456) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_acurastsdk_checksum_method_secp256k1_to_u8a() != 13966) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -9321,6 +9919,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_ed25519_new() != 65413) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurastsdk_checksum_constructor_runtimemetadata_from_bytes() != 4959) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurastsdk_checksum_constructor_secp256k1_new() != 48789) {

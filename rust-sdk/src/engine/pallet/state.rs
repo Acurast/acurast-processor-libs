@@ -62,6 +62,22 @@ impl State {
         ))
     }
 
+    /// The SCALE-encoded runtime metadata, as hex.
+    pub async fn get_metadata(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+        engine: &Arc<dyn RpcEngine>,
+    ) -> Result<Option<String>, String> {
+        let mut params = json!([]);
+        if let Some(block_hash) = block_hash {
+            params.as_array_mut().unwrap().push(json!(format!("0x{}", block_hash.to_hex())));
+        }
+        let response = rpc_engine_request(engine, "state_getMetadata", params, timeout).await;
+
+        self.read_string_result(response)
+    }
+
     pub async fn get_storage(
         &self,
         storage_key: &[u8],

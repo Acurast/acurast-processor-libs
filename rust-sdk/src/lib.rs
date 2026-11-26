@@ -8,6 +8,7 @@ pub mod cursor;
 pub mod engine;
 mod error;
 pub mod hex;
+pub mod metadata;
 pub mod storage;
 pub mod tests;
 pub mod types;
@@ -23,6 +24,7 @@ use crate::engine::http::http_client::HttpClient;
 use crate::engine::http::http_client_impl::HttpClientImpl;
 pub use crate::engine::pallet::state::RuntimeVersion;
 pub use crate::error::AcurastError;
+pub use crate::metadata::{CallArgument, CallValue, DecodedCall, RuntimeMetadata};
 use crate::storage::acurast_storage::AcurastStorage;
 pub use crate::types::header::Header;
 pub use acurast_rpc::AcurastRpc;
@@ -126,6 +128,14 @@ impl AcurastRpcClient {
         self.acurastrpc
             .get_runtime_version(block_hash, timeout)
             .await
+    }
+    /// Runtime metadata at `block_hash` (the best block if `None`), to decode calls with.
+    pub async fn get_metadata(
+        &self,
+        block_hash: Option<Vec<u8>>,
+        timeout: Option<u64>,
+    ) -> Result<Arc<RuntimeMetadata>> {
+        self.acurastrpc.get_metadata(block_hash, timeout).await
     }
     pub async fn get_block_hash(
         &self,

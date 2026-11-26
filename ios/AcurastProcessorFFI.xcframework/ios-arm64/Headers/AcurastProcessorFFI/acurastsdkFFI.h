@@ -283,7 +283,7 @@ typedef void (*UniffiCallbackInterfaceAcurastRpcMethod4)(uint64_t, RustBuffer, R
 #endif
 #ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD5
 #define UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD5
-typedef void (*UniffiCallbackInterfaceAcurastRpcMethod5)(uint64_t, RustBuffer, RustBuffer, RustBuffer, UniffiForeignFutureCompleteRustBuffer _Nonnull, uint64_t, UniffiForeignFuture* _Nonnull
+typedef void (*UniffiCallbackInterfaceAcurastRpcMethod5)(uint64_t, RustBuffer, RustBuffer, UniffiForeignFutureCompletePointer _Nonnull, uint64_t, UniffiForeignFuture* _Nonnull
     );
 
 #endif
@@ -295,19 +295,25 @@ typedef void (*UniffiCallbackInterfaceAcurastRpcMethod6)(uint64_t, RustBuffer, R
 #endif
 #ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD7
 #define UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD7
-typedef void (*UniffiCallbackInterfaceAcurastRpcMethod7)(uint64_t, RustBuffer, RustBuffer, UniffiForeignFutureCompleteRustBuffer _Nonnull, uint64_t, UniffiForeignFuture* _Nonnull
+typedef void (*UniffiCallbackInterfaceAcurastRpcMethod7)(uint64_t, RustBuffer, RustBuffer, RustBuffer, UniffiForeignFutureCompleteRustBuffer _Nonnull, uint64_t, UniffiForeignFuture* _Nonnull
     );
 
 #endif
 #ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD8
 #define UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD8
-typedef void (*UniffiCallbackInterfaceAcurastRpcMethod8)(uint64_t, RustBuffer, RustBuffer, RustBuffer, RustBuffer, UniffiForeignFutureCompleteRustBuffer _Nonnull, uint64_t, UniffiForeignFuture* _Nonnull
+typedef void (*UniffiCallbackInterfaceAcurastRpcMethod8)(uint64_t, RustBuffer, RustBuffer, UniffiForeignFutureCompleteRustBuffer _Nonnull, uint64_t, UniffiForeignFuture* _Nonnull
     );
 
 #endif
 #ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD9
 #define UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD9
-typedef void (*UniffiCallbackInterfaceAcurastRpcMethod9)(uint64_t, uint32_t, void*_Nonnull* _Nonnull, 
+typedef void (*UniffiCallbackInterfaceAcurastRpcMethod9)(uint64_t, RustBuffer, RustBuffer, RustBuffer, RustBuffer, UniffiForeignFutureCompleteRustBuffer _Nonnull, uint64_t, UniffiForeignFuture* _Nonnull
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD10
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_ACURAST_RPC_METHOD10
+typedef void (*UniffiCallbackInterfaceAcurastRpcMethod10)(uint64_t, uint32_t, void*_Nonnull* _Nonnull, 
         RustCallStatus *_Nonnull uniffiCallStatus
     );
 
@@ -429,11 +435,12 @@ typedef struct UniffiVTableCallbackInterfaceAcurastRpc {
     UniffiCallbackInterfaceAcurastRpcMethod2 _Nonnull getHeader;
     UniffiCallbackInterfaceAcurastRpcMethod3 _Nonnull getApiVersion;
     UniffiCallbackInterfaceAcurastRpcMethod4 _Nonnull getRuntimeVersion;
-    UniffiCallbackInterfaceAcurastRpcMethod5 _Nonnull getUpdateInfo;
-    UniffiCallbackInterfaceAcurastRpcMethod6 _Nonnull getKnownBinaryHash;
-    UniffiCallbackInterfaceAcurastRpcMethod7 _Nonnull submitExtrinsic;
-    UniffiCallbackInterfaceAcurastRpcMethod8 _Nonnull call;
-    UniffiCallbackInterfaceAcurastRpcMethod9 _Nonnull storage;
+    UniffiCallbackInterfaceAcurastRpcMethod5 _Nonnull getMetadata;
+    UniffiCallbackInterfaceAcurastRpcMethod6 _Nonnull getUpdateInfo;
+    UniffiCallbackInterfaceAcurastRpcMethod7 _Nonnull getKnownBinaryHash;
+    UniffiCallbackInterfaceAcurastRpcMethod8 _Nonnull submitExtrinsic;
+    UniffiCallbackInterfaceAcurastRpcMethod9 _Nonnull call;
+    UniffiCallbackInterfaceAcurastRpcMethod10 _Nonnull storage;
     UniffiCallbackInterfaceFree _Nonnull uniffiFree;
 } UniffiVTableCallbackInterfaceAcurastRpc;
 
@@ -505,6 +512,11 @@ uint64_t uniffi_acurastsdk_fn_method_acurastrpc_get_api_version(void*_Nonnull pt
 uint64_t uniffi_acurastsdk_fn_method_acurastrpc_get_runtime_version(void*_Nonnull ptr, RustBuffer block_hash, RustBuffer timeout
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPC_GET_METADATA
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPC_GET_METADATA
+uint64_t uniffi_acurastsdk_fn_method_acurastrpc_get_metadata(void*_Nonnull ptr, RustBuffer block_hash, RustBuffer timeout
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPC_GET_UPDATE_INFO
 #define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPC_GET_UPDATE_INFO
 uint64_t uniffi_acurastsdk_fn_method_acurastrpc_get_update_info(void*_Nonnull ptr, RustBuffer account_id, RustBuffer block_hash, RustBuffer timeout
@@ -563,6 +575,11 @@ uint64_t uniffi_acurastsdk_fn_method_acurastrpcclient_get_finalized_block_hash(v
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPCCLIENT_GET_HEADER
 #define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPCCLIENT_GET_HEADER
 uint64_t uniffi_acurastsdk_fn_method_acurastrpcclient_get_header(void*_Nonnull ptr, RustBuffer block_hash, RustBuffer timeout
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPCCLIENT_GET_METADATA
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPCCLIENT_GET_METADATA
+uint64_t uniffi_acurastsdk_fn_method_acurastrpcclient_get_metadata(void*_Nonnull ptr, RustBuffer block_hash, RustBuffer timeout
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_ACURASTRPCCLIENT_GET_RUNTIME_VERSION
@@ -723,6 +740,26 @@ void uniffi_acurastsdk_fn_init_callback_vtable_publickey(const UniffiVTableCallb
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_PUBLICKEY_TO_U8A
 #define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_PUBLICKEY_TO_U8A
 RustBuffer uniffi_acurastsdk_fn_method_publickey_to_u8a(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_CLONE_RUNTIMEMETADATA
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_CLONE_RUNTIMEMETADATA
+void*_Nonnull uniffi_acurastsdk_fn_clone_runtimemetadata(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_FREE_RUNTIMEMETADATA
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_FREE_RUNTIMEMETADATA
+void uniffi_acurastsdk_fn_free_runtimemetadata(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_CONSTRUCTOR_RUNTIMEMETADATA_FROM_BYTES
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_CONSTRUCTOR_RUNTIMEMETADATA_FROM_BYTES
+void*_Nonnull uniffi_acurastsdk_fn_constructor_runtimemetadata_from_bytes(RustBuffer bytes, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_RUNTIMEMETADATA_DECODE_CALL
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_METHOD_RUNTIMEMETADATA_DECODE_CALL
+RustBuffer uniffi_acurastsdk_fn_method_runtimemetadata_decode_call(void*_Nonnull ptr, RustBuffer call, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_FN_CLONE_SECP256K1
@@ -1192,6 +1229,12 @@ uint16_t uniffi_acurastsdk_checksum_method_acurastrpc_get_runtime_version(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPC_GET_METADATA
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPC_GET_METADATA
+uint16_t uniffi_acurastsdk_checksum_method_acurastrpc_get_metadata(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPC_GET_UPDATE_INFO
 #define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPC_GET_UPDATE_INFO
 uint16_t uniffi_acurastsdk_checksum_method_acurastrpc_get_update_info(void
@@ -1243,6 +1286,12 @@ uint16_t uniffi_acurastsdk_checksum_method_acurastrpcclient_get_finalized_block_
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPCCLIENT_GET_HEADER
 #define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPCCLIENT_GET_HEADER
 uint16_t uniffi_acurastsdk_checksum_method_acurastrpcclient_get_header(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPCCLIENT_GET_METADATA
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_ACURASTRPCCLIENT_GET_METADATA
+uint16_t uniffi_acurastsdk_checksum_method_acurastrpcclient_get_metadata(void
     
 );
 #endif
@@ -1384,6 +1433,12 @@ uint16_t uniffi_acurastsdk_checksum_method_publickey_to_u8a(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_RUNTIMEMETADATA_DECODE_CALL
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_RUNTIMEMETADATA_DECODE_CALL
+uint16_t uniffi_acurastsdk_checksum_method_runtimemetadata_decode_call(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_SECP256K1_TO_U8A
 #define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_METHOD_SECP256K1_TO_U8A
 uint16_t uniffi_acurastsdk_checksum_method_secp256k1_to_u8a(void
@@ -1513,6 +1568,12 @@ uint16_t uniffi_acurastsdk_checksum_constructor_acuraststorage_new(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_CONSTRUCTOR_ED25519_NEW
 #define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_CONSTRUCTOR_ED25519_NEW
 uint16_t uniffi_acurastsdk_checksum_constructor_ed25519_new(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_CONSTRUCTOR_RUNTIMEMETADATA_FROM_BYTES
+#define UNIFFI_FFIDEF_UNIFFI_ACURASTSDK_CHECKSUM_CONSTRUCTOR_RUNTIMEMETADATA_FROM_BYTES
+uint16_t uniffi_acurastsdk_checksum_constructor_runtimemetadata_from_bytes(void
     
 );
 #endif
