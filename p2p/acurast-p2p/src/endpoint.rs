@@ -3,7 +3,7 @@
 use std::sync::{Arc, Mutex};
 
 use iroh::{
-    Endpoint, EndpointAddr, EndpointId, RelayMode, SecretKey,
+    Endpoint, EndpointAddr, EndpointId, RelayMode, SecretKey, Watcher,
     endpoint::{Connection, presets},
 };
 use tokio::task::JoinHandle;
@@ -76,6 +76,16 @@ impl P2pEndpoint {
     /// Waits until the endpoint is connected to its home relay.
     pub async fn online(&self) {
         self.endpoint.online().await
+    }
+
+    /// Whether the endpoint is connected to its home relay right now: relay nodes can reach it,
+    /// e.g. to notify new assignments, only while it is.
+    pub fn home_relay_connected(&self) -> bool {
+        self.endpoint
+            .home_relay_status()
+            .get()
+            .iter()
+            .any(|status| status.is_connected())
     }
 
     /// Replaces the relays, e.g. after the relay list changed on chain.

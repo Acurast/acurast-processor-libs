@@ -18,6 +18,7 @@ tokio = { workspace = true, features = ["rt", "macros"] }
 tracing = "0.1"
 
 [dev-dependencies]
+blake2 = "0.10"
 # The registry server of the relay nodes, to test the client against it.
 acurast-p2p-registry = { workspace = true }
 async-trait = { workspace = true }

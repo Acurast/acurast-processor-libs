@@ -18,6 +18,7 @@ mod startup;
 mod telemetry;
 
 pub use assignments::{ALPN_ASSIGNMENTS, AssignmentNotice, OnNotice};
+pub use chain::{RuntimeSupport, runtime_support};
 pub use endpoint::P2pEndpoint;
 pub use identity::Registration;
 pub use iroh::{EndpointAddr, EndpointId, RelayUrl, SecretKey, endpoint::Connection};

@@ -13,6 +13,38 @@ struct RelayNode {
     _operator: [u8; 32],
 }
 
+/// The runtime's version, as returned by `Core_version`; only the fields read here.
+#[derive(Decode)]
+struct RuntimeVersion {
+    _spec_name: Vec<u8>,
+    _impl_name: Vec<u8>,
+    _authoring_version: u32,
+    spec_version: u32,
+    _impl_version: u32,
+    apis: Vec<([u8; 8], u32)>,
+}
+
+/// Id of the `P2pApi` runtime API: the first 8 bytes of its name's BLAKE2b hash.
+const P2P_API_ID: [u8; 8] = [0xd0, 0xd6, 0x24, 0x0d, 0x9a, 0x9c, 0xa0, 0xfc];
+
+/// Whether the chain's runtime has the P2P layer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RuntimeSupport {
+    /// Version of the runtime that was asked, to ask again only once it changes.
+    pub spec_version: u32,
+    /// Whether the runtime offers the P2P runtime API, without which no endpoint can register.
+    pub p2p: bool,
+}
+
+/// Reads from the chain's runtime whether it has the P2P layer.
+pub async fn runtime_support(chain: &dyn Chain) -> Result<RuntimeSupport, Error> {
+    let version: RuntimeVersion = call(chain, "Core_version", Vec::new()).await?;
+    Ok(RuntimeSupport {
+        spec_version: version.spec_version,
+        p2p: version.apis.iter().any(|(id, _)| *id == P2P_API_ID),
+    })
+}
+
 async fn call<R: Decode>(chain: &dyn Chain, method: &str, args: Vec<u8>) -> Result<R, Error> {
     let output = chain.state_call(method.into(), args).await?;
     R::decode(&mut &output[..]).map_err(|e| Error::InvalidChainData(format!("{method}: {e}")))
@@ -82,6 +114,7 @@ mod tests {
                     );
                     format!("08{ENDPOINT}{node}{}{node}", "02".repeat(32))
                 }
+                "Core_version" => DEVNET_VERSION.to_owned(),
                 _ => unreachable!(),
             };
             Ok(hex::decode(answer).unwrap())
@@ -90,6 +123,32 @@ mod tests {
         async fn register_endpoint(&self, _: Vec<u8>, _: Vec<u8>) -> Result<(), PlatformError> {
             unreachable!()
         }
+    }
+
+    /// `Core_version` of the devnet (runtime 170, with the P2P layer) and of Canary (without it).
+    const DEVNET_VERSION: &str = "44616375726173742d70617261636861696e44616375726173742d70617261636861696e03000000aa0000000200000044dd718d5cc53262d401000000d7bdd8a272ca0d650200000004e70521a0d3d2f802000000075f8cd374350e8401000000df6acb689907609b0500000037e397fc7c91f5e402000000ccd9de6396c899ca0100000040fe3ad401f8959a06000000d2bc9897eed08f1503000000f78b278be53f454c02000000ab3c0572291feb8b02000000bc9d89904f5b923f0100000037c8bb1350a9a2a804000000f3ff14d5ab52705903000000d0d6240d9a9ca0fc01000000ea93e3f16f3d696203000000fbc577b9d747efd6010000000100000001";
+    const CANARY_VERSION: &str = "44616375726173742d70617261636861696e44616375726173742d70617261636861696e01000000410000000100000040dd718d5cc53262d401000000d7bdd8a272ca0d650200000004e70521a0d3d2f802000000075f8cd374350e8401000000df6acb689907609b0500000037e397fc7c91f5e402000000ccd9de6396c899ca0100000040fe3ad401f8959a06000000d2bc9897eed08f1503000000f78b278be53f454c02000000ab3c0572291feb8b02000000bc9d89904f5b923f0100000037c8bb1350a9a2a804000000f3ff14d5ab52705903000000ea93e3f16f3d696203000000fbc577b9d747efd6010000000100000001";
+
+    #[test]
+    fn the_p2p_api_id_is_the_hash_of_its_name() {
+        use blake2::{Blake2b, Digest, digest::consts::U8};
+        assert_eq!(Blake2b::<U8>::digest(b"P2pApi")[..], P2P_API_ID);
+    }
+
+    #[tokio::test]
+    async fn tells_whether_the_runtime_has_the_p2p_layer() {
+        let devnet = runtime_support(&RecordedChain).await.unwrap();
+        assert_eq!(
+            devnet,
+            RuntimeSupport {
+                spec_version: 170,
+                p2p: true
+            }
+        );
+
+        let canary =
+            RuntimeVersion::decode(&mut &hex::decode(CANARY_VERSION).unwrap()[..]).unwrap();
+        assert!(!canary.apis.iter().any(|(id, _)| *id == P2P_API_ID));
     }
 
     #[tokio::test]

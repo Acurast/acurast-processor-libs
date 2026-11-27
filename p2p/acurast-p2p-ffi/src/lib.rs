@@ -212,30 +212,30 @@ impl acurast_p2p::ManageHandler for ManageBridge {
     }
 }
 
-/// The app's callbacks, seen by `acurast-p2p` as its platform services.
-struct Platform {
-    key_store: Arc<dyn KeyStore>,
-    chain: Arc<dyn ChainClient>,
-}
+/// The app's key store, seen by `acurast-p2p` as its platform key store.
+struct KeyStoreBridge(Arc<dyn KeyStore>);
 
-impl platform::KeyStore for Platform {
+impl platform::KeyStore for KeyStoreBridge {
     fn load_seed(&self) -> Result<Option<Vec<u8>>, platform::PlatformError> {
-        Ok(self.key_store.load_seed()?)
+        Ok(self.0.load_seed()?)
     }
 
     fn store_seed(&self, seed: Vec<u8>) -> Result<(), platform::PlatformError> {
-        Ok(self.key_store.store_seed(seed)?)
+        Ok(self.0.store_seed(seed)?)
     }
 }
 
+/// The app's chain client, seen by `acurast-p2p` as its platform chain.
+struct ChainBridge(Arc<dyn ChainClient>);
+
 #[async_trait::async_trait]
-impl platform::Chain for Platform {
+impl platform::Chain for ChainBridge {
     fn account(&self) -> Vec<u8> {
-        self.chain.account()
+        self.0.account()
     }
 
     async fn genesis_hash(&self) -> Result<Vec<u8>, platform::PlatformError> {
-        Ok(self.chain.genesis_hash().await?)
+        Ok(self.0.genesis_hash().await?)
     }
 
     async fn state_call(
@@ -243,7 +243,7 @@ impl platform::Chain for Platform {
         method: String,
         args: Vec<u8>,
     ) -> Result<Vec<u8>, platform::PlatformError> {
-        Ok(self.chain.state_call(method, args).await?)
+        Ok(self.0.state_call(method, args).await?)
     }
 
     async fn register_endpoint(
@@ -251,8 +251,27 @@ impl platform::Chain for Platform {
         id: Vec<u8>,
         proof: Vec<u8>,
     ) -> Result<(), platform::PlatformError> {
-        Ok(self.chain.register_endpoint(id, proof).await?)
+        Ok(self.0.register_endpoint(id, proof).await?)
     }
+}
+
+/// Whether a chain's runtime has the P2P layer, as returned by [`runtime_support`].
+#[derive(Debug, PartialEq, Eq, uniffi::Record)]
+pub struct RuntimeSupport {
+    /// Version of the runtime that was asked, to ask again only once it changes.
+    pub spec_version: u32,
+    /// Whether the runtime offers the P2P layer: without it no endpoint can register.
+    pub p2p: bool,
+}
+
+/// Reads from the runtime of `chain` whether it has the P2P layer, before starting a node.
+#[uniffi::export(async_runtime = "tokio")]
+pub async fn runtime_support(chain: Arc<dyn ChainClient>) -> Result<RuntimeSupport, P2pError> {
+    let support = acurast_p2p::runtime_support(&ChainBridge(chain)).await?;
+    Ok(RuntimeSupport {
+        spec_version: support.spec_version,
+        p2p: support.p2p,
+    })
 }
 
 /// Outcome of [`P2pNode::ping`].
@@ -273,7 +292,7 @@ pub struct PingResult {
 /// The processor's P2P endpoint.
 #[derive(uniffi::Object)]
 pub struct P2pNode {
-    platform: Arc<Platform>,
+    chain: Arc<ChainBridge>,
     endpoint: P2pEndpoint,
     roles: Arc<RoleCache>,
     registered_now: bool,
@@ -288,12 +307,12 @@ impl P2pNode {
         key_store: Arc<dyn KeyStore>,
         chain: Arc<dyn ChainClient>,
     ) -> Result<Arc<Self>, P2pError> {
-        let platform = Arc::new(Platform { key_store, chain });
+        let chain = Arc::new(ChainBridge(chain));
         let (endpoint, registration) =
-            acurast_p2p::start(platform.as_ref(), platform.as_ref(), Vec::new()).await?;
+            acurast_p2p::start(&KeyStoreBridge(key_store), chain.as_ref(), Vec::new()).await?;
         Ok(Arc::new(Self {
-            roles: Arc::new(RoleCache::new(platform.clone())),
-            platform,
+            roles: Arc::new(RoleCache::new(chain.clone())),
+            chain,
             endpoint,
             registered_now: registration == Registration::Registered,
         }))
@@ -302,6 +321,12 @@ impl P2pNode {
     /// This processor's `EndpointId`, hex-encoded.
     pub fn endpoint_id(&self) -> String {
         hex::encode(self.endpoint.id().as_bytes())
+    }
+
+    /// Whether the endpoint is connected to its home relay right now. Relay nodes notify new
+    /// assignments only while it is, so the app polls the chain more often while it is not.
+    pub fn relay_connected(&self) -> bool {
+        self.endpoint.home_relay_connected()
     }
 
     /// Whether this start registered the key on chain (first start, or a new key).
@@ -320,7 +345,7 @@ impl P2pNode {
 
     /// Re-reads the relays listed on chain; returns whether they changed.
     pub async fn refresh_relays(&self) -> Result<bool, P2pError> {
-        Ok(self.endpoint.refresh_relays(self.platform.as_ref()).await?)
+        Ok(self.endpoint.refresh_relays(self.chain.as_ref()).await?)
     }
 
     /// Roles of the hex-encoded `endpoint_id`, as a bit set (1 registered, 2 processor, 4 manager,
@@ -350,7 +375,7 @@ impl P2pNode {
     pub async fn serve_manager_commands(&self, handler: Arc<dyn ManagerCommandHandler>) {
         self.endpoint.serve_manage(
             self.roles.clone(),
-            self.platform.clone(),
+            self.chain.clone(),
             Arc::new(ManageBridge(handler)),
         );
     }
