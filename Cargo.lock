@@ -23,6 +23,7 @@ dependencies = [
  "acurast-p2p-proto",
  "acurast-p2p-registry",
  "async-trait",
+ "blake2",
  "hex",
  "iroh",
  "iroh-relay",

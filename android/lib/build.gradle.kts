@@ -93,6 +93,10 @@ dependencies {
     compileOnly(libs.jna)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.jna)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

@@ -1718,6 +1718,12 @@ public protocol P2pNodeProtocol: AnyObject, Sendable {
     func registeredNow()  -> Bool
     
     /**
+     * Whether the endpoint is connected to its home relay right now. Relay nodes notify new
+     * assignments only while it is, so the app polls the chain more often while it is not.
+     */
+    func relayConnected()  -> Bool
+    
+    /**
      * URLs of the relays in use.
      */
     func relays()  -> [String]
@@ -1890,6 +1896,17 @@ open func refreshRelays()async throws  -> Bool  {
 open func registeredNow() -> Bool  {
     return try!  FfiConverterBool.lift(try! rustCall() {
     uniffi_acurast_p2p_ffi_fn_method_p2pnode_registered_now(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Whether the endpoint is connected to its home relay right now. Relay nodes notify new
+     * assignments only while it is, so the app polls the chain more often while it is not.
+     */
+open func relayConnected() -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_acurast_p2p_ffi_fn_method_p2pnode_relay_connected(self.uniffiClonePointer(),$0
     )
 })
 }
@@ -2345,6 +2362,91 @@ public func FfiConverterTypeProcessorState_lift(_ buf: RustBuffer) throws -> Pro
 #endif
 public func FfiConverterTypeProcessorState_lower(_ value: ProcessorState) -> RustBuffer {
     return FfiConverterTypeProcessorState.lower(value)
+}
+
+
+/**
+ * Whether a chain's runtime has the P2P layer, as returned by [`runtime_support`].
+ */
+public struct RuntimeSupport {
+    /**
+     * Version of the runtime that was asked, to ask again only once it changes.
+     */
+    public var specVersion: UInt32
+    /**
+     * Whether the runtime offers the P2P layer: without it no endpoint can register.
+     */
+    public var p2p: Bool
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Version of the runtime that was asked, to ask again only once it changes.
+         */specVersion: UInt32, 
+        /**
+         * Whether the runtime offers the P2P layer: without it no endpoint can register.
+         */p2p: Bool) {
+        self.specVersion = specVersion
+        self.p2p = p2p
+    }
+}
+
+#if compiler(>=6)
+extension RuntimeSupport: Sendable {}
+#endif
+
+
+extension RuntimeSupport: Equatable, Hashable {
+    public static func ==(lhs: RuntimeSupport, rhs: RuntimeSupport) -> Bool {
+        if lhs.specVersion != rhs.specVersion {
+            return false
+        }
+        if lhs.p2p != rhs.p2p {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(specVersion)
+        hasher.combine(p2p)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeSupport: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeSupport {
+        return
+            try RuntimeSupport(
+                specVersion: FfiConverterUInt32.read(from: &buf), 
+                p2p: FfiConverterBool.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RuntimeSupport, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.specVersion, into: &buf)
+        FfiConverterBool.write(value.p2p, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeSupport_lift(_ buf: RustBuffer) throws -> RuntimeSupport {
+    return try FfiConverterTypeRuntimeSupport.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeSupport_lower(_ value: RuntimeSupport) -> RustBuffer {
+    return FfiConverterTypeRuntimeSupport.lower(value)
 }
 
 // Note that we don't yet support `indirect` for enums.
@@ -3014,6 +3116,23 @@ public func uniffiForeignFutureHandleCountAcurastP2pFfi() -> Int {
     UNIFFI_FOREIGN_FUTURE_HANDLE_MAP.count
 }
 /**
+ * Reads from the runtime of `chain` whether it has the P2P layer, before starting a node.
+ */
+public func runtimeSupport(chain: ChainClient)async throws  -> RuntimeSupport  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_acurast_p2p_ffi_fn_func_runtime_support(FfiConverterTypeChainClient_lower(chain)
+                )
+            },
+            pollFunc: ffi_acurast_p2p_ffi_rust_future_poll_rust_buffer,
+            completeFunc: ffi_acurast_p2p_ffi_rust_future_complete_rust_buffer,
+            freeFunc: ffi_acurast_p2p_ffi_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeRuntimeSupport_lift,
+            errorHandler: FfiConverterTypeP2pError_lift
+        )
+}
+/**
  * Version of this library, so the app can log which one it runs.
  */
 public func version() -> String  {
@@ -3037,6 +3156,9 @@ private let initializationResult: InitializationResult = {
     let scaffolding_contract_version = ffi_acurast_p2p_ffi_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
+    }
+    if (uniffi_acurast_p2p_ffi_checksum_func_runtime_support() != 51108) {
+        return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurast_p2p_ffi_checksum_func_version() != 10953) {
         return InitializationResult.apiChecksumMismatch
@@ -3081,6 +3203,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurast_p2p_ffi_checksum_method_p2pnode_registered_now() != 12200) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_acurast_p2p_ffi_checksum_method_p2pnode_relay_connected() != 56597) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_acurast_p2p_ffi_checksum_method_p2pnode_relays() != 32072) {

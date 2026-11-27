@@ -2,7 +2,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use acurast_p2p_ffi::{ChainClient, KeyStore, P2pError, P2pNode};
+use acurast_p2p_ffi::{ChainClient, KeyStore, P2pError, P2pNode, RuntimeSupport, runtime_support};
 use parity_scale_codec::Encode;
 
 #[derive(Default)]
@@ -68,6 +68,14 @@ impl ChainClient for MockChain {
                     .any(|id| id[..] == args[..]);
                 vec![if registered { 0b0011u8 } else { 0 }]
             }
+            // Runtime 7 with one API: `P2pApi` (id d0d6240d9a9ca0fc), version 1.
+            "Core_version" => {
+                let mut version = (b"x".to_vec(), b"x".to_vec(), 0u32, 7u32, 0u32).encode();
+                version.extend(
+                    vec![([0xd0u8, 0xd6, 0x24, 0x0d, 0x9a, 0x9c, 0xa0, 0xfc], 1u32)].encode(),
+                );
+                version
+            }
             other => panic!("unexpected runtime API {other}"),
         })
     }
@@ -93,6 +101,8 @@ async fn start_registers_and_uses_the_chain_relays() {
         .unwrap();
 
     assert!(node.registered_now());
+    // The listed relay does not exist.
+    assert!(!node.relay_connected());
     assert_eq!(
         hex::decode(node.endpoint_id()).unwrap(),
         chain.endpoints.lock().unwrap()[0]
@@ -127,4 +137,19 @@ async fn errors_of_the_app_are_returned_as_platform_errors() {
         Err(other) => panic!("unexpected error {other:?}"),
         Ok(_) => panic!("the start must fail"),
     }
+}
+
+#[tokio::test]
+async fn runtime_support_reads_the_runtime_apis() {
+    let support = runtime_support(Arc::new(MockChain::default()))
+        .await
+        .unwrap();
+
+    assert_eq!(
+        support,
+        RuntimeSupport {
+            spec_version: 7,
+            p2p: true
+        }
+    );
 }

@@ -498,6 +498,11 @@ uint64_t uniffi_acurast_p2p_ffi_fn_method_p2pnode_refresh_relays(void*_Nonnull p
 int8_t uniffi_acurast_p2p_ffi_fn_method_p2pnode_registered_now(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_METHOD_P2PNODE_RELAY_CONNECTED
+#define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_METHOD_P2PNODE_RELAY_CONNECTED
+int8_t uniffi_acurast_p2p_ffi_fn_method_p2pnode_relay_connected(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_METHOD_P2PNODE_RELAYS
 #define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_METHOD_P2PNODE_RELAYS
 RustBuffer uniffi_acurast_p2p_ffi_fn_method_p2pnode_relays(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
@@ -531,6 +536,11 @@ uint64_t uniffi_acurast_p2p_ffi_fn_method_p2pnode_shutdown(void*_Nonnull ptr
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_METHOD_P2PNODE_START_TELEMETRY
 #define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_METHOD_P2PNODE_START_TELEMETRY
 uint64_t uniffi_acurast_p2p_ffi_fn_method_p2pnode_start_telemetry(void*_Nonnull ptr, RustBuffer app_version
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_FUNC_RUNTIME_SUPPORT
+#define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_FUNC_RUNTIME_SUPPORT
+uint64_t uniffi_acurast_p2p_ffi_fn_func_runtime_support(void*_Nonnull chain
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_FN_FUNC_VERSION
@@ -819,6 +829,12 @@ void ffi_acurast_p2p_ffi_rust_future_free_void(uint64_t handle
 void ffi_acurast_p2p_ffi_rust_future_complete_void(uint64_t handle, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_FUNC_RUNTIME_SUPPORT
+#define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_FUNC_RUNTIME_SUPPORT
+uint16_t uniffi_acurast_p2p_ffi_checksum_func_runtime_support(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_FUNC_VERSION
 #define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_FUNC_VERSION
 uint16_t uniffi_acurast_p2p_ffi_checksum_func_version(void
@@ -906,6 +922,12 @@ uint16_t uniffi_acurast_p2p_ffi_checksum_method_p2pnode_refresh_relays(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_METHOD_P2PNODE_REGISTERED_NOW
 #define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_METHOD_P2PNODE_REGISTERED_NOW
 uint16_t uniffi_acurast_p2p_ffi_checksum_method_p2pnode_registered_now(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_METHOD_P2PNODE_RELAY_CONNECTED
+#define UNIFFI_FFIDEF_UNIFFI_ACURAST_P2P_FFI_CHECKSUM_METHOD_P2PNODE_RELAY_CONNECTED
+uint16_t uniffi_acurast_p2p_ffi_checksum_method_p2pnode_relay_connected(void
     
 );
 #endif
